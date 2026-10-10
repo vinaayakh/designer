@@ -3,7 +3,7 @@ id: "009"
 title: "What does the Design Brief interview look like?"
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: []
 parent: map
 ---

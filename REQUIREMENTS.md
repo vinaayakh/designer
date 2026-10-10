@@ -13,6 +13,8 @@ A diagramming tool for software architects that keeps the low-friction, hand-dra
 - ✅ Freeform, Excalidraw-like sketching surface for quick architecture mockups.
 - ✅ Built on the **Excalidraw library** (embedded), with a layer that tags each shape with the component it represents. Needs a spike to confirm this works.
 - ✅ **Must load fast and stay quick on large diagrams.** Package and bundle choices are judged on load time and rendering speed.
+- ✅ **Measured:** about 0.4 s to usable, and smooth at 500–2,000 elements. Pinned `@excalidraw/excalidraw@0.18.0-143b5b6`.
+- ✅ The frozen Rough Draft is read-only, but Nodes can still be clicked into the AI's context, using our own click handling.
 - ✅ The Rough Draft should feel like a **back-of-the-napkin sketch**: fast and loose.
 - ✅ Once the first Production Diagram is created, the Rough Draft is **frozen (read-only)**. It stays as a reference for both the user and the AI.
 

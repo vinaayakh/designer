@@ -2,7 +2,7 @@
 id: "015"
 title: "Is Excalidraw fast enough? (spike)"
 labels: [wayfinder:task]
-status: open
+status: closed
 assignee: claude (spike subagent)
 blocked_by: []
 parent: map
@@ -20,7 +20,15 @@ Before locking Excalidraw into the spec, measure it. Build a throwaway Vite + Re
 
 Output: the numbers, and a go/no-go plus a version recommendation for you to approve.
 
-## Findings (awaiting user approval)
+## Resolution
+
+Approved by the user, 2026-10-10:
+1. **Go: Excalidraw is the canvas** for both the Rough Draft and the Production Diagram.
+2. **Pin `@excalidraw/excalidraw@0.18.0-143b5b6`** (an @next snapshot) with the 4-line lazy shim for mermaid. Use the new API names (`onExcalidrawAPI`, `setViewport`). Stable 0.18.1 is the fallback.
+3. **The frozen Rough Draft stays read-only, with our own click handling.** On a pointer click, convert the screen position to scene coordinates and find the Node under it. Read-only mode stays on, so the draft can't be edited. (Turning read-only off was considered: it would fix clicks but either reopen editing or need fragile revert-on-change code.)
+4. **When the app moves Nodes, it recalculates their arrows.** Re-layout and Proposals that move Nodes must update the connected arrows themselves, and layout should avoid long diagram-spanning arrows because of the GPU memory risk. Both are noted in "How is the Production Diagram laid out and styled?".
+
+## Findings
 
 Code, numbers and raw results: branch `spike/015-is-excalidraw-fast-enough`, file `spikes/015-excalidraw/RESULTS.md`. Test machine: Ryzen 5 2600, 16 GB RAM, RX 6700, Edge 155, 1600×900 at DPR 1; median of 3 runs.
 

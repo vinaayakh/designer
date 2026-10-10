@@ -17,3 +17,8 @@ Using the findings from "How do we draw the Production Diagram?" and the numbers
 2. **Arrow style:** Excalidraw elbow arrows (re-route when you move things) or ELK's exact routes? And what happens to arrows when you hand-edit after layout?
 3. **Generic icon set:** Tabler (MIT) or Lucide (ISC)?
 4. **Groups:** since Excalidraw frames can't be nested, groups (Region/VPC/Subnet/AZ) are drawn as rectangles. How do they look and resize, and is re-layout available on demand after manual edits?
+
+Constraints from "Is Excalidraw fast enough? (spike)":
+- ELK in a Web Worker takes about 0.28 s for 50 nodes, 1.0 s for 200 and 2.55 s for 500 (plus 0.4–1.4 s the first time a worker starts). The main thread never froze.
+- **Moving shapes from code does not re-route their bound arrows.** Re-layout, and Proposals that move Nodes, must recalculate the connected arrows themselves.
+- **GPU memory risk:** long arrows spanning the whole diagram are expensive (60 of them reached 2.4 GB of GPU memory at 500 elements). Layout and arrow style should keep arrows short and local.

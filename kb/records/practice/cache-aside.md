@@ -7,7 +7,7 @@ summary: The application reads from a cache first, loads from the data store on 
 aliases: [lazy loading, look-aside cache, read-through cache, cache miss, cache invalidation, TTL, expiry, eviction, Redis, Memcached, read-heavy, hot data]
 coverage: checkable
 applies_to:
-  kinds: ["data.relational", "data.document", "data.keyvalue", "data.cache"]
+  kinds: ["data.relational", "data.document", "data.key-value", "data.cache"]
   brief: { read_write_bias: [read-heavy] }
 sources:
   - title: "Cache-Aside pattern, Azure Architecture Center"

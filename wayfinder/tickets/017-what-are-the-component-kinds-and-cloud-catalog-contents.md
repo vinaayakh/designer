@@ -2,7 +2,7 @@
 id: "017"
 title: "What are the Component Kinds and Cloud Catalog contents?"
 labels: [wayfinder:grilling]
-status: open
+status: closed
 assignee: vinu (with claude)
 blocked_by: []
 parent: map
@@ -31,3 +31,59 @@ _From "How does Conversion work?":_ the Kind list (IDs plus a few words each) go
 _From "How is the Production Diagram laid out and styled?":_
 - **Generic icons:** each Component Kind and group kind needs a **Tabler** icon (MIT); only the mapped SVGs ship.
 - **Category:** each Kind also needs a category for the card's border tint: compute / data / network / security / messaging / external.
+
+## Resolution
+
+Decided with vinu, 2026-10-10.
+
+**Kind IDs**
+- `<category>.<name>`, kebab-case. The prefix **is** the category, so one fact drives both Record globs (`data.*`) and the card's border tint.
+- **Seven categories:** the six from the layout ticket plus **`observability`**. Clients and third-party SaaS are `external.*`; analytics is `data.warehouse` / `compute.batch`.
+- The pilot's `data.keyvalue` is renamed `data.key-value` in `kb/records/`.
+
+**The v1 Kind list (46)**
+
+| Category | Kinds |
+|---|---|
+| compute (7) | `vm`, `container`, `kubernetes`, `function`, `web-app`, `batch`, `ai-model` |
+| data (11) | `relational`, `document`, `key-value`, `graph`, `cache`, `object`, `file`, `search`, `warehouse`, `time-series`, `backup` |
+| network (9) | `dns`, `cdn`, `load-balancer`, `api-gateway`, `internet-gateway`, `nat`, `private-endpoint`, `transit`, `hybrid-link` |
+| security (7) | `identity`, `key-management`, `secrets`, `waf`, `firewall`, `ddos`, `threat-detection` |
+| messaging (6) | `queue`, `topic`, `stream`, `event-bus`, `workflow`, `notification` |
+| observability (4) | `logs`, `metrics`, `tracing`, `audit` |
+| external (4) | `user`, `client`, `service`, `system` |
+
+`kinds.yaml` entry: `id`, a short `gloss` (goes in the static system prompt), Tabler `icon`, `holds_data`.
+
+**Data Classification**
+- Multi-select tags: **`PHI`, `PII`, `confidential`, `public`**. PHI doesn't imply PII. No tag means *unclassified*, and the AI states its assumption. No `PCI` (no PCI regime in v1) and no `secrets` (that's the `security.secrets` Kind).
+- The card badge shows the most sensitive tag: PHI > PII > confidential.
+- Allowed only on Kinds with `holds_data: true`: every `data.*`; `messaging.queue/topic/stream/event-bus`; `observability.logs/audit`; `external.service/system` (where it means "receives data of this class", which is what raises the BAA question).
+
+**Group kinds (provider-neutral)**
+- `region`, `zone`, `network` (shown as VPC/VNet from the catalog), `subnet` with tier `public|private|isolated`, `account` (AWS account / Azure subscription), `boundary` (a trust zone: on-prem, third party, DMZ).
+- No resource groups and no cluster groups in v1: a cluster is a `compute.kubernetes` Node.
+- The compact format becomes `g2 network "Prod VPC"`, `g3 subnet:private "App"`.
+
+**Cloud Catalog**
+- Files: `catalog/kinds.yaml`, `catalog/aws.yaml`, `catalog/azure.yaml`, built into the binary.
+- Catalog header: `provider`, group-kind display names, `hipaa_as_of`, pinned `icon_set` (version, URL, sha256).
+- Entry:
+  ```yaml
+  - id: aws.rds-postgres
+    name: Amazon RDS for PostgreSQL   # full official name, shown beside the icon
+    kind: data.relational
+    icon: Arch_Amazon-RDS              # stable key into the downloaded set; null → generic
+    hipaa: true
+    docs: https://docs.aws.amazon.com/...
+    aliases: [rds, postgres, postgresql]
+  ```
+  There's no provider-category field, because the Kind gives the category.
+- **Multi-engine products are one entry per engine or API** (`azure.cosmos-nosql → data.document`, `azure.cosmos-postgres → data.relational`), sharing an icon. "Exactly one Kind per Service" holds.
+- **Off-catalog services:** a Node may have a Kind plus a free-text service name, with the generic icon and a *not in catalog* mark. The runtime validates the Kind only. Third-party SaaS always works this way. Compact form: `n7 "Payments" external.service ~Stripe`.
+- **Size:** about 80–120 Services per cloud. Rules: every Kind is covered, the reference architectures for web apps, data and serverless are covered, every HIPAA-eligible service that maps to a Kind is in, niche domains are out. CI checks coverage and that the `id → kind` export stays ≤ 1.2k tokens. The entries themselves are written during implementation.
+
+**Icons and sync**
+- Generic: each Kind and group kind names one Tabler icon (about 53 ship). Icons may be shared. CI fails on a missing or unknown icon. The specific picks are made during implementation.
+- The icon-sync script is dev-time only. It downloads a vendor release and writes a diff report (new, removed, renamed, dangling catalog keys). People update the catalog and bump `icon_set`. CI fails on a dangling key. At runtime a missing key falls back to the generic icon.
+- Refreshing the HIPAA-eligible list (`hipaa_as_of`) belongs with the "Keeping the Knowledge Base current" fog.

@@ -49,6 +49,7 @@ A diagramming tool for software architects that keeps the low-friction, hand-dra
 - ✅ If a cloud provider is specified, generated components use that provider's services (e.g. AWS, Azure, GCP).
 - ✅ v1 targets: **Generic** (provider-neutral), **AWS**, **Azure**.
 - ✅ Provider services are kept as a data catalog, so adding providers (e.g. GCP) needs no code changes.
+- ✅ **Catalog contents** ([What are the Component Kinds and Cloud Catalog contents?](wayfinder/tickets/017-what-are-the-component-kinds-and-cloud-catalog-contents.md)): `catalog/kinds.yaml` (46 Kinds) plus one YAML file per cloud with about 80–120 Services each. Each entry has an ID, the full official name, Kind, icon key, HIPAA-eligible flag, docs link and aliases. Multi-engine products get one entry per engine. Off-catalog services (e.g. third-party SaaS) are a Kind plus a name, shown with the generic icon. A dev-time icon-sync script diffs each vendor release, and CI checks Kind coverage, icon keys and the ≤ 1.2k-token export.
 - ✅ **AWS/Azure icons are never bundled.** When the user first picks an AWS or Azure target, they agree to the vendor's icon terms, and the app downloads the official icon set into a local cache (pinned version, checksum). Offline or declined: generic Component Kind icons plus the full service name. Official icons are locked against rotate, flip, crop and distort, and always show the full service name.
 
 ### R4 — AI helper sidebar
@@ -105,7 +106,8 @@ An internal, curated database of records that the AI consults **first**:
 ### R10 — Diagram data model
 - ✅ One `.excalidraw` file per diagram. Meaning is stored on its elements, and the graph is calculated when needed ([ADR 0001](docs/adr/0001-diagram-semantics-live-in-excalidraw-scene.md)).
 - ✅ Two type layers: provider-neutral **Component Kinds** and provider-specific **Services** from Cloud Catalogs.
-- ✅ Production Edges have an interaction style (sync/async/stream) and a protocol. Data-storing Nodes carry a Data Classification (PHI/PII/…).
+- ✅ Production Edges have an interaction style (sync/async/stream) and a protocol. Nodes that hold or receive data carry a multi-select Data Classification: `PHI`, `PII`, `confidential` or `public`.
+- ✅ Kind IDs are `<category>.<name>`, across 7 categories: compute, data, network, security, messaging, observability and external. Group kinds are neutral: region, zone, network, subnet (public/private/isolated), account and boundary.
 - ✅ Production Group membership is explicit, and a mismatch with the drawing is flagged. Rough Draft membership comes from position.
 - ✅ The AI reads a compact text format with stable short aliases. Token cost is to be measured.
 

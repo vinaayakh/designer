@@ -12,17 +12,17 @@
 
 **Note**: Free text, or an arrow not connected at both ends, on a diagram. It is passed to the AI as an annotation (e.g. "~10k rps peak"). It is not a component.
 
-**Group**: A shape that contains other Nodes, e.g. Region, VPC/VNet, Subnet, Availability Zone. Groups can nest. On the Rough Draft, membership is worked out from what is drawn inside what. On a Production Diagram, membership is an explicit parent link.
+**Group**: A shape that contains other Nodes. Groups can nest. Each has a provider-neutral **group kind**: region, zone, network (shown as VPC on AWS, VNet on Azure), subnet (public, private or isolated), account (an AWS account or Azure subscription), or boundary (a trust zone such as on-prem or a third party). On the Rough Draft, membership is worked out from what is drawn inside what. On a Production Diagram, membership is an explicit parent link.
 
 **Alias**: A short handle (`n1`, `g2`) the AI uses for a Node or Group. It stays the same for a whole Assistant Session.
 
-**Component Kind**: A provider-neutral category of component from a fixed vocabulary (e.g. relational database, queue, CDN). Knowledge Base Records can attach to Kinds.
+**Component Kind**: A provider-neutral category of component from a fixed vocabulary (e.g. relational database, queue, CDN). Every Kind belongs to one **category**: compute, data, network, security, messaging, observability or external. Knowledge Base Records can attach to Kinds or to a whole category.
 
-**Service**: A provider-specific offering in a Cloud Catalog (e.g. AWS RDS for PostgreSQL) that maps to exactly one Component Kind.
+**Service**: A provider-specific offering in a Cloud Catalog (e.g. Amazon RDS for PostgreSQL) that maps to exactly one Component Kind. A product that offers several engines or APIs (e.g. Cosmos DB) is several Services. A component with no catalog entry, such as a third-party SaaS, is an **off-catalog service**: a Kind plus the service's name, shown with the generic icon.
 
 **Cloud Catalog**: The list of Services for one target cloud (AWS, Azure). The Generic target uses Component Kinds only.
 
-**Data Classification**: A label on a data-storing Node saying what kind of data it holds (e.g. PHI, PII, public). It drives compliance checks.
+**Data Classification**: One or more labels on a Node that holds or receives data (a data store, a queue or stream, logs, or an external service it is sent to), saying what kind of data it holds: PHI, PII, confidential or public. A Node with none is **unclassified**, and the AI states what it assumed. It drives compliance checks.
 
 **Conversion**: The one-time AI step that turns the Rough Draft, together with the Design Brief and Knowledge Base, into the Project's first Production Diagram. It runs as two tasks: **Design**, then **Gap Check**. It happens once per Project; after that, every change comes through Proposals.
 

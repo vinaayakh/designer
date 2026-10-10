@@ -3,7 +3,7 @@ id: "011"
 title: "How does Conversion work?"
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: ["002", "006", "007"]
 parent: map
 ---

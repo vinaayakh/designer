@@ -23,6 +23,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 
 - [How do we run Claude Code as a background agent?](tickets/002-how-do-we-run-claude-code-as-a-background-agent.md): feasible as one long-running `claude -p` process (JSON over stdin/stdout) using our Go MCP server over localhost HTTP, with prompt caching across turns. Domain limits on WebSearch need a hook. `--bare` (needs an API key) is a risk.
 - [Which Knowledge Base sources can we use and ship?](tickets/004-which-knowledge-base-sources-can-we-use-and-ship.md): three licence tiers. Public domain (HIPAA rule, NIST) can ship verbatim. OWASP/AWS/Azure Architecture Center can ship with attribution (share-alike). SOC 2, CIS, Azure WAF and the HIPAA service lists are paraphrase or link only. AICPA explicitly objects to its content in LLM knowledge bases.
+- [Can Excalidraw be our canvas?](tickets/001-can-excalidraw-be-our-canvas.md): yes. `@excalidraw/excalidraw` (MIT) supports custom data per element, selection events and undoable changes from code, and can render a clean, non-sketchy look. About 350–420 KB gzipped; fonts must ship locally. Speed at our sizes not yet measured (spike ticketed). tldraw (paid licence) and React Flow (no freehand) rejected.
 
 ## Not yet specified
 

@@ -31,6 +31,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - [Is Excalidraw fast enough? (spike)](tickets/015-is-excalidraw-fast-enough-spike.md): go. Smooth at 500 and 2,000 elements and usable in about 0.4 s. Pinned `@excalidraw/excalidraw@0.18.0-143b5b6` (@next) with a lazy shim for mermaid. The frozen Rough Draft stays read-only with our own click handling. When the app moves Nodes it must recalculate their arrows.
 - [What does the Design Brief interview look like?](tickets/009-what-does-the-design-brief-interview-look-like.md): a local wizard (no Assistant, no tokens), one question per screen, with the brief always visible beside it. The 3 required questions come first and gate the Rough Draft, then you can start sketching or answer more, and skipped questions stay `unknown`. CAP is asked as a network-split scenario with CP and AP only.
 - [How are Proposals shown and reviewed?](tickets/010-how-are-proposals-shown-and-reviewed.md): changes are drawn as an overlay on the canvas. The user steps through them (accept or skip), or jumps to a full review with one Accept. Parts can be accepted on their own, and the runtime works out dependencies. Accepted changes become one version with one Undo. The canvas is locked while a Proposal is waiting. Replying creates a new revision. Draft `submit_proposal` payload: ops with aliases and `+new` references, no coordinates.
+- [How is the Claude Code session configured?](tickets/013-how-is-the-claude-code-session-configured.md): a static system prompt, with Project context in messages. Trusted domains are enforced by WebFetch domain rules plus an HTTP hook to our server that makes WebSearch use `allowed_domains`. The process starts when the sidebar opens, stops after 15 min idle, and resumes with `--resume`; after a crash it resumes once, then starts fresh. MCP runs over localhost HTTP with a bearer token. The model is a per-install setting and can be switched mid-session. Isolated from the user's own Claude Code config (`--setting-sources ""`, empty working directory). `--bare` risk accepted, with a version check.
 
 ## Not yet specified
 
@@ -41,6 +42,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - **Keeping the Knowledge Base current:** how Records get refreshed after v1 ships, and how a Record's version shows up in a Gap Report.
 - **Editing the Design Brief later:** answering or changing brief questions from Project settings after sketching or Conversion has started. Does a change mark the current Production Diagram as stale, or suggest a Proposal?
 - **More than one Proposal at once:** can the Assistant have several Proposals waiting (e.g. one per Gap Report item), or only one at a time given the canvas lock? How are they queued?
+- **Showing usage and cost:** whether to show the user the per-session token cost Claude Code reports (`total_cost_usd`), and where.
 - **Chat history:** whether Assistant conversations are saved per Project, and how they relate to diagram versions.
 
 ## Out of scope

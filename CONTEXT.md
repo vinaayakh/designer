@@ -14,7 +14,7 @@
 
 **Group**: A shape that contains other Nodes, e.g. Region, VPC/VNet, Subnet, Availability Zone. Groups can nest. On the Rough Draft, membership is worked out from what is drawn inside what. On a Production Diagram, membership is an explicit parent link.
 
-**Alias**: A short handle (`n1`, `g2`) the AI uses for a Node or Group. It stays the same for a whole Assistant session.
+**Alias**: A short handle (`n1`, `g2`) the AI uses for a Node or Group. It stays the same for a whole Assistant Session.
 
 **Component Kind**: A provider-neutral category of component from a fixed vocabulary (e.g. relational database, queue, CDN). Knowledge Base Records can attach to Kinds.
 
@@ -33,6 +33,8 @@
 **Gap Report**: A list attached to a Production Diagram showing which items on the selected compliance and security checklists are met, unmet, or outside what the diagram can show. Unmet items come with suggested fixes as Proposals. The report itself never changes the diagram.
 
 **Assistant**: The AI helper in the sidebar, available in both the Rough Draft and Production Diagram views. It can read the canvas and make Proposals. Its work is done by the user's local CLI Agent.
+
+**Assistant Session**: One continuous conversation between the Assistant and a Project, during which Aliases stay stable and the Assistant remembers earlier turns. A session can end (idle, restart, crash). The next one starts from the Project's current state and has no memory of earlier chat.
 
 **CLI Agent**: A coding-agent command-line tool already on the user's machine (e.g. Claude Code) that does the AI work. It brings its own login, model and web search.
 

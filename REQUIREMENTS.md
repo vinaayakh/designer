@@ -64,7 +64,8 @@ An internal, curated database of records that the AI consults **first**:
 
 ### R7 — Trusted web search fallback
 - ✅ When the knowledge base lacks needed information, the AI may search the web.
-- ❓ What counts as a "trusted source" (allowlist of domains? e.g. cloud provider docs, NIST, HHS, AICPA, OWASP)?
+- ✅ Trusted Sources are a **curated domain allowlist shipped in the binary**, read-only in v1. It is **enforced, not just requested**: WebSearch must name allowed domains, and WebFetch only reaches listed domains. Details: [How is the Claude Code session configured?](wayfinder/tickets/013-how-is-the-claude-code-session-configured.md).
+- ❓ Which domains are on the list (tracked in the licensing ticket).
 - ❓ Do web findings get promoted into the knowledge base?
 
 ### R8 — Compliance behaviour
@@ -84,6 +85,13 @@ An internal, curated database of records that the AI consults **first**:
 - ✅ v1 supports **Claude Code** only. Other agents could be added later behind an adapter.
 - ✅ The runtime runs an **MCP server** that the agent uses to read the canvas, Design Brief and Knowledge Base, and to submit Proposals.
 - ✅ **Token efficiency is a design target**: the agent reads a compact view of the diagram (not raw Excalidraw JSON), small context is put directly in the prompt, larger data is fetched on demand through tools, and one long-running agent session is reused so prompt caching applies. **Measured and approved** (token spike): the compact format is about 49× smaller than raw JSON. Only changes are sent after the first turn. About 6 tools. The default system prompt is replaced (−38% input).
+- ✅ **Agent session setup** ([How is the Claude Code session configured?](wayfinder/tickets/013-how-is-the-claude-code-session-configured.md)):
+  - **System prompt:** static and shipped in the binary. Project context travels in messages.
+  - **Isolation:** the session ignores the user's own Claude Code config (`CLAUDE.md`, plugins, hooks, slash commands) and runs in an empty working directory owned by the runtime.
+  - **MCP:** Streamable HTTP on localhost, with a bearer token generated per process.
+  - **Lifecycle:** starts when the Assistant sidebar opens, stops after 15 min idle, and resumes with `--resume`. After a crash it resumes once, then starts a fresh session.
+  - **Model:** a per-install setting (default: Claude Code's own default), switchable mid-session.
+  - **Version check:** the Claude Code version is checked against a tested range. The `--bare`/API-key risk is accepted.
 
 ## Product shape (decided)
 - ✅ **Solo-first.** One user per install. Avoid choices that would block adding teams later.

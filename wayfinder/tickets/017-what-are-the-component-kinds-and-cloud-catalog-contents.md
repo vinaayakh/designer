@@ -3,7 +3,7 @@ id: "017"
 title: "What are the Component Kinds and Cloud Catalog contents?"
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: []
 parent: map
 ---

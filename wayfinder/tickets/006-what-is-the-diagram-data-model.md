@@ -3,7 +3,7 @@ id: "006"
 title: "What is the diagram data model?"
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: ["001", "003"]
 parent: map
 ---

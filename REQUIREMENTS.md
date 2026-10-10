@@ -78,7 +78,7 @@ An internal, curated database of records that the AI consults **first**:
 - ✅ **No API keys** are handled by the app. Login, the model and web search come from the CLI agent.
 - ✅ v1 supports **Claude Code** only. Other agents could be added later behind an adapter.
 - ✅ The runtime runs an **MCP server** that the agent uses to read the canvas, Design Brief and Knowledge Base, and to submit Proposals.
-- ✅ **Token efficiency is a design target**: the agent reads a compact view of the diagram (not raw Excalidraw JSON), small context is put directly in the prompt, larger data is fetched on demand through tools, and one long-running agent session is reused so prompt caching applies. To be measured in a spike.
+- ✅ **Token efficiency is a design target**: the agent reads a compact view of the diagram (not raw Excalidraw JSON), small context is put directly in the prompt, larger data is fetched on demand through tools, and one long-running agent session is reused so prompt caching applies. **Measured and approved** (token spike): the compact format is about 49× smaller than raw JSON. Only changes are sent after the first turn. About 6 tools. The default system prompt is replaced (−38% input).
 
 ## Product shape (decided)
 - ✅ **Solo-first.** One user per install. Avoid choices that would block adding teams later.

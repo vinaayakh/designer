@@ -2,7 +2,7 @@
 id: "012"
 title: "How few tokens can the Assistant use? (spike)"
 labels: [wayfinder:prototype]
-status: open
+status: closed
 assignee: claude (spike subagent)
 blocked_by: ["002", "006"]
 parent: map
@@ -14,7 +14,18 @@ parent: map
 
 Measure with the real Claude Code (also confirm the stdin message format and how interrupting a turn works, both undocumented; see "How do we run Claude Code as a background agent?"): tokens per turn and response time for (a) raw Excalidraw JSON vs the compact form, (b) putting selected nodes and the Design Brief summary in the prompt vs fetching them with tools, (c) one long-running session with prompt caching vs a fresh process each turn, (d) a tool list of about 5 tools vs a larger one, (e) sending only what changed on later turns, (f) a compact catalog of Knowledge Base records (ID, title, tags) vs search-only access. Output: the context strategy for the Assistant, with numbers.
 
-## Findings (awaiting user approval)
+## Resolution
+
+Approved by the user, 2026-10-10. **The Assistant's context strategy:**
+1. The AI sees **only the compact format**, never raw Excalidraw JSON.
+2. **The first message** includes the brief, selected nodes and the whole diagram. **Later messages** include only selected nodes and a list of what changed.
+3. **About 6 MCP tools**, e.g. `get_diagram`, `get_nodes`, `search_kb`, `get_record`, `submit_proposal`, `web_fetch`. Keep round trips low.
+4. **Knowledge Base access:** search plus fetching single records (`get_record`). No list of all records up front.
+5. **One long-running Claude Code process per open Project**, for speed (it saves about 3 s per turn; token use is the same either way).
+6. **Replace** Claude Code's default system prompt (`--system-prompt`), saving about 3.2k tokens per call.
+7. **The runtime validates every message before writing it to Claude Code's stdin**, because a malformed line kills the process. Interrupt with the `control_request` interrupt message.
+
+## Findings
 
 Harness and full numbers: branch `spike/012-how-few-tokens-can-the-assistant-use`, file `spikes/012-token-spike/RESULTS.md`.
 - **Model:** most runs used Haiku (claude-haiku-5-5); two confirming runs used Opus 5.5 and pointed the same way.

@@ -26,6 +26,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - [Can Excalidraw be our canvas?](tickets/001-can-excalidraw-be-our-canvas.md): yes. `@excalidraw/excalidraw` (MIT) supports custom data per element, selection events and undoable changes from code, and can render a clean, non-sketchy look. About 350–420 KB gzipped; fonts must ship locally. Speed at our sizes not yet measured (spike ticketed). tldraw (paid licence) and React Flow (no freehand) rejected.
 - [How do we draw the Production Diagram?](tickets/003-how-do-we-draw-the-production-diagram.md): ELK.js recommended for automatic layout with nested groups (about 462 KB, loaded only when needed). Groups are plain rectangles because Excalidraw frames can't nest. AWS/Azure icon terms only cover use in diagrams and documentation, not shipping inside an app, so how to ship them needs a decision.
 - [How do we search the Knowledge Base locally in Go?](tickets/005-how-do-we-search-the-knowledge-base-locally-in-go.md): tags/filters plus BM25 keyword search, no embedding model in v1 (Claude Code rewrites queries itself). Pure Go keeps the single binary: SQLite FTS5 adds about 4 MB, a hand-written BM25 about 0.04 MB, both with sub-10 ms queries. Go stays.
+- [What is the diagram data model?](tickets/006-what-is-the-diagram-data-model.md): one `.excalidraw` file per diagram, with meaning stored in each element's `customData` and the graph calculated when needed (ADR 0001). The Node ID is `element.id`. Two type layers: Component Kind and Service. Production Group membership is an explicit parent link set on drop, with mismatches flagged; Rough Draft membership comes from position. The AI reads a compact indented format with stable short aliases.
 
 ## Not yet specified
 
@@ -33,7 +34,6 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - **Export:** PNG/SVG for sure. Whether the Design Rationale and Gap Report export as markdown/PDF.
 - **Install and update:** the `curl | sh` script, self-update (`designer --update`), supported operating systems, checking that Claude Code is installed.
 - **Project folder layout:** the file layout inside a project folder (brief, frozen draft, diagram versions, rationale, reports, chat history?).
-- **Cloud service catalogs:** contents and structure of the Generic/AWS/Azure catalogs (services, categories, generic equivalents, HIPAA eligibility). Depends on the data model and the icon research.
 - **Keeping the Knowledge Base current:** how Records get refreshed after v1 ships, and how a Record's version shows up in a Gap Report.
 - **Chat history:** whether Assistant conversations are saved per Project, and how they relate to diagram versions.
 

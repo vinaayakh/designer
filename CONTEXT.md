@@ -6,7 +6,23 @@
 
 **Rough Draft**: The hand-drawn, back-of-the-napkin sketch that starts a Project. It is editable until the first Conversion, then frozen as a read-only reference.
 
-**Node**: A single element on the Rough Draft, such as a box or shape, that represents a component of the system. It can be added to the Assistant's message context.
+**Node**: A shape on a diagram (rectangle, ellipse, diamond, image) that stands for one component of the system. On the Rough Draft it may have no type, and its label carries the meaning. On a Production Diagram it always has a Component Kind and, for AWS/Azure targets, a Service. Nodes that store data carry a Data Classification. It can be added to the Assistant's message context.
+
+**Edge**: An arrow connecting two Nodes. On the Rough Draft it has direction and an optional label. On a Production Diagram it also has an interaction style (sync / async / stream) and an optional protocol.
+
+**Note**: Free text, or an arrow not connected at both ends, on a diagram. It is passed to the AI as an annotation (e.g. "~10k rps peak"). It is not a component.
+
+**Group**: A shape that contains other Nodes, e.g. Region, VPC/VNet, Subnet, Availability Zone. Groups can nest. On the Rough Draft, membership is worked out from what is drawn inside what. On a Production Diagram, membership is an explicit parent link.
+
+**Alias**: A short handle (`n1`, `g2`) the AI uses for a Node or Group. It stays the same for a whole Assistant session.
+
+**Component Kind**: A provider-neutral category of component from a fixed vocabulary (e.g. relational database, queue, CDN). Knowledge Base Records can attach to Kinds.
+
+**Service**: A provider-specific offering in a Cloud Catalog (e.g. AWS RDS for PostgreSQL) that maps to exactly one Component Kind.
+
+**Cloud Catalog**: The list of Services for one target cloud (AWS, Azure). The Generic target uses Component Kinds only.
+
+**Data Classification**: A label on a data-storing Node saying what kind of data it holds (e.g. PHI, PII, public). It drives compliance checks.
 
 **Conversion**: The AI step that turns the current Rough Draft, together with the Design Brief and Knowledge Base, into a new Production Diagram.
 

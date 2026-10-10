@@ -66,6 +66,13 @@ An internal, curated database of records that the AI consults **first**:
 - ✅ Compliance and security checklists **report gaps and suggest fixes**; they never change the diagram on their own.
 - ✅ Each suggested fix is a Proposal. When the user approves it, the diagram is updated.
 
+### R10 — Diagram data model
+- ✅ One `.excalidraw` file per diagram. Meaning is stored on its elements, and the graph is calculated when needed ([ADR 0001](docs/adr/0001-diagram-semantics-live-in-excalidraw-scene.md)).
+- ✅ Two type layers: provider-neutral **Component Kinds** and provider-specific **Services** from Cloud Catalogs.
+- ✅ Production Edges have an interaction style (sync/async/stream) and a protocol. Data-storing Nodes carry a Data Classification (PHI/PII/…).
+- ✅ Production Group membership is explicit, and a mismatch with the drawing is flagged. Rough Draft membership comes from position.
+- ✅ The AI reads a compact text format with stable short aliases. Token cost is to be measured.
+
 ### R9 — AI runtime
 - ✅ Same approach as px0: the AI work is **handed off to a local CLI coding agent** (e.g. Claude Code) already installed on the user's machine.
 - ✅ **No API keys** are handled by the app. Login, the model and web search come from the CLI agent.

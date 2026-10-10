@@ -3,7 +3,7 @@ id: "007"
 title: "What is the Knowledge Base record format?"
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: ["004", "005", "014"]
 parent: map
 ---

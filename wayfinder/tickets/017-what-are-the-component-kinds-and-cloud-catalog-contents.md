@@ -21,3 +21,5 @@ Constraints from "What are the licensing rules for the Knowledge Base and icons?
 - AWS/Azure icons are **downloaded on first use** after the user agrees to the vendor's terms, never bundled. A catalog entry's icon reference points into that downloaded set (stable key, not a bundled path), and the download manifest (URL, version, checksum) is kept by the icon-sync script.
 - Every Component Kind needs a **generic fallback icon** (used offline, or when the user declines the terms), shown with the full service name.
 - The full official service name must be stored on each catalog entry, since it's shown beside official icons.
+
+_Constraints from "What is the Knowledge Base record format?":_ Records match Kinds by glob (`applies_to.kinds: ["data.*"]`), so Kind IDs need dotted namespaces where the prefix means something (`data.relational`, `data.object`…). Records also match on Data Classification values, so that list must be fixed here as well (PHI, PII, …).

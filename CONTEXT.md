@@ -42,7 +42,13 @@
 
 **Knowledge Base**: The curated set of Records the AI consults before anything else.
 
-**Record**: One entry in the Knowledge Base: a design practice, security practice, or compliance checklist item, with the sources it is based on.
+**Record**: One entry in the Knowledge Base, either a Control or a Practice, with the sources it is based on.
+
+**Control**: A Record for one item on a compliance checklist: one SOC 2 criterion, or one HIPAA implementation specification. Controls are what a Gap Report marks met, unmet or outside the diagram.
+
+**Practice**: A Record for one named design or security practice (e.g. encryption at rest, cache-aside). A Control lists the Practices that satisfy it, and those become the suggested fixes.
+
+**Coverage**: How much of a Record a diagram can show: fully (checkable), only whether the component exists (partial), or not at all because it's policy or procedure (process). Process Records always land in the Gap Report's "outside what the diagram can show".
 
 **Licence Tier**: How freely a Record may reuse one of its sources: public domain (quote verbatim), attribution (adapt with credit), or facts-only (IDs and facts in our own words, plus a link).
 

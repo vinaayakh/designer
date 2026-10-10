@@ -68,7 +68,11 @@ An internal, curated database of records that the AI consults **first**:
   - SOC 2 is described in our own words, keyed to criterion IDs. **CIS is out of v1.**
   - Each source in a Record carries a licence tier, and CI rejects copied text from non-free sources. No legal review until Designer is sold.
   - Generating the Knowledge Base on first install was rejected (token cost, not curated).
-- ❓ Record format/schema, retrieval method, versioning and citation of sources.
+- ✅ **Record format** ([What is the Knowledge Base record format?](wayfinder/tickets/007-what-is-the-knowledge-base-record-format.md)):
+  - One markdown file per Record, of two types: **controls** (one SOC 2 criterion or HIPAA implementation specification each) and **practices** (design or security).
+  - Each Record says which Nodes and Brief answers it applies to, how far a diagram can show it, which practices satisfy it (controls only), and its sources with licence tiers and as-of dates.
+  - Compliance is judged by the AI from the Records that apply to the diagram, not by rules in the runtime.
+  - Search is a hand-written BM25 that returns IDs and short summaries. The Knowledge Base has a date version, stamped on every Gap Report.
 
 ### R7 — Trusted web search fallback
 - ✅ When the knowledge base lacks needed information, the AI may search the web.

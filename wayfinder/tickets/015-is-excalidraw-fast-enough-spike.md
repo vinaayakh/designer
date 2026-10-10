@@ -3,7 +3,7 @@ id: "015"
 title: "Is Excalidraw fast enough? (spike)"
 labels: [wayfinder:task]
 status: open
-assignee:
+assignee: claude (spike subagent)
 blocked_by: []
 parent: map
 ---

@@ -3,7 +3,7 @@ id: "012"
 title: "How few tokens can the Assistant use? (spike)"
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: claude (spike subagent)
 blocked_by: ["002", "006"]
 parent: map
 ---

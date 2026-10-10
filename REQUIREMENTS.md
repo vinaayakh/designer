@@ -39,6 +39,7 @@ A diagramming tool for software architects that keeps the low-friction, hand-dra
 - ✅ Clicking a node on the canvas (in either view) adds it to the context of the message being sent to the assistant.
 - ✅ Proposals apply to whichever view is active. Gap Report fixes apply to the latest Production Diagram.
 - ✅ The assistant can **propose** changes to the Rough Draft. The user reviews each proposal and can **accept**, **reject**, or **reply with changes** (counter-suggest), and the assistant then revises it. Nothing is applied without the user's approval.
+- ✅ **Reviewing a Proposal:** changes are drawn as an overlay on the canvas (added / removed / changed / moved). The user steps through them one at a time (accept or skip), or jumps to a full review of everything not skipped with a single Accept. **Parts of a Proposal can be accepted on their own**, and the runtime handles dependencies. Accepted changes are saved as **one new version with one Undo**. **The canvas is locked while a Proposal is waiting for review.** Payload and details: [How are Proposals shown and reviewed?](wayfinder/tickets/010-how-are-proposals-shown-and-reviewed.md).
 
 ### R5 — Project setup interview
 When starting a new project, the user is asked for the system's non-functional targets, including:

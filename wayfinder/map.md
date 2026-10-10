@@ -30,6 +30,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - [How few tokens can the Assistant use? (spike)](tickets/012-how-few-tokens-can-the-assistant-use-spike.md): the compact format is about 49× smaller than raw JSON. Brief, selected nodes and the first diagram go in the prompt, and later turns get only changes. About 6 tools; Knowledge Base access by search plus `get_record`. One long-running process per Project; replace the system prompt (−38% input). Rule of thumb: tokens ≈ context × round trips.
 - [Is Excalidraw fast enough? (spike)](tickets/015-is-excalidraw-fast-enough-spike.md): go. Smooth at 500 and 2,000 elements and usable in about 0.4 s. Pinned `@excalidraw/excalidraw@0.18.0-143b5b6` (@next) with a lazy shim for mermaid. The frozen Rough Draft stays read-only with our own click handling. When the app moves Nodes it must recalculate their arrows.
 - [What does the Design Brief interview look like?](tickets/009-what-does-the-design-brief-interview-look-like.md): a local wizard (no Assistant, no tokens), one question per screen, with the brief always visible beside it. The 3 required questions come first and gate the Rough Draft, then you can start sketching or answer more, and skipped questions stay `unknown`. CAP is asked as a network-split scenario with CP and AP only.
+- [How are Proposals shown and reviewed?](tickets/010-how-are-proposals-shown-and-reviewed.md): changes are drawn as an overlay on the canvas. The user steps through them (accept or skip), or jumps to a full review with one Accept. Parts can be accepted on their own, and the runtime works out dependencies. Accepted changes become one version with one Undo. The canvas is locked while a Proposal is waiting. Replying creates a new revision. Draft `submit_proposal` payload: ops with aliases and `+new` references, no coordinates.
 
 ## Not yet specified
 
@@ -39,6 +40,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - **Project folder layout:** the file layout inside a project folder (brief, frozen draft, diagram versions, rationale, reports, chat history?).
 - **Keeping the Knowledge Base current:** how Records get refreshed after v1 ships, and how a Record's version shows up in a Gap Report.
 - **Editing the Design Brief later:** answering or changing brief questions from Project settings after sketching or Conversion has started. Does a change mark the current Production Diagram as stale, or suggest a Proposal?
+- **More than one Proposal at once:** can the Assistant have several Proposals waiting (e.g. one per Gap Report item), or only one at a time given the canvas lock? How are they queued?
 - **Chat history:** whether Assistant conversations are saved per Project, and how they relate to diagram versions.
 
 ## Out of scope

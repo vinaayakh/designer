@@ -36,7 +36,7 @@
 
 **CLI Agent**: A coding-agent command-line tool already on the user's machine (e.g. Claude Code) that does the AI work. It brings its own login, model and web search.
 
-**Proposal**: A set of changes to the active diagram (Rough Draft or Production Diagram) suggested by the Assistant. The user accepts it, rejects it, or replies with changes. Nothing is applied without the user's approval.
+**Proposal**: A set of changes to the active diagram (Rough Draft or Production Diagram) suggested by the Assistant. The user accepts or skips each change, accepts everything at once, rejects it, or replies with changes, which produces a new **revision** of the same Proposal. Everything accepted is saved as one new diagram version. Nothing is applied without the user's approval, and the diagram can't be edited by hand while a Proposal is waiting for review.
 
 **Knowledge Base**: The curated set of Records the AI consults before anything else.
 

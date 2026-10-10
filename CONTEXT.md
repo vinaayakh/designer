@@ -2,7 +2,7 @@
 
 **Project**: One system being designed. It holds a Design Brief, one Rough Draft, and zero or more Production Diagrams.
 
-**Design Brief**: The non-functional targets captured when a Project is created: CAP trade-off, user scale, performance expectations, read/write bias, target cloud, compliance regimes, and so on. The AI treats it as a standing constraint.
+**Design Brief**: The non-functional targets captured by the setup wizard when a Project is created: CAP trade-off (CP or AP), user scale, performance expectations, read/write bias, target cloud, compliance regimes, and so on. The AI treats it as a standing constraint.
 
 **Rough Draft**: The hand-drawn, back-of-the-napkin sketch that starts a Project. It is editable until the first Conversion, then frozen as a read-only reference.
 

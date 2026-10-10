@@ -48,6 +48,8 @@ When starting a new project, the user is asked for the system's non-functional t
 - ✅ Read-optimized vs write-optimized workload.
 - ✅ Also: availability target, data volume and growth, RPO/RTO, regions and data residency, compliance regimes (none / SOC 2 / HIPAA), target cloud, budget sensitivity, team/ops maturity.
 - ✅ Required: target cloud, compliance regimes, CAP. Everything else is optional and defaults to "unknown", which the AI states as an assumption.
+- ✅ **Interview shape:** a local wizard (no AI, no tokens), one question per screen, with the brief always visible beside it. The 3 required questions come first and must be answered before the Rough Draft opens. Then the user can start sketching or answer more, and optional questions can be skipped or answered later from Project settings.
+- ✅ CAP is asked as a plain-language network-split scenario, with an optional explanation. Only **CP** and **AP** are offered (CA isn't possible on more than one machine).
 
 ### R6 — Internal knowledge base
 An internal, curated database of records that the AI consults **first**:

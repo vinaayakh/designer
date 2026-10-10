@@ -4,7 +4,7 @@ title: "What is the Knowledge Base record format?"
 labels: [wayfinder:grilling]
 status: open
 assignee:
-blocked_by: ["004", "005"]
+blocked_by: ["004", "005", "014"]
 parent: map
 ---
 

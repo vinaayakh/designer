@@ -3,7 +3,7 @@ id: "008"
 title: "Write the 5 pilot Knowledge Base records"
 labels: [wayfinder:task]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: ["007"]
 parent: map
 ---

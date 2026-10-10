@@ -70,6 +70,7 @@ When starting a new project, the user is asked for the system's non-functional t
 - ✅ Required: target cloud, compliance regimes, CAP. Everything else is optional and defaults to "unknown", which the AI states as an assumption.
 - ✅ **Interview shape:** a local wizard (no AI, no tokens), one question per screen, with the brief always visible beside it. The 3 required questions come first and must be answered before the Rough Draft opens. Then the user can start sketching or answer more, and optional questions can be skipped or answered later from Project settings.
 - ✅ CAP is asked as a plain-language network-split scenario, with an optional explanation. Only **CP** and **AP** are offered (CA isn't possible on more than one machine).
+- ✅ **Fields and storage** ([What are the Design Brief field IDs and answer values?](wayfinder/tickets/018-what-are-the-design-brief-field-ids-and-answer-values.md)): 15 fields with fixed values plus `unknown` (regions and residency are separate), and an optional `notes` field. Saved as `brief.yaml` with every field written out, and validated against a brief schema built into the binary. Knowledge Base Records filter on value lists: a hard filter for Controls, a ranking hint for Practices.
 
 ### R6 — Internal knowledge base
 An internal, curated database of records that the AI consults **first**:

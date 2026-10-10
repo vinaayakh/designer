@@ -3,7 +3,7 @@ id: "013"
 title: "How is the Claude Code session configured?"
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: []
 parent: map
 ---

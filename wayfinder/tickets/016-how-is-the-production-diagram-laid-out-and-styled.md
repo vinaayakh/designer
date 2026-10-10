@@ -16,7 +16,8 @@ Using the findings from "How do we draw the Production Diagram?" and the numbers
 1. **Layout engine:** ELK.js (handles nested groups and cross-group edges; about 462 KB, loaded only when needed in a Web Worker) or dagre (about 17 KB, weak on cross-group edges)?
 2. **Arrow style:** Excalidraw elbow arrows (re-route when you move things) or ELK's exact routes? And what happens to arrows when you hand-edit after layout?
 3. **Generic icon set:** Tabler (MIT) or Lucide (ISC)?
-4. **Groups:** since Excalidraw frames can't be nested, groups (Region/VPC/Subnet/AZ) are drawn as rectangles. How do they look and resize, and is re-layout available on demand after manual edits?
+4. **Placing Proposal changes:** Proposals never carry coordinates (see "How are Proposals shown and reviewed?"). Where does the runtime put new and moved Nodes: an incremental layout around their neighbours, or a full re-layout? The overlay preview must use the same positions that will be applied.
+5. **Groups:** since Excalidraw frames can't be nested, groups (Region/VPC/Subnet/AZ) are drawn as rectangles. How do they look and resize, and is re-layout available on demand after manual edits?
 
 Constraints from "Is Excalidraw fast enough? (spike)":
 - ELK in a Web Worker takes about 0.28 s for 50 nodes, 1.0 s for 200 and 2.55 s for 500 (plus 0.4–1.4 s the first time a worker starts). The main thread never froze.

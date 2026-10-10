@@ -30,6 +30,14 @@ A diagramming tool for software architects that keeps the low-friction, hand-dra
   - **Local pre-check** (no AI): flags partial overlaps, unlabeled Nodes and loose arrows.
   - **Design** (Conversion model setting, default Opus): types Nodes and writes a structured Design Rationale with Assumptions. It is reviewed all or nothing in a **Conversion Preview**, with Accept / Reply / Reject. Accept creates version 1 and freezes the Rough Draft.
   - **Gap Check**: runs on the accepted version, and can be run again on any version with **Check again**. The runtime puts the Records that apply in the message and files `process` Controls itself.
+- ✅ **Layout and style** ([How is the Production Diagram laid out and styled?](wayfinder/tickets/016-how-is-the-production-diagram-laid-out-and-styled.md)):
+  - **ELK** runs in a lazily loaded Web Worker, left to right, using Rough Draft positions as hints.
+  - **Elbow arrows**, styled by interaction (sync solid, async dashed, stream dotted).
+  - **Cards:** fixed 200×72 with icon, label, Service name and a Data Classification badge.
+  - **Groups:** styled rectangles that grow automatically.
+  - **Proposal changes** are placed locally inside their Group, without a full re-layout.
+  - **Tidy up** re-runs layout on demand.
+  - Generic icons are **Tabler**.
 - ✅ **Design Rationale:** per-Node entries (why, practices, citations), plus Assumptions and trade-offs. It is kept current by accepted Proposals and saved as a snapshot per version.
 - ✅ **Gap Report:** one item per Control that applies (met / unmet / outside, Nodes, finding, practice fixes), plus a **security recommendations** section. Saved as JSON with the version it checked and stamped with the Knowledge Base version. It shows a banner when it's older than the current version.
 - ✅ **Citations** are Record IDs or trusted-list URLs, validated by the runtime when submitted.

@@ -27,3 +27,7 @@ _Constraints from "What is the Knowledge Base record format?":_ Records match Ki
 _From "Write the 5 pilot Knowledge Base records":_ the pilot Records use the provisional Kinds `data.relational`, `data.document`, `data.keyvalue`, `data.cache` and `data.object`, and the Data Classes `PHI`, `PII` and `confidential`. Rename them in `kb/records/` if this ticket picks different IDs. A Data Classification must be allowed on **any Node that holds data** (queues, caches, search indexes), not only on `data.*` Kinds, because the PHI Records now match on Data Classification alone.
 
 _From "How does Conversion work?":_ the Kind list (IDs plus a few words each) goes in the **static system prompt**, so keep it short. Each Cloud Catalog needs a **compact `id → kind` export** (about 8 tokens per Service) that goes in the Design task message. Aim for about 1.2k tokens per cloud.
+
+_From "How is the Production Diagram laid out and styled?":_
+- **Generic icons:** each Component Kind and group kind needs a **Tabler** icon (MIT); only the mapped SVGs ship.
+- **Category:** each Kind also needs a category for the card's border tint: compute / data / network / security / messaging / external.

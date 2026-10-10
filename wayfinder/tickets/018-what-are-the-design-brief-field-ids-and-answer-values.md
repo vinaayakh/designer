@@ -3,7 +3,7 @@ id: "018"
 title: "What are the Design Brief field IDs and answer values?"
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: []
 parent: map
 ---

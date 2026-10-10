@@ -23,3 +23,5 @@ Constraints from "What are the licensing rules for the Knowledge Base and icons?
 - The full official service name must be stored on each catalog entry, since it's shown beside official icons.
 
 _Constraints from "What is the Knowledge Base record format?":_ Records match Kinds by glob (`applies_to.kinds: ["data.*"]`), so Kind IDs need dotted namespaces where the prefix means something (`data.relational`, `data.object`…). Records also match on Data Classification values, so that list must be fixed here as well (PHI, PII, …).
+
+_From "Write the 5 pilot Knowledge Base records":_ the pilot Records use the provisional Kinds `data.relational`, `data.document`, `data.keyvalue`, `data.cache` and `data.object`, and the Data Classes `PHI`, `PII` and `confidential`. Rename them in `kb/records/` if this ticket picks different IDs. A Data Classification must be allowed on **any Node that holds data** (queues, caches, search indexes), not only on `data.*` Kinds, because the PHI Records now match on Data Classification alone.

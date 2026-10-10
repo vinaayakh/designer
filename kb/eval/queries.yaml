@@ -1,0 +1,36 @@
+# Search test set for search_kb. Each query lists the Record IDs that must appear in the top 5.
+# Phrased the way the Assistant would ask mid-Conversion or mid-review, not as Record titles.
+# Pilot set: written against the 5 pilot Records (2026-10-10). Grow it with every Record batch.
+
+- { query: "encrypt PHI stored in the database", expect: [hipaa.164-312-a-2-iv, practice.encryption-at-rest] }
+- { query: "HIPAA encryption at rest requirement", expect: [hipaa.164-312-a-2-iv] }
+- { query: "is encryption required or addressable under HIPAA", expect: [hipaa.164-312-a-2-iv] }
+- { query: "164.312 technical safeguards encryption", expect: [hipaa.164-312-a-2-iv] }
+- { query: "ePHI storage protection", expect: [hipaa.164-312-a-2-iv] }
+- { query: "where should encryption keys be stored", expect: [practice.encryption-at-rest] }
+- { query: "KMS customer managed keys for RDS", expect: [practice.encryption-at-rest] }
+- { query: "Azure Key Vault encryption keys rotation", expect: [practice.encryption-at-rest] }
+- { query: "envelope encryption data key", expect: [practice.encryption-at-rest] }
+- { query: "transparent data encryption sql", expect: [practice.encryption-at-rest] }
+- { query: "encrypt backups and snapshots", expect: [practice.encryption-at-rest] }
+- { query: "protect PII in object storage", expect: [practice.encryption-at-rest] }
+- { query: "SOC 2 access control requirements", expect: [soc2.cc6-1] }
+- { query: "CC6.1 logical access", expect: [soc2.cc6-1] }
+- { query: "identity provider in front of the API for SOC 2", expect: [soc2.cc6-1] }
+- { query: "least privilege role based access", expect: [soc2.cc6-1] }
+- { query: "network segmentation private subnet for databases", expect: [soc2.cc6-1] }
+- { query: "MFA single sign-on audit requirement", expect: [soc2.cc6-1] }
+- { query: "reduce database read load", expect: [practice.cache-aside] }
+- { query: "add Redis cache in front of Postgres", expect: [practice.cache-aside] }
+- { query: "read heavy workload caching strategy", expect: [practice.cache-aside] }
+- { query: "cache invalidation on write", expect: [practice.cache-aside] }
+- { query: "lazy loading cache pattern", expect: [practice.cache-aside] }
+- { query: "stale data after update with a cache", expect: [practice.cache-aside] }
+- { query: "TTL expiry policy for cached items", expect: [practice.cache-aside] }
+- { query: "Lambda in private subnet access S3 without NAT", expect: [practice.aws-s3-gateway-endpoint] }
+- { query: "VPC endpoint for S3", expect: [practice.aws-s3-gateway-endpoint] }
+- { query: "reduce NAT gateway data processing cost", expect: [practice.aws-s3-gateway-endpoint] }
+- { query: "keep S3 traffic off the internet", expect: [practice.aws-s3-gateway-endpoint] }
+- { query: "restrict bucket access to my VPC", expect: [practice.aws-s3-gateway-endpoint] }
+- { query: "on-premises access to S3 over Direct Connect", expect: [practice.aws-s3-gateway-endpoint] }
+- { query: "PrivateLink interface endpoint", expect: [practice.aws-s3-gateway-endpoint] }

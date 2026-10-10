@@ -73,6 +73,7 @@ An internal, curated database of records that the AI consults **first**:
   - Each Record says which Nodes and Brief answers it applies to, how far a diagram can show it, which practices satisfy it (controls only), and its sources with licence tiers and as-of dates.
   - Compliance is judged by the AI from the Records that apply to the diagram, not by rules in the runtime.
   - Search is a hand-written BM25 that returns IDs and short summaries. The Knowledge Base has a date version, stamped on every Gap Report.
+- ✅ **Pilot done** ([Write the 5 pilot Knowledge Base records](wayfinder/tickets/008-write-the-5-pilot-knowledge-base-records.md)): five Records in `kb/records/`, source copies in `kb/sources/`, and a 32-query test set in `kb/eval/queries.yaml`. Facts-only Records read well and pass the copy check. Search puts the right Record first 97% of the time. Each source can name its local `copy` for the check.
 
 ### R7 — Trusted web search fallback
 - ✅ When the knowledge base lacks needed information, the AI may search the web.

@@ -21,3 +21,5 @@ _Constraints from "What is the Knowledge Base record format?":_
 - The AI judges met or unmet. Records marked `coverage: process` go straight to "outside what the diagram can show".
 - A control's `satisfied_by` links to the practices that become fix suggestions, and the reverse `satisfies` link feeds the Design Rationale.
 - Every Gap Report is stamped with the Knowledge Base version.
+
+_From "Write the 5 pilot Knowledge Base records":_ `applies_to` matches by Kind, so practices over-apply (e.g. the S3 gateway endpoint practice matches every S3 Node on AWS, inside a VPC or not). Treat matched practices as **candidates** for the AI to judge, not findings. A control's `satisfied_by` list may be incomplete while the Knowledge Base is still being written.

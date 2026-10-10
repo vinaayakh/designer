@@ -23,3 +23,5 @@ Constraints from "Is Excalidraw fast enough? (spike)":
 - ELK in a Web Worker takes about 0.28 s for 50 nodes, 1.0 s for 200 and 2.55 s for 500 (plus 0.4–1.4 s the first time a worker starts). The main thread never froze.
 - **Moving shapes from code does not re-route their bound arrows.** Re-layout, and Proposals that move Nodes, must recalculate the connected arrows themselves.
 - **GPU memory risk:** long arrows spanning the whole diagram are expensive (60 of them reached 2.4 GB of GPU memory at 500 elements). Layout and arrow style should keep arrows short and local.
+
+_From "How does Conversion work?":_ Conversion's Design task returns a **whole new diagram** with no coordinates (all `add_*` ops), shown in a read-only **Conversion Preview** before Accept. Layout must handle a full first layout of up to about 300 Nodes, and the preview must use the same positions that Accept saves.

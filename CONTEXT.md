@@ -4,7 +4,7 @@
 
 **Design Brief**: The non-functional targets captured by the setup wizard when a Project is created: CAP trade-off (CP or AP), user scale, performance expectations, read/write bias, target cloud, compliance regimes, and so on. The AI treats it as a standing constraint.
 
-**Rough Draft**: The hand-drawn, back-of-the-napkin sketch that starts a Project. It is editable until the first Conversion, then frozen as a read-only reference.
+**Rough Draft**: The hand-drawn, back-of-the-napkin sketch that starts a Project. It is editable until the Design from Conversion is accepted, then frozen as a read-only reference.
 
 **Node**: A shape on a diagram (rectangle, ellipse, diamond, image) that stands for one component of the system. On the Rough Draft it may have no type, and its label carries the meaning. On a Production Diagram it always has a Component Kind and, for AWS/Azure targets, a Service. Nodes that store data carry a Data Classification. It can be added to the Assistant's message context.
 
@@ -24,13 +24,17 @@
 
 **Data Classification**: A label on a data-storing Node saying what kind of data it holds (e.g. PHI, PII, public). It drives compliance checks.
 
-**Conversion**: The AI step that turns the current Rough Draft, together with the Design Brief and Knowledge Base, into a new Production Diagram.
+**Conversion**: The one-time AI step that turns the Rough Draft, together with the Design Brief and Knowledge Base, into the Project's first Production Diagram. It runs as two tasks: **Design**, then **Gap Check**. It happens once per Project; after that, every change comes through Proposals.
+
+**Design**: The first task of Conversion. The AI types each Node (Component Kind, Service), designs the Production Diagram and writes its Design Rationale. The user reviews the result as a whole in the **Conversion Preview** and accepts it, replies (producing a new revision) or rejects it. Accepting creates Production version 1 and freezes the Rough Draft.
+
+**Gap Check**: The task that produces a Gap Report for one Production Diagram version. It runs automatically after Design is accepted and can be run again on any later version.
 
 **Production Diagram**: The polished, cloud-specific diagram produced by Conversion. Once it exists it is the Project's working source: fully editable, with every edit saving a new version. It comes with a Design Rationale and a Gap Report.
 
-**Design Rationale**: The explanation attached to a Production Diagram: why each component exists, which practices it applies, and the trade-offs made.
+**Design Rationale**: The explanation attached to a Production Diagram: why each Node exists and which Practices it applies, the Assumptions the AI made about the Rough Draft, and the trade-offs. Accepted Proposals keep it current.
 
-**Gap Report**: A list attached to a Production Diagram showing which items on the selected compliance and security checklists are met, unmet, or outside what the diagram can show. Unmet items come with suggested fixes as Proposals. The report itself never changes the diagram.
+**Gap Report**: The result of a Gap Check for one Production Diagram version. It says, for each Control that applies, whether it is met, unmet, or outside what the diagram can show, and has a separate section of security recommendations. Unmet items can be turned into a Proposal on request (Fix). The report never changes the diagram, and is never edited after it's written.
 
 **Assistant**: The AI helper in the sidebar, available in both the Rough Draft and Production Diagram views. It can read the canvas and make Proposals. Its work is done by the user's local CLI Agent.
 

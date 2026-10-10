@@ -24,9 +24,18 @@ A diagramming tool for software architects that keeps the low-friction, hand-dra
   - (a) a clean, laid-out diagram using the target cloud's service icons,
   - (b) a **design rationale** (why each component exists, which practices it applies, trade-offs),
   - (c) a **compliance/security gap report** against the selected checklists (SOC 2 / HIPAA).
-- ✅ Each conversion produces a new, versioned **Production Diagram**. Versions can be compared.
+- ✅ Conversion produces Production version 1, and every accepted Proposal or edit saves a new version. Versions can be compared.
 - ✅ The Production Diagram is **fully editable** and becomes the working source once it exists. Edits save new versions.
+- ✅ **Conversion** ([How does Conversion work?](wayfinder/tickets/011-how-does-conversion-work.md)), run **once per Project**:
+  - **Local pre-check** (no AI): flags partial overlaps, unlabeled Nodes and loose arrows.
+  - **Design** (Conversion model setting, default Opus): types Nodes and writes a structured Design Rationale with Assumptions. It is reviewed all or nothing in a **Conversion Preview**, with Accept / Reply / Reject. Accept creates version 1 and freezes the Rough Draft.
+  - **Gap Check**: runs on the accepted version, and can be run again on any version with **Check again**. The runtime puts the Records that apply in the message and files `process` Controls itself.
+- ✅ **Design Rationale:** per-Node entries (why, practices, citations), plus Assumptions and trade-offs. It is kept current by accepted Proposals and saved as a snapshot per version.
+- ✅ **Gap Report:** one item per Control that applies (met / unmet / outside, Nodes, finding, practice fixes), plus a **security recommendations** section. Saved as JSON with the version it checked and stamped with the Knowledge Base version. It shows a banner when it's older than the current version.
+- ✅ **Citations** are Record IDs or trusted-list URLs, validated by the runtime when submitted.
+- ✅ **Fixes** are drafted on demand (**Fix** / **Fix all**), so there is at most one Proposal waiting at a time.
 - ❌ Infrastructure-as-code generation is not in v1.
+- ❌ Re-converting from the frozen Rough Draft is not in v1.
 
 ### R3 — Cloud-provider targeting
 - ✅ If a cloud provider is specified, generated components use that provider's services (e.g. AWS, Azure, GCP).
@@ -97,7 +106,7 @@ An internal, curated database of records that the AI consults **first**:
 - ✅ **No API keys** are handled by the app. Login, the model and web search come from the CLI agent.
 - ✅ v1 supports **Claude Code** only. Other agents could be added later behind an adapter.
 - ✅ The runtime runs an **MCP server** that the agent uses to read the canvas, Design Brief and Knowledge Base, and to submit Proposals.
-- ✅ **Token efficiency is a design target**: the agent reads a compact view of the diagram (not raw Excalidraw JSON), small context is put directly in the prompt, larger data is fetched on demand through tools, and one long-running agent session is reused so prompt caching applies. **Measured and approved** (token spike): the compact format is about 49× smaller than raw JSON. Only changes are sent after the first turn. About 6 tools. The default system prompt is replaced (−38% input).
+- ✅ **Token efficiency is a design target**: the agent reads a compact view of the diagram (not raw Excalidraw JSON), small context is put directly in the prompt, larger data is fetched on demand through tools, and one long-running agent session is reused so prompt caching applies. **Measured and approved** (token spike): the compact format is about 49× smaller than raw JSON. Only changes are sent after the first turn. 6 tools: `get_diagram`, `get_nodes`, `search_kb`, `get_record`, `submit_proposal`, `submit_gap_report`. The default system prompt is replaced (−38% input).
 - ✅ **Agent session setup** ([How is the Claude Code session configured?](wayfinder/tickets/013-how-is-the-claude-code-session-configured.md)):
   - **System prompt:** static and shipped in the binary. Project context travels in messages.
   - **Isolation:** the session ignores the user's own Claude Code config (`CLAUDE.md`, plugins, hooks, slash commands) and runs in an empty working directory owned by the runtime.

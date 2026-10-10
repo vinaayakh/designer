@@ -32,6 +32,7 @@ A diagramming tool for software architects that keeps the low-friction, hand-dra
 - ✅ If a cloud provider is specified, generated components use that provider's services (e.g. AWS, Azure, GCP).
 - ✅ v1 targets: **Generic** (provider-neutral), **AWS**, **Azure**.
 - ✅ Provider services are kept as a data catalog, so adding providers (e.g. GCP) needs no code changes.
+- ✅ **AWS/Azure icons are never bundled.** When the user first picks an AWS or Azure target, they agree to the vendor's icon terms, and the app downloads the official icon set into a local cache (pinned version, checksum). Offline or declined: generic Component Kind icons plus the full service name. Official icons are locked against rotate, flip, crop and distort, and always show the full service name.
 
 ### R4 — AI helper sidebar
 - ✅ AI assistant lives in a sidebar, available in **both** the Rough Draft view and the Production Diagram view.
@@ -60,12 +61,19 @@ An internal, curated database of records that the AI consults **first**:
 - ✅ Records are produced via deep research as part of the app development process.
 - 🔬 Deep research needed to author these records from authoritative sources.
 - ✅ v1: the Knowledge Base is **shipped with the app, curated, and read-only**. Users can't add their own records in v1.
+- ✅ **Licensing** ([ADR 0002](docs/adr/0002-knowledge-base-is-written-clean-not-share-alike.md)): the Knowledge Base is written in-house during development and carries the app's own licence, with no share-alike. How a Record may use each source tier:
+  - **Public domain** (HIPAA rule, NIST): verbatim, with credit.
+  - **CC BY** (Azure Architecture Center): adapted, with attribution.
+  - **CC BY-SA** (OWASP, AWS docs) and **restricted** sources (SOC 2, Azure Well-Architected, AWS compliance pages): facts and IDs only, in our own words, plus a link.
+  - SOC 2 is described in our own words, keyed to criterion IDs. **CIS is out of v1.**
+  - Each source in a Record carries a licence tier, and CI rejects copied text from non-free sources. No legal review until Designer is sold.
+  - Generating the Knowledge Base on first install was rejected (token cost, not curated).
 - ❓ Record format/schema, retrieval method, versioning and citation of sources.
 
 ### R7 — Trusted web search fallback
 - ✅ When the knowledge base lacks needed information, the AI may search the web.
 - ✅ Trusted Sources are a **curated domain allowlist shipped in the binary**, read-only in v1. It is **enforced, not just requested**: WebSearch must name allowed domains, and WebFetch only reaches listed domains. Details: [How is the Claude Code session configured?](wayfinder/tickets/013-how-is-the-claude-code-session-configured.md).
-- ❓ Which domains are on the list (tracked in the licensing ticket).
+- ✅ **The list** (fetch allowed): `docs.aws.amazon.com`, `learn.microsoft.com` (used to answer questions only, never copied into Records), `owasp.org`, `top10.owasp.org`, `cheatsheetseries.owasp.org`, `nist.gov`, `csrc.nist.gov`, `govinfo.gov`, `ecfr.gov`, `federalregister.gov`, `hhs.gov`, and `aws.amazon.com/compliance/` (path-restricted). AICPA is link-only and never fetched. hhs.gov and ecfr.gov block bots, so HIPAA relies on the Knowledge Base's built-in copy of the rule. If a fetch fails, the AI cites the Record instead.
 - ❓ Do web findings get promoted into the knowledge base?
 
 ### R8 — Compliance behaviour
@@ -112,3 +120,4 @@ _(Tracked as tickets on the planning map: [wayfinder/map.md](wayfinder/map.md).)
 - New Rough Drafts in an existing Project (e.g. sketching an extension and converting it as a Proposal): **v2**
 - CLI agents other than Claude Code (v1)
 - GCP target (v1; the data catalog leaves room for it)
+- CIS Controls and Benchmarks (licence is NonCommercial-NoDerivatives)

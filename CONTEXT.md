@@ -44,4 +44,6 @@
 
 **Record**: One entry in the Knowledge Base: a design practice, security practice, or compliance checklist item, with the sources it is based on.
 
+**Licence Tier**: How freely a Record may reuse one of its sources: public domain (quote verbatim), attribution (adapt with credit), or facts-only (IDs and facts in our own words, plus a link).
+
 **Trusted Source**: An external source the AI may search when the Knowledge Base has no answer.

@@ -32,6 +32,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - [What does the Design Brief interview look like?](tickets/009-what-does-the-design-brief-interview-look-like.md): a local wizard (no Assistant, no tokens), one question per screen, with the brief always visible beside it. The 3 required questions come first and gate the Rough Draft, then you can start sketching or answer more, and skipped questions stay `unknown`. CAP is asked as a network-split scenario with CP and AP only.
 - [How are Proposals shown and reviewed?](tickets/010-how-are-proposals-shown-and-reviewed.md): changes are drawn as an overlay on the canvas. The user steps through them (accept or skip), or jumps to a full review with one Accept. Parts can be accepted on their own, and the runtime works out dependencies. Accepted changes become one version with one Undo. The canvas is locked while a Proposal is waiting. Replying creates a new revision. Draft `submit_proposal` payload: ops with aliases and `+new` references, no coordinates.
 - [How is the Claude Code session configured?](tickets/013-how-is-the-claude-code-session-configured.md): a static system prompt, with Project context in messages. Trusted domains are enforced by WebFetch domain rules plus an HTTP hook to our server that makes WebSearch use `allowed_domains`. The process starts when the sidebar opens, stops after 15 min idle, and resumes with `--resume`; after a crash it resumes once, then starts fresh. MCP runs over localhost HTTP with a bearer token. The model is a per-install setting and can be switched mid-session. Isolated from the user's own Claude Code config (`--setting-sources ""`, empty working directory). `--bare` risk accepted, with a version check.
+- [What are the licensing rules for the Knowledge Base and icons?](tickets/014-what-are-the-licensing-rules-for-the-knowledge-base-and-icons.md): free and open source but used at work, so it's treated as commercial. The Knowledge Base is written in-house with no share-alike (ADR 0002): public domain verbatim, CC BY adapted, CC BY-SA and restricted sources as facts and IDs in our own words, enforced by a CI check for copied text. SOC 2 written in our own words; CIS out. No legal review until it's sold. Allowlist of 12 fetch domains, with HIPAA served from the built-in copy. AWS/Azure icons download on first use after the user agrees to the terms, with generic icons as the fallback and official icons locked against edits.
 
 ## Not yet specified
 
@@ -43,6 +44,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - **Editing the Design Brief later:** answering or changing brief questions from Project settings after sketching or Conversion has started. Does a change mark the current Production Diagram as stale, or suggest a Proposal?
 - **More than one Proposal at once:** can the Assistant have several Proposals waiting (e.g. one per Gap Report item), or only one at a time given the canvas lock? How are they queued?
 - **Showing usage and cost:** whether to show the user the per-session token cost Claude Code reports (`total_cost_usd`), and where.
+- **App licence:** Designer is open source, but its own licence (MIT, Apache-2.0, …) isn't chosen yet. The Knowledge Base carries the same licence (ADR 0002).
 - **Chat history:** whether Assistant conversations are saved per Project, and how they relate to diagram versions.
 
 ## Out of scope
@@ -55,3 +57,4 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - CLI agents other than Claude Code: v1 is Claude Code only.
 - GCP target: v1 is Generic + AWS + Azure (the data catalog leaves room for it).
 - User-extensible Knowledge Base (org-specific standards): v1 ships a read-only, curated Knowledge Base.
+- CIS Controls and Benchmarks: their NonCommercial-NoDerivatives licence rules them out, and v1 covers SOC 2 and HIPAA only ([What are the licensing rules for the Knowledge Base and icons?](tickets/014-what-are-the-licensing-rules-for-the-knowledge-base-and-icons.md)).

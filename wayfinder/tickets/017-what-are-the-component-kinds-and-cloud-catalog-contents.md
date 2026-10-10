@@ -16,3 +16,8 @@ Using the two type layers from "What is the diagram data model?":
 1. What is the v1 **Component Kind** vocabulary (about 40 kinds: names, categories, which ones store data and so can carry a Data Classification) and the **group kinds** (region / vpc / vnet / subnet / az / account, plus anything else)?
 2. What fields does a **Cloud Catalog** entry have? Candidates: service ID, display name, Kind, provider category, icon reference, HIPAA-eligible plus an as-of date, a link to the docs. Which AWS and Azure Services are in v1, and how many?
 3. How is the catalog kept in step with the icon releases (the scrape-and-diff script from "How do we draw the Production Diagram?")? Icon *distribution* is decided in "What are the licensing rules for the Knowledge Base and icons?"
+
+Constraints from "What are the licensing rules for the Knowledge Base and icons?":
+- AWS/Azure icons are **downloaded on first use** after the user agrees to the vendor's terms, never bundled. A catalog entry's icon reference points into that downloaded set (stable key, not a bundled path), and the download manifest (URL, version, checksum) is kept by the icon-sync script.
+- Every Component Kind needs a **generic fallback icon** (used offline, or when the user declines the terms), shown with the full service name.
+- The full official service name must be stored on each catalog entry, since it's shown beside official icons.

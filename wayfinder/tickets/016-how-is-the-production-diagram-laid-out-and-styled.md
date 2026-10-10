@@ -3,7 +3,7 @@ id: "016"
 title: "How is the Production Diagram laid out and styled?"
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: ["015"]
 parent: map
 ---

@@ -3,7 +3,7 @@ id: "010"
 title: "How are Proposals shown and reviewed?"
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: vinu (with claude)
 blocked_by: ["006"]
 parent: map
 ---

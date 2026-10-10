@@ -21,6 +21,8 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 
 <!-- the index: one line per closed ticket, enough to judge relevance, then open the link for the detail the ticket holds -->
 
+- [How do we run Claude Code as a background agent?](tickets/002-how-do-we-run-claude-code-as-a-background-agent.md): feasible as one long-running `claude -p` process (JSON over stdin/stdout) using our Go MCP server over localhost HTTP, with prompt caching across turns. Domain limits on WebSearch need a hook. `--bare` (needs an API key) is a risk.
+
 ## Not yet specified
 
 - **Comparing versions:** how two Production Diagram versions are compared side by side (visual diff vs change list), and how far back history goes.

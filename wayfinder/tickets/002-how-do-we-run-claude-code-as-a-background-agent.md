@@ -2,7 +2,7 @@
 id: "002"
 title: "How do we run Claude Code as a background agent?"
 labels: [wayfinder:research]
-status: open
+status: closed
 assignee: claude (research subagent)
 blocked_by: []
 parent: map
@@ -26,3 +26,17 @@ Find out:
 ## Context
 
 Findings: branch `research/002-how-do-we-run-claude-code-as-a-background-agent`, file `research/002-how-do-we-run-claude-code-as-a-background-agent.md`.
+
+## Resolution
+
+Full findings: branch `research/002-how-do-we-run-claude-code-as-a-background-agent`, file `research/002-how-do-we-run-claude-code-as-a-background-agent.md`.
+
+- **Feasible.** One long-running `claude -p` process per open Project, talking line-by-line JSON over stdin/stdout (`--input-format stream-json --output-format stream-json --verbose`). Tested locally: two turns ran in one process, and the second turn read about 3.2k tokens from the prompt cache (subscription logins get a 1-hour cache). Each turn's `result` line reports tokens used and an estimated cost. Startup about 4 s on Windows; about 180 MB while idle.
+- **Tools:** our Go MCP server over localhost HTTP (`--mcp-config` with `type:"http"` + `--strict-mcp-config`). The agent is limited with `--tools "WebSearch,WebFetch"`, `--allowedTools "mcp__designer__*"` and `--permission-mode dontAsk`.
+- **Risk:** `--bare` (the fast mode for scripts) needs an API key, which conflicts with R9. The docs say it may become the default for `-p` later.
+- **Trusted domains:** WebFetch can be limited per domain, but WebSearch can't. Enforcing the list needs a hook in our Go server (untested).
+- **Knowledge Base first** is up to the system prompt, which is fixed for the life of a conversation, even across `--resume`.
+- **px0** starts a new process per turn (`--session-id`, then `--resume`). It uses no MCP, no streaming input and no tool limits.
+- **Go MCP SDK** v1.8.0 is mature: Streamable HTTP, SSE, stdio and in-memory transports.
+- **Not documented:** the stdin message format and the interrupt message (folded into the token spike).
+- **Decisions raised:** moved to the new ticket "How is the Claude Code session configured?"

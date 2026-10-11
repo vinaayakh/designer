@@ -1,17 +1,34 @@
 import type { Brief, Graph, KBRecord, Pending, ReportRef, Settings, State, Version, GapReport, Issue } from "./types";
+import { perf } from "./perf";
 
 /** Identifies this tab, so it can ignore its own save notifications. */
 export const CLIENT_ID = Math.random().toString(36).slice(2);
 
+/** The route of a path, for grouping timings: /api/versions/3 → /api/versions/{n}. */
+const route = (method: string, path: string) => `${method} ${path.split("?")[0].replace(/\/\d+(?=\/|$)/g, "/{n}")}`;
+
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(path, {
-    method,
-    headers: { "X-Designer": "1", "X-Client": CLIENT_ID, ...(body !== undefined ? { "Content-Type": "application/json" } : {}) },
-    body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
-  });
+  const t0 = performance.now();
+  const sent = body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body);
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method,
+      headers: { "X-Designer": "1", "X-Client": CLIENT_ID, ...(body !== undefined ? { "Content-Type": "application/json" } : {}) },
+      body: sent,
+    });
+  } catch (err) {
+    perf.error(`request failed: ${route(method, path)}`, err, { ms: Math.round(performance.now() - t0) });
+    throw err;
+  }
   const text = await res.text();
+  const ms = performance.now() - t0;
   const data = text ? JSON.parse(text) : null;
-  if (!res.ok) throw new Error(data?.error ?? `${res.status} ${res.statusText}`);
+  perf.mark(`api ${route(method, path)}`, ms, { status: res.status, in_bytes: sent?.length ?? 0, out_bytes: text.length });
+  if (!res.ok) {
+    perf.log(res.status >= 500 ? "error" : "warn", `request ${res.status}: ${route(method, path)}`, { error: data?.error, ms: Math.round(ms) });
+    throw new Error(data?.error ?? `${res.status} ${res.statusText}`);
+  }
   return data as T;
 }
 
@@ -57,6 +74,10 @@ export const api = {
 
 /** POSTs and returns the response as a file (Content-Disposition names it). */
 export async function download(path: string, body: unknown): Promise<{ blob: Blob; name: string }> {
+  return perf.timeAsync(`api ${route("POST", path)}`, () => fetchFile(path, body));
+}
+
+async function fetchFile(path: string, body: unknown): Promise<{ blob: Blob; name: string }> {
   const res = await fetch(path, {
     method: "POST",
     headers: { "X-Designer": "1", "X-Client": CLIENT_ID, "Content-Type": "application/json" },

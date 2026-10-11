@@ -9,14 +9,17 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/vinaayakh/designer/internal/app"
 	"github.com/vinaayakh/designer/internal/brief"
+	"github.com/vinaayakh/designer/internal/obs"
 	"github.com/vinaayakh/designer/internal/project"
 	"github.com/vinaayakh/designer/internal/report"
 	"github.com/vinaayakh/designer/internal/scene"
@@ -310,14 +313,21 @@ func (s *Server) Handler() http.Handler {
 			fail(w, 400, err)
 			return
 		}
+		format := r.PathValue("format")
+		t := obs.Start("export.input", "version", n)
 		din, err := a.DocumentInput(n)
+		t.End(err)
 		if err != nil {
 			fail(w, 404, err)
 			return
 		}
+		t = obs.Start("export.build", "version", n, "nodes", len(din.Graph.Nodes), "edges", len(din.Graph.Edges))
 		doc := report.Build(din)
+		t.End(nil)
+		t = obs.Start("export."+format, "version", n, "svg_bytes", len(in.SVG), "png_bytes", len(in.PNG))
+		defer func() { t.End(nil) }()
 		name := fmt.Sprintf("%s-v%d-arc42", fileSafe(din.Project), n)
-		switch r.PathValue("format") {
+		switch format {
 		case "docx":
 			out, err := report.DOCX(doc, in.PNG)
 			if err != nil {
@@ -338,6 +348,58 @@ func (s *Server) Handler() http.Handler {
 		default:
 			fail(w, 400, errors.New("format must be docx or html"))
 		}
+	})
+
+	// Observability: this run's metrics, and timings and errors from the browser.
+	api.HandleFunc("GET /api/metrics", func(w http.ResponseWriter, r *http.Request) {
+		m := obs.M.Snapshot()
+		m["assistant"] = a.Status()
+		writeJSON(w, m)
+	})
+	api.HandleFunc("POST /api/clientlog", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Entries []struct {
+				Level string         `json:"level"`
+				Msg   string         `json:"msg"`
+				Name  string         `json:"name"`
+				Ms    float64        `json:"ms"`
+				Slow  bool           `json:"slow"`
+				Data  map[string]any `json:"data"`
+			} `json:"entries"`
+		}
+		if err := read(r, &in); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		client := r.Header.Get("X-Client")
+		for i, e := range in.Entries {
+			if i == 200 {
+				slog.Warn("client log batch truncated", "client", client, "entries", len(in.Entries))
+				break
+			}
+			lvl := slog.LevelDebug
+			switch e.Level {
+			case "info":
+				lvl = slog.LevelInfo
+			case "warn":
+				lvl = slog.LevelWarn
+			case "error":
+				lvl = slog.LevelError
+			}
+			attrs := []any{"source", "web", "client", client}
+			if e.Name != "" {
+				attrs = append(attrs, "name", e.Name)
+			}
+			if e.Ms > 0 {
+				attrs = append(attrs, "ms", e.Ms)
+				obs.M.ObserveSlow("client", e.Name, time.Duration(e.Ms*float64(time.Millisecond)), lvl >= slog.LevelError, e.Slow)
+			}
+			for _, k := range sortedKeys(e.Data) {
+				attrs = append(attrs, k, e.Data[k])
+			}
+			slog.Log(r.Context(), lvl, truncate(e.Msg, 300), attrs...)
+		}
+		w.WriteHeader(http.StatusNoContent)
 	})
 
 	api.HandleFunc("GET /api/assistant", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, a.Status()) })
@@ -416,7 +478,7 @@ func (s *Server) Handler() http.Handler {
 
 	mux.Handle("/api/", s.guard(api))
 	mux.Handle("/", s.static())
-	return mux
+	return obs.Middleware(mux)
 }
 
 // guard protects the browser API from other websites: the Host must be our
@@ -439,6 +501,22 @@ func (s *Server) guard(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func sortedKeys(m map[string]any) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func truncate(s string, n int) string {
+	if len(s) > n {
+		return s[:n] + "…"
+	}
+	return s
 }
 
 // fileSafe makes a Project name usable in a download's file name.

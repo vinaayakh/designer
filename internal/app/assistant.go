@@ -6,12 +6,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/vinaayakh/designer/internal/agent"
+	"github.com/vinaayakh/designer/internal/obs"
 )
 
 const (
@@ -30,6 +32,10 @@ type Turn struct {
 	resent      bool
 	switched    bool // model was switched for this task
 	text        strings.Builder
+	model       string
+	firstToken  time.Duration // until the first streamed text
+	tools       int
+	msgChars    int
 }
 
 // taskSpec can rebuild its message, so a crashed turn can be resent with
@@ -141,10 +147,13 @@ func (a *App) startLocked(resume string) error {
 		ResumeID:     resume,
 		LogPath:      filepath.Join(a.P.StateDir(), "assistant.log"),
 	}
+	t0 := time.Now()
 	p, err := agent.Start(context.Background(), opts)
 	if err != nil {
+		slog.Error("Claude Code failed to start", "err", err, "resume", resume != "")
 		return err
 	}
+	slog.Info("Claude Code started", "pid", p.PID(), "model", modelOrDefault(a.settings.Model), "resume", resume != "", "ms", float64(time.Since(t0).Microseconds())/1000)
 	a.proc = p
 	a.procGen++
 	go a.loop(p, a.procGen, resume != "")
@@ -168,6 +177,7 @@ func (a *App) Stop(reason string) {
 		a.mu.Unlock()
 		return
 	}
+	slog.Info("Claude Code stopping", "reason", reason, "pid", p.PID())
 	a.proc = nil
 	a.procGen++ // the old loop's exit is now expected
 	if a.turn != nil {
@@ -213,6 +223,9 @@ func (a *App) handle(ev agent.Event, gen int) {
 			if d["type"] == "text_delta" {
 				t, _ := d["text"].(string)
 				if a.turn != nil {
+					if a.turn.firstToken == 0 {
+						a.turn.firstToken = time.Since(a.turn.Started)
+					}
 					a.turn.text.WriteString(t)
 				}
 				a.emit("assistant.delta", map[string]any{"text": t})
@@ -225,6 +238,10 @@ func (a *App) handle(ev agent.Event, gen int) {
 			cm, _ := c.(map[string]any)
 			if cm["type"] == "tool_use" {
 				name, _ := cm["name"].(string)
+				if a.turn != nil {
+					a.turn.tools++
+				}
+				slog.Debug("assistant tool call", "tool", name, "turn", turnKind(a.turn))
 				a.emit("assistant.tool", map[string]any{"name": strings.TrimPrefix(name, "mcp__designer__"), "input": cm["input"]})
 			}
 		}
@@ -234,6 +251,7 @@ func (a *App) handle(ev agent.Event, gen int) {
 }
 
 func (a *App) finishTurnLocked(ev agent.Event) {
+	a.logTurnLocked(a.turn, ev)
 	if c, ok := ev["total_cost_usd"].(float64); ok && c > 0 {
 		a.sess.CostUSD = c
 	}
@@ -288,7 +306,9 @@ func (a *App) failTurnLocked(reason string) {
 	kind := ""
 	if t != nil {
 		kind = t.Kind
+		obs.M.ObserveSlow("turn", kind, time.Since(t.Started), true, false)
 	}
+	slog.Error("assistant turn failed", "kind", kind, "reason", reason)
 	a.emit("assistant.done", map[string]any{"kind": kind, "failed": reason, "costUsd": a.sess.CostUSD})
 }
 
@@ -306,6 +326,7 @@ func (a *App) onExit(p *agent.Process, gen int, resumed, gotInit bool) {
 	if p.Err != nil {
 		reason += ": " + p.Err.Error()
 	}
+	slog.Error("Claude Code exited unexpectedly", "err", p.Err, "turn", turnKind(a.turn), "resumed", resumed, "got_init", gotInit)
 	t := a.turn
 	if resumed && !gotInit {
 		// The saved session couldn't be resumed: start fresh.
@@ -370,11 +391,18 @@ func (a *App) run(spec *taskSpec) error {
 	if err := a.ensureLocked(); err != nil {
 		return err
 	}
+	build := time.Now()
 	msg, err := spec.build()
 	if err != nil {
+		slog.Error("building the task message failed", "kind", spec.kind, "err", err)
 		return err
 	}
-	t := &Turn{Kind: spec.kind, Expect: spec.expect, Started: time.Now(), spec: spec}
+	model := spec.model
+	if model == "" {
+		model = modelOrDefault(a.settings.Model)
+	}
+	t := &Turn{Kind: spec.kind, Expect: spec.expect, Started: time.Now(), spec: spec, model: model, msgChars: len(msg)}
+	slog.Info("assistant turn started", "kind", spec.kind, "model", model, "message_chars", len(msg), "build_ms", float64(time.Since(build).Microseconds())/1000)
 	if spec.model != "" && spec.model != a.settings.Model {
 		if err := a.proc.SetModel(spec.model); err == nil {
 			t.switched = true

@@ -172,6 +172,19 @@ func (p *Process) send(v any) error {
 	return err
 }
 
+// PID is Claude Code's process ID (0 once it has exited).
+func (p *Process) PID() int {
+	select {
+	case <-p.Done:
+		return 0
+	default:
+	}
+	if p.cmd.Process == nil {
+		return 0
+	}
+	return p.cmd.Process.Pid
+}
+
 // SendUser sends a user message (one turn).
 func (p *Process) SendUser(text string) error {
 	return p.send(map[string]any{"type": "user", "message": map[string]any{"role": "user", "content": text}})

@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/vinaayakh/designer/internal/catalog"
 	"github.com/vinaayakh/designer/internal/kb"
+	"github.com/vinaayakh/designer/internal/obs"
 )
 
 func obj(props map[string]any, required ...string) map[string]any {
@@ -198,6 +201,24 @@ func (a *App) getNodes(raw json.RawMessage) (string, error) {
 	return sb.String(), nil
 }
 
+// logTool records one MCP tool call. A submit tool's validation errors are
+// normal (the AI fixes and resubmits), so they're warnings, not errors.
+func logTool(name string, inBytes, outBytes int, wait, d time.Duration, err error) {
+	slow := d > obs.Slow()
+	obs.M.ObserveSlow("tool", name, d, err != nil, slow)
+	attrs := []any{"tool", name, "ms", float64(d.Microseconds()) / 1000, "lock_wait_ms", float64(wait.Microseconds()) / 1000, "in_bytes", inBytes, "out_bytes", outBytes}
+	switch {
+	case err != nil:
+		slog.Warn("tool call returned an error", append(attrs, "err", truncate(err.Error(), 600))...)
+	case slow:
+		slog.Warn("slow tool call", attrs...)
+	case wait > 250*time.Millisecond:
+		slog.Warn("tool call waited for the runtime lock", attrs...)
+	default:
+		slog.Debug("tool call", attrs...)
+	}
+}
+
 // MCPHandler serves the tools over Streamable HTTP, behind the bearer token.
 func (a *App) MCPHandler() http.Handler {
 	srv := mcp.NewServer(&mcp.Implementation{Name: "designer", Version: "1.0.0"}, nil)
@@ -205,9 +226,12 @@ func (a *App) MCPHandler() http.Handler {
 		t := t
 		srv.AddTool(&mcp.Tool{Name: t.name, Description: t.desc, InputSchema: t.schema},
 			func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+				wait := time.Now()
 				a.mu.Lock()
+				start := time.Now()
 				out, err := t.fn(req.Params.Arguments)
 				a.mu.Unlock()
+				logTool(t.name, len(req.Params.Arguments), len(out), start.Sub(wait), time.Since(start), err)
 				if err != nil {
 					return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}}}, nil
 				}

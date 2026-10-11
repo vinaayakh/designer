@@ -32,3 +32,21 @@ func TestNameAliases(t *testing.T) {
 		t.Errorf("dropAsides: %q", got)
 	}
 }
+
+func TestTurnUsage(t *testing.T) {
+	ev := map[string]any{
+		"total_cost_usd": 0.30,
+		"usage":          map[string]any{"input_tokens": 2.0, "output_tokens": 4.0, "cache_read_input_tokens": 18274.0, "cache_creation_input_tokens": 180.0, "output_tokens_details": map[string]any{"thinking_tokens": 1.0}},
+		"modelUsage":     map[string]any{"opus": map[string]any{"outputTokens": 5948.0}}, // session-wide: ignored
+	}
+	got := turnUsage(ev, 0.25)
+	if got.Output != 4 || got.Input != 2 || got.CacheRead != 18274 || got.CacheCreation != 180 || got.Thinking != 1 || got.Turns != 1 {
+		t.Errorf("tokens: %+v", got)
+	}
+	if got.CostUSD < 0.0499 || got.CostUSD > 0.0501 {
+		t.Errorf("cost %v, want the change 0.05", got.CostUSD)
+	}
+	if fresh := turnUsage(ev, 0.9); fresh.CostUSD != 0.30 {
+		t.Errorf("a fresh session's cost should be its total, got %v", fresh.CostUSD)
+	}
+}

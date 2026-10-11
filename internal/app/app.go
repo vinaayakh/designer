@@ -21,6 +21,7 @@ import (
 	"github.com/vinaayakh/designer/internal/brief"
 	"github.com/vinaayakh/designer/internal/catalog"
 	"github.com/vinaayakh/designer/internal/kb"
+	"github.com/vinaayakh/designer/internal/obs"
 	"github.com/vinaayakh/designer/internal/project"
 	"github.com/vinaayakh/designer/internal/scene"
 )
@@ -165,7 +166,15 @@ const (
 
 // Graph returns the meaning of a view: the Rough Draft, or the latest
 // Production version (with its number).
-func (a *App) Graph(view string) (*scene.Graph, int, error) {
+func (a *App) Graph(view string) (g *scene.Graph, ver int, err error) {
+	t := obs.Start("scene.parse", "view", view)
+	defer func() {
+		if g != nil {
+			t.End(err, "version", ver, "nodes", len(g.Nodes), "edges", len(g.Edges))
+		} else {
+			t.End(err)
+		}
+	}()
 	if view == ViewProduction {
 		n, err := a.P.Latest()
 		if err != nil {
@@ -185,7 +194,7 @@ func (a *App) Graph(view string) (*scene.Graph, int, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	g, err := scene.Parse(data, false)
+	g, err = scene.Parse(data, false)
 	return g, 0, err
 }
 

@@ -5,6 +5,7 @@
 import type { GEdge, Graph } from "../types";
 import { GROUP_HEAD, type Box } from "./constants";
 import { bestRoute, labelSize, placeLabelsAvoiding, wrapLabel, type Pt, type Route } from "./geometry";
+import { perf } from "../perf";
 
 /** text: what the arrow shows (wrapped); label: its size. */
 export type RoutedEdge = { route: Route; abs: Pt[]; labelAt: number; label?: { w: number; h: number }; text: string };
@@ -17,6 +18,10 @@ export const edgeLabelSize = (e: GEdge) => {
 };
 
 export function routeEdges(g: Graph, geo: Map<string, Box>): Map<string, RoutedEdge> {
+  return perf.time("layout.route", () => route(g, geo), { edges: g.edges.length });
+}
+
+function route(g: Graph, geo: Map<string, Box>): Map<string, RoutedEdge> {
   const has = (id: string) => geo.has(id) && (g.nodes.some((n) => n.id === id) || g.groups.some((x) => x.id === id));
   // Arrows avoid cards they don't connect (Groups are crossed freely).
   const cardBoxes = g.nodes.filter((n) => geo.has(n.id)).map((n) => ({ id: n.id, b: geo.get(n.id)! }));

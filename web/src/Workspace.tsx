@@ -4,6 +4,7 @@ import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import { api, CLIENT_ID, subscribe, type ServerEvent } from "./api";
 import { ExportDoc, type DocFormat, type DocSignal } from "./ExportDoc";
+import { perf } from "./perf";
 import { Canvas } from "./Canvas";
 import { Chat, toolText, type ChatItem } from "./panels/Chat";
 import { Review, changeStatus, reviewStart, reviewSteps, type ReviewState } from "./panels/Review";
@@ -317,7 +318,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
     const k = buildKey(p, rs);
     let b = builtCache.current.get(k);
     if (!b) {
-      b = buildOverlay(p, rs).catch(() => null);
+      b = perf.timeAsync("review.build", () => buildOverlay(p, rs), { step: rs.index, mode: rs.mode, changes: p.payload.changes.length }).catch(() => null);
       builtCache.current.set(k, b);
     }
     return b;
@@ -330,7 +331,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
     const token = ++showToken.current;
     // Move first, over what's already on screen; then swap the next step in.
     if (follow && b.target.size) {
-      await panTo(a, getCommonBounds(b.elements.filter((e) => b.target.has(e.id))) as Bounds, () => token === showToken.current);
+      await perf.frames("review.pan", () => panTo(a, getCommonBounds(b.elements.filter((e) => b.target.has(e.id))) as Bounds, () => token === showToken.current));
       if (token !== showToken.current) return; // a newer step took over
     }
     setLabels((old) => {
@@ -339,8 +340,11 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
       return m;
     });
     a.addFiles(Object.values(b.files));
-    const elements = reuseUnchanged(a.getSceneElements(), b.elements);
-    a.updateScene({ elements, captureUpdate: CaptureUpdateAction.NEVER });
+    const elements = perf.time("review.swap", () => {
+      const els = reuseUnchanged(a.getSceneElements(), b.elements);
+      a.updateScene({ elements: els, captureUpdate: CaptureUpdateAction.NEVER });
+      return els;
+    }, { elements: b.elements.length });
     // The Production renderer dims by itself; the Rough Draft uses render overrides (no document change).
     if (b.view === "rough" && b.target.size) {
       const keep = new Set([...b.target, HIGHLIGHT_GLOW, HIGHLIGHT_OUTLINE]);
@@ -806,7 +810,8 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   // arc42 document export: the images come from the version on the canvas.
   const [docExport, setDocExport] = useState<DocFormat | null>(null);
   const [docSignal, setDocSignal] = useState<DocSignal | null>(null);
-  const docImages = async () => {
+  const docImages = () => perf.timeAsync("export.images", docImagesNow, { format: docExport });
+  const docImagesNow = async () => {
     const a = apiRef.current;
     if (!a) return {};
     const elements = a.getSceneElements().filter((e) => !e.id.startsWith("__review"));

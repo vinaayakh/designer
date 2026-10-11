@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -150,6 +151,11 @@ func (a *App) ServeHook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	allow, reason := hookDecision(in.ToolName, in.ToolInput)
+	if allow {
+		slog.Debug("hook allowed a tool", "tool", in.ToolName)
+	} else {
+		slog.Warn("hook blocked a tool", "tool", in.ToolName, "reason", reason, "input", truncate(fmt.Sprint(in.ToolInput), 300))
+	}
 	if in.ToolName == "WebSearch" || in.ToolName == "WebFetch" {
 		a.emit("assistant.web", map[string]any{"tool": in.ToolName, "input": in.ToolInput, "allowed": allow})
 	}

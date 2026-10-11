@@ -11,6 +11,7 @@ import { ICONS } from "../generated/icons";
 import { placeLabels, type Route } from "./geometry";
 import { edgeText, routeEdges } from "./routing";
 import { CARD_H, CARD_W, GROUP_HEAD, GROUP_PAD, type Box } from "./constants";
+import { perf } from "../perf";
 
 export { CARD_H, CARD_W, GROUP_HEAD, GROUP_PAD };
 
@@ -120,6 +121,10 @@ export function renderProduction(
   overlay?: Overlay,
   keep: readonly ExcalidrawElement[] = [],
 ): { elements: ExcalidrawElement[]; files: BinaryFiles } {
+  return perf.time("render.production", () => render(g, geo, cat, cloud, overlay, keep), { nodes: g.nodes.length, edges: g.edges.length, overlay: !!overlay });
+}
+
+function render(g: Graph, geo: Map<string, Box>, cat: Catalog, cloud: string, overlay: Overlay | undefined, keep: readonly ExcalidrawElement[]): { elements: ExcalidrawElement[]; files: BinaryFiles } {
   const files: BinaryFiles = {};
   const addFile = (icon: string, color: string) => {
     const f = iconFile(icon, color);

@@ -15,6 +15,19 @@ bin/designer ~/my-system    # opens (or creates) a Project folder and the browse
 
 Flags: `--port` (default 4717, falls back to a free port), `--no-open`, `--claude <path>`.
 
+### Logs and performance
+
+Designer writes JSON-lines logs to `<project>/.designer/logs/designer.log` (rotated at 20 MB, 5 kept) and readable lines to stderr.
+
+- `--verbose` (or `--log-level debug`): every request, MCP tool call, timer, browser timing and resource sample. The default `info` logs startups, Assistant turns and every warning or error.
+- `--slow-ms 500`: requests, tool calls and tasks slower than this are logged as `slow request` / `slow tool call` / `slow task` warnings. Assistant turns are slow after 3 minutes.
+- `--sample 15s`: how often CPU (% of one core) and memory (RSS) of Designer and Claude Code are sampled; sustained CPU over 90% or memory over 1 GB (Designer) / 2 GB (Claude Code) is a warning. `0` turns sampling off.
+- `--log-dir <dir>`: write the log somewhere else.
+
+Each Assistant turn logs `assistant turn` with its kind, model, wall time, time to first token, tokens in/out/thinking, cache reads/writes and cost. The browser sends its own timings to the same log (`"source":"web"`): API round trips, ELK layout, routing, rendering, review build/swap, export images, long tasks (> 200 ms is a warning), dropped frames while panning, JS heap, and uncaught errors. `GET /api/metrics` returns this run's totals: per-route and per-task counts with p50/p95/max, token totals per turn kind, and the latest and peak CPU/RAM samples.
+
+To find problems: `grep '"level":"WARN"\|"level":"ERROR"' designer.log`, or filter by `"msg":"slow request"`, `"msg":"assistant turn"`, `"msg":"dropped frames"`, `"msg":"resources"`.
+
 For frontend work, run `bin/designer --no-open .` and `npm run dev` in `web/` (Vite proxies `/api` to port 4717).
 
 ## How it fits together

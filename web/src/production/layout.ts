@@ -7,6 +7,7 @@
 import type { Graph, GNode, GGroup } from "../types";
 import { CARD_H, CARD_W, GROUP_HEAD, GROUP_PAD, type Box } from "./constants";
 import { boxesOverlap, center, flowDirection, inflate, labelSize, segmentHitsBox, wrapLabel, type Pt } from "./geometry";
+import { perf } from "../perf";
 
 const GAP_X = 60;
 const GAP_Y = 36;
@@ -138,7 +139,11 @@ export function flowRank(g: Graph): Map<string, number> {
  * so it retries without constraints and hints, and finally uses a grid; a
  * layout always comes back.
  */
-export async function elkLayout(g: Graph, hints: Map<string, { x: number; y: number }>, rootId = "", origin = { x: 0, y: 0 }, options: LayoutOptions = {}): Promise<Map<string, Box>> {
+export function elkLayout(g: Graph, hints: Map<string, { x: number; y: number }>, rootId = "", origin = { x: 0, y: 0 }, options: LayoutOptions = {}): Promise<Map<string, Box>> {
+  return perf.timeAsync("layout.elk", () => layoutGraph(g, hints, rootId, origin, options), { nodes: g.nodes.length, edges: g.edges.length, groups: g.groups.length, scope: rootId || "all" });
+}
+
+async function layoutGraph(g: Graph, hints: Map<string, { x: number; y: number }>, rootId: string, origin: { x: number; y: number }, options: LayoutOptions): Promise<Map<string, Box>> {
   const o = { ...DEFAULT_LAYOUT, ...options };
   if (o.mode === "recursive") return recursiveLayout(g, hints, rootId, origin, o);
   const shared = new Set(o.band ? g.nodes.filter((n) => isSharedService(n.kind)).map((n) => n.id) : []);

@@ -8,6 +8,7 @@ import type { Change, Graph } from "../types";
 import { bindArrows, routeGeometry, type ArrowBinding, type Box, type OverlayStatus } from "../production/render";
 import { arrowSegments, bestRoute, estimateLabel, labelBox, placeLabels, type Box as GBox, type Pt } from "../production/geometry";
 import { placeChanges } from "../production/layout";
+import { perf } from "../perf";
 
 const PREVIEW: Record<OverlayStatus, { strokeColor: string; strokeStyle?: string; backgroundColor?: string; opacity?: number }> = {
   add: { strokeColor: "#2f9e44", strokeStyle: "dashed", backgroundColor: "#ebfbee" },
@@ -42,6 +43,10 @@ export interface RoughResult {
  * the sketch. Pass true to style all of them, false to apply all of them.
  */
 export function applyRough(elements: readonly ExcalidrawElement[], base: Graph, result: Graph, changes: Change[], styled: boolean | Set<string>): RoughResult {
+  return perf.time("rough.apply", () => apply(elements, base, result, changes, styled), { elements: elements.length, changes: changes.length });
+}
+
+function apply(elements: readonly ExcalidrawElement[], base: Graph, result: Graph, changes: Change[], styled: boolean | Set<string>): RoughResult {
   const isStyled = (ch: Change) => (styled === true ? true : styled === false ? false : styled.has(ch.id));
   const live = elements.filter((e) => !e.isDeleted);
   const byId = new Map(live.map((e) => [e.id, e]));

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CaptureUpdateAction, convertToExcalidrawElements, exportToBlob, exportToSvg, getCommonBounds, hashElementsVersion, restoreElements, serializeAsJSON } from "@excalidraw/excalidraw";
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
-import { api, CLIENT_ID, subscribe, type ServerEvent } from "./api";
+import { api, retryable, CLIENT_ID, subscribe, type ServerEvent } from "./api";
 import { ExportDoc, type DocFormat, type DocSignal } from "./ExportDoc";
 import { perf } from "./perf";
 import { Canvas } from "./Canvas";
@@ -146,6 +146,15 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   const [record, setRecord] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [connected, setConnected] = useState(true);
+  // Canvas edits not yet saved: "pending" while the autosave waits, "failed" when it couldn't
+  // reach the runtime (kept, retried every few seconds and as soon as the connection is back).
+  const [unsaved, setUnsavedState] = useState<"" | "pending" | "failed">("");
+  const unsavedRef = useRef<"" | "pending" | "failed">("");
+  const setUnsaved = useCallback((v: "" | "pending" | "failed") => {
+    if (unsavedRef.current === v) return;
+    unsavedRef.current = v;
+    setUnsavedState(v);
+  }, []);
   const [fixed, setFixed] = useState<Record<string, number>>(() => loadFixes(initial.project.dir));
   const exportMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
@@ -192,6 +201,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
     a.updateScene({ elements: s.elements, captureUpdate: CaptureUpdateAction.NEVER });
     a.history.clear();
     lastSaved.current = hashElementsVersion(s.elements);
+    setUnsaved("");
     if (fit && s.elements.length) a.setViewport({ target: s.elements.filter((e) => !e.isDeleted), fit: "scale-down", offsets: { ui: true } });
   }, []);
 
@@ -513,13 +523,18 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   const saveTimer = useRef<number | undefined>(undefined);
   const dragStart = useRef<Map<string, Box> | null>(null);
 
+  const retryTimer = useRef<number | undefined>(undefined);
+  const saving = useRef(false);
   const saveNow = useCallback(async () => {
     const a = apiRef.current;
-    if (!a || modeRef.current !== "edit") return;
+    if (!a || modeRef.current !== "edit" || saving.current) return;
+    window.clearTimeout(retryTimer.current);
     const els = a.getSceneElements();
     const h = hashElementsVersion(els);
-    if (h === lastSaved.current) return;
+    if (h === lastSaved.current) return setUnsaved("");
     const json = serializeAsJSON(els, a.getAppState(), a.getFiles(), "local");
+    const wasFailing = unsavedRef.current === "failed";
+    saving.current = true;
     try {
       if (viewRef.current === "rough") await api.saveRough(json);
       else {
@@ -527,10 +542,40 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
         if (v.n !== latestRef.current) setSt(await reload());
       }
       lastSaved.current = h;
+      // Edits made while this save was on its way get their own (the autosave is already waiting).
+      if (hashElementsVersion(a.getSceneElements()) === h) setUnsaved("");
+      if (wasFailing) {
+        perf.log("info", "saved after a failed attempt");
+        toastIt("Saved.");
+      }
     } catch (e) {
-      fail(e);
+      if (retryable(e)) {
+        // Keep the edit and try again: the runtime may be restarting.
+        if (unsavedRef.current !== "failed") toastIt("Couldn't save; your changes are kept and will be saved when Designer is reachable again.", true);
+        setUnsaved("failed");
+        retryTimer.current = window.setTimeout(() => void saveNow(), 5000);
+      } else {
+        setUnsaved("failed");
+        fail(e);
+      }
+    } finally {
+      saving.current = false;
     }
-  }, [fail, reload]);
+  }, [fail, reload, setUnsaved, toastIt]);
+  // Back online: save what's waiting right away.
+  useEffect(() => {
+    if (connected && unsavedRef.current === "failed") void saveNow();
+  }, [connected, saveNow]);
+  // Don't let a reload or close drop edits that aren't saved yet.
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (!unsavedRef.current) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
 
   const rerender = useCallback((mutate: (g: Graph) => void, place?: Set<string>) => {
     const a = apiRef.current;
@@ -561,13 +606,15 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
     setSelection((prev) => (prev.join() === sel.join() ? prev : sel));
     if (modeRef.current !== "edit") return;
     if (hashElementsVersion(elements) === lastSaved.current) return;
+    if (unsavedRef.current === "") setUnsaved("pending");
+    if (unsavedRef.current === "failed") return; // the retry saves everything, these edits too
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
       if (viewRef.current === "production" && apiRef.current && hasOrphans(apiRef.current.getSceneElements())) rerender(() => {});
       refreshGraph();
       void saveNow();
     }, 700);
-  }, [refreshGraph, rerender, saveNow]);
+  }, [refreshGraph, rerender, saveNow, setUnsaved]);
 
   const onPointerDown = useCallback(() => {
     if (viewRef.current === "production" && modeRef.current === "edit" && apiRef.current) dragStart.current = geometryOf(apiRef.current.getSceneElements());
@@ -896,6 +943,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
         )}
         <span className="spacer" />
         {!connected && <span className="pill bad">Disconnected — retrying</span>}
+        {unsaved === "failed" && <span className="pill bad" title="Your edits are kept in this tab and saved as soon as Designer answers again">Unsaved changes — retrying</span>}
         <details className="menu" ref={exportMenu}>
           <summary><button className="ghost" tabIndex={-1} onClick={(e) => { e.preventDefault(); exportMenu.current!.open = !exportMenu.current!.open; }}>Export</button></summary>
           <div className="menu-list">

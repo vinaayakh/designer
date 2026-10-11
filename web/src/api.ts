@@ -27,7 +27,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
   perf.mark(`api ${route(method, path)}`, ms, { status: res.status, in_bytes: sent?.length ?? 0, out_bytes: text.length });
   if (!res.ok) {
     perf.log(res.status >= 500 ? "error" : "warn", `request ${res.status}: ${route(method, path)}`, { error: data?.error, ms: Math.round(ms) });
-    throw new Error(data?.error ?? `${res.status} ${res.statusText}`);
+    throw Object.assign(new Error(data?.error ?? `${res.status} ${res.statusText}`), { status: res.status });
   }
   return data as T;
 }
@@ -90,6 +90,15 @@ async function fetchFile(path: string, body: unknown): Promise<{ blob: Blob; nam
   const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "document";
   return { blob: await res.blob(), name };
 }
+
+/**
+ * Whether a failed request is worth sending again: the runtime wasn't reachable (no status) or
+ * failed itself (5xx). 4xx answers (e.g. "the diagram changed") won't change by retrying.
+ */
+export const retryable = (e: unknown) => {
+  const status = (e as { status?: number })?.status;
+  return status === undefined || status >= 500;
+};
 
 export type ServerEvent = { type: string; data: any };
 

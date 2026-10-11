@@ -86,6 +86,7 @@ export const Canvas = memo(function Canvas({ onApi, onChange, viewMode, onViewCl
       flush();
     };
     const onWheel = (e: WheelEvent) => {
+      void e.deltaX, e.deltaY; // read before deltaMode, or Firefox reports lines (see snapshotPan.ts)
       if (ours.has(e) || !(e.target instanceof HTMLCanvasElement) || e.deltaMode !== 0) return;
       if (!raf) raf = requestAnimationFrame(frame);
       e.preventDefault();

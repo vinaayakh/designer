@@ -47,6 +47,11 @@ export const perf = {
     push({ level: slow ? "warn" : "debug", msg: slow ? "slow work" : "work", name, ms: round(ms), slow, data: slow ? { ...data, slow_ms: slowMs } : data });
   },
 
+  /** Records a measured event with its own verdict (several numbers decide whether it was slow). */
+  record(name: string, ms: number, slow: boolean, data?: Record<string, unknown>) {
+    push({ level: slow ? "warn" : "debug", msg: slow ? "slow work" : "work", name, ms: round(ms), slow, data });
+  },
+
   /** Times synchronous (main-thread) work. */
   time<T>(name: string, fn: () => T, data?: Record<string, unknown>): T {
     const t0 = performance.now();

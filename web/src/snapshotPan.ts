@@ -50,6 +50,19 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
   let refreshing = false;
   let ending = false;
   let started = 0, events = 0, refreshes = 0;
+  // What each gesture cost, for the log (see report()).
+  let stats = { kind: "", firstInput: 0, firstFrameMs: -1, copyMs: 0, refreshMs: [] as number[], handoverMs: 0, worstFrameMs: 0 };
+  let frameWatch = 0;
+  const skipped: Record<string, number> = {}; // wheel events left to Excalidraw, by reason
+  const watchFrames = () => {
+    let last = performance.now();
+    const tick = (t: number) => {
+      stats.worstFrameMs = Math.max(stats.worstFrameMs, t - last);
+      last = t;
+      if (frameWatch) frameWatch = requestAnimationFrame(tick);
+    };
+    frameWatch = requestAnimationFrame(tick);
+  };
   // Excalidraw zooms around the last pointer position it saw (from pointer moves, starting at 0,0), not the wheel event's.
   const pointer = { x: 0, y: 0 };
 
@@ -84,6 +97,7 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
       drag.confirmed = true;
     }
     e.stopPropagation(); // Excalidraw's own pan move would redraw everything
+    noteInput("drag", e.timeStamp);
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     drag.x = e.clientX;
     drag.y = e.clientY;
@@ -119,6 +133,14 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
     ctx.drawImage(src, 0, 0);
   };
 
+  /** Notes the gesture's first input, and when the frame showing it starts. */
+  const noteInput = (kind: string, at: number) => {
+    if (stats.firstInput) return;
+    stats.kind = kind;
+    stats.firstInput = at;
+    requestAnimationFrame((t) => { stats.firstFrameMs = t - at; });
+  };
+
   /** Places the copy so it shows `cur`: screen = (scene + scroll) * zoom. */
   const place = () => {
     if (!copy || !base || !cur) return;
@@ -141,7 +163,10 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
     copy = document.createElement("canvas");
     copy.style.cssText = `position:absolute;left:0;top:0;width:${box.width}px;height:${box.height}px;transform-origin:0 0;will-change:transform`;
     overlay.appendChild(copy);
+    const c0 = performance.now();
     snapshot(src);
+    stats = { kind: "", firstInput: 0, firstFrameMs: -1, copyMs: performance.now() - c0, refreshMs: [], handoverMs: 0, worstFrameMs: 0 };
+    watchFrames();
     // Above both canvases, below Excalidraw's toolbars.
     const interactive = root.querySelector<HTMLCanvasElement>("canvas.excalidraw__canvas.interactive");
     (interactive ?? src).after(overlay);
@@ -177,7 +202,9 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
     if (!api || !cur || refreshing) return;
     refreshing = true;
     const target = { ...cur };
+    const r0 = performance.now();
     await commit(api, target, false);
+    stats.refreshMs.push(performance.now() - r0);
     const src = staticCanvas();
     if (overlay && src) {
       snapshot(src);
@@ -195,7 +222,9 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
     ending = true;
     while (refreshing) await new Promise((r) => requestAnimationFrame(r));
     const target = { ...cur! };
+    const h0 = performance.now();
     await commit(api, target, true);
+    stats.handoverMs = performance.now() - h0;
     ending = false;
     const src = staticCanvas();
     if (cur && (cur.scrollX !== target.scrollX || cur.scrollY !== target.scrollY || cur.zoom !== target.zoom) && src) {
@@ -209,27 +238,59 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
     overlay?.remove();
     overlay = copy = null;
     base = cur = null;
-    perf.mark("viewport.snapshot-gesture", performance.now() - started, { events, refreshes }, 60_000);
+    cancelAnimationFrame(frameWatch);
+    frameWatch = 0;
+    report();
   };
 
+  /**
+   * Logs what the gesture cost: input to first moved frame, copying the snapshot, each mid-gesture
+   * redraw, the final hand-over redraw (the sharp picture appears after it), and the worst frame.
+   * Any of those noticeably slow makes it a warning.
+   */
+  const report = () => {
+    const s = stats;
+    const r = (v: number) => Math.round(v * 10) / 10;
+    const data: Record<string, unknown> = {
+      gesture: s.kind || "unknown", events, refreshes, settle_ms: SETTLE_MS,
+      first_frame_ms: r(s.firstFrameMs), copy_ms: r(s.copyMs), refresh_ms_max: r(Math.max(0, ...s.refreshMs)), handover_ms: r(s.handoverMs),
+      worst_frame_ms: r(s.worstFrameMs),
+    };
+    const reasons = Object.entries(skipped).filter(([, n]) => n);
+    if (reasons.length) {
+      data.wheel_left_to_excalidraw = Object.fromEntries(reasons);
+      for (const k of Object.keys(skipped)) skipped[k] = 0;
+    }
+    const slow = s.firstFrameMs > 34 || s.copyMs > 16 || s.handoverMs > 150 || s.worstFrameMs > 50;
+    perf.record("viewport.gesture", performance.now() - started, slow, data);
+  };
+
+  const skip = (why: string) => { skipped[why] = (skipped[why] ?? 0) + 1; };
   const onWheel = (e: WheelEvent) => {
-    if (!(e.target instanceof HTMLCanvasElement) || e.deltaMode !== 0 || e.buttons !== 0) return;
+    // Read the deltas before deltaMode: Firefox reports a mouse wheel in lines (about 3 instead of
+    // 100 px) to pages that look at deltaMode first, which would also shrink Excalidraw's steps.
+    const deltaX = e.deltaX, deltaY = e.deltaY;
+    if (!(e.target instanceof HTMLCanvasElement)) return;
+    if (e.deltaMode !== 0) return skip(`deltaMode ${e.deltaMode}`);
+    if (e.buttons !== 0) return skip("button held");
     const api = getApi();
     if (!api) return;
     const st = api.getAppState();
-    if (st.editingTextElement || st.newElement) return; // mid-edit: leave it to Excalidraw
+    if (st.editingTextElement || st.newElement) return skip("editing"); // mid-edit: leave it to Excalidraw
     if (!overlay && !begin(api)) return;
     e.preventDefault();
     e.stopPropagation();
     events++;
     const v = cur!;
-    if (e.deltaY !== 0 && isZoom(e)) {
-      cur = zoomStep(v, e.deltaY, pointer.x - st.offsetLeft, pointer.y - st.offsetTop);
+    const zooming = deltaY !== 0 && isZoom(e);
+    noteInput(zooming ? "wheel-zoom" : "wheel-pan", e.timeStamp);
+    if (zooming) {
+      cur = zoomStep(v, deltaY, pointer.x - st.offsetLeft, pointer.y - st.offsetTop);
     } else if (e.shiftKey) {
-      const s = e.deltaY || e.deltaX;
+      const s = deltaY || deltaX;
       cur = e.ctrlKey || e.metaKey ? { ...v, scrollY: v.scrollY - s / v.zoom } : { ...v, scrollX: v.scrollX - s / v.zoom };
     } else {
-      cur = { ...v, scrollX: v.scrollX - e.deltaX / v.zoom, scrollY: v.scrollY - e.deltaY / v.zoom };
+      cur = { ...v, scrollX: v.scrollX - deltaX / v.zoom, scrollY: v.scrollY - deltaY / v.zoom };
     }
     place();
     window.clearTimeout(settle);

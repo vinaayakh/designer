@@ -49,6 +49,56 @@ export const Canvas = memo(function Canvas({ onApi, onChange, viewMode, onViewCl
     };
   }, []);
 
+  // Excalidraw redraws the whole scene for every wheel event, and precision touchpads send about
+  // two per frame. Wheel events are held and handed over as one at the next animation frame
+  // (Excalidraw draws after that frame's paint anyway, so nothing shows later). Pans add up
+  // exactly; zooms merge only while the total stays within the step Excalidraw allows per event,
+  // so zoom speed doesn't change.
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const ZOOM_STEP_CAP = 10; // Excalidraw clamps a wheel zoom to ±10 per event
+    const ours = new WeakSet<Event>();
+    let acc: { dx: number; dy: number; last: WheelEvent; zoom: boolean } | null = null;
+    let raf = 0;
+    const isZoom = (e: WheelEvent) => e.ctrlKey || e.metaKey || (apiRef.current?.getAppState().inputDevice === "mouse" && !e.shiftKey && e.deltaY !== 0);
+    const dispatch = (dx: number, dy: number, like: WheelEvent) => {
+      const ev = new WheelEvent("wheel", {
+        deltaX: dx, deltaY: dy, deltaMode: 0, clientX: like.clientX, clientY: like.clientY, screenX: like.screenX, screenY: like.screenY,
+        ctrlKey: like.ctrlKey, metaKey: like.metaKey, shiftKey: like.shiftKey, altKey: like.altKey, buttons: like.buttons,
+        bubbles: true, cancelable: true, composed: true,
+      });
+      ours.add(ev);
+      like.target?.dispatchEvent(ev);
+    };
+    const flush = () => {
+      if (!acc) return;
+      const a = acc;
+      acc = null;
+      dispatch(a.dx, a.dy, a.last);
+    };
+    const frame = () => {
+      raf = 0;
+      flush();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (ours.has(e) || !(e.target instanceof HTMLCanvasElement) || e.deltaMode !== 0) return;
+      if (!raf) raf = requestAnimationFrame(frame);
+      e.preventDefault();
+      e.stopPropagation();
+      const zoom = isZoom(e);
+      const fits = acc && acc.zoom === zoom && acc.last.ctrlKey === e.ctrlKey && acc.last.metaKey === e.metaKey && acc.last.shiftKey === e.shiftKey &&
+        (!zoom || (Math.sign(acc.dy) === Math.sign(e.deltaY) && Math.abs(acc.dy + e.deltaY) <= ZOOM_STEP_CAP));
+      if (acc && !fits) flush();
+      acc = acc ? { dx: acc.dx + e.deltaX, dy: acc.dy + e.deltaY, last: e, zoom } : { dx: e.deltaX, dy: e.deltaY, last: e, zoom };
+    };
+    el.addEventListener("wheel", onWheel, { capture: true, passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel, { capture: true });
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <div ref={wrap} style={{ position: "absolute", inset: 0 }}>
       <Excalidraw

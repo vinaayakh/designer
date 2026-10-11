@@ -28,6 +28,8 @@ Each Assistant turn logs `assistant turn` with its kind, model, wall time, time 
 
 To find problems: `grep '"level":"WARN"\|"level":"ERROR"' designer.log`, or filter by `"msg":"slow request"`, `"msg":"assistant turn"`, `"msg":"dropped frames"`, `"msg":"resources"`.
 
+`npm run bench:pan -- [url] [--throttle 4] [--dpr 2] [--rough] [--hz 120]` (in `web/`, needs Microsoft Edge) measures frame times, dropped frames, long tasks and script time while panning with the wheel, pinch-zooming, dragging with the hand tool and panning at 1x zoom. Saving is blocked, so it is safe on a real project. Build with `npx vite build --minify false` for readable profiles.
+
 For frontend work, run `bin/designer --no-open .` and `npm run dev` in `web/` (Vite proxies `/api` to port 4717).
 
 ## How it fits together

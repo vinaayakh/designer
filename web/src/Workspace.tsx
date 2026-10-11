@@ -3,6 +3,7 @@ import { CaptureUpdateAction, convertToExcalidrawElements, exportToBlob, exportT
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import { api, CLIENT_ID, subscribe, type ServerEvent } from "./api";
+import { ExportDoc, type DocFormat, type DocSignal } from "./ExportDoc";
 import { Canvas } from "./Canvas";
 import { Chat, toolText, type ChatItem } from "./panels/Chat";
 import { Review, changeStatus, reviewStart, reviewSteps, type ReviewState } from "./panels/Review";
@@ -636,6 +637,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
         if (!e.data.allowed) push({ kind: "tool", text: `Blocked a web request outside the trusted sources (${e.data.tool})` });
         break;
       case "assistant.done":
+        if (e.data.kind === "document" && e.data.failed) setDocSignal((s) => ({ seq: (s?.seq ?? 0) + 1, failed: e.data.failed }));
         if (e.data.failed) push({ kind: "error", text: e.data.failed, retry: e.data.kind && e.data.kind !== "chat" });
         else if (e.data.interrupted) push({ kind: "notice", text: "Stopped." });
         break;
@@ -657,6 +659,9 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
           setView("production");
           setViewing(null);
         }
+        break;
+      case "document":
+        setDocSignal((s) => ({ seq: (s?.seq ?? 0) + 1, version: e.data.version }));
         break;
       case "gapreport":
         reload().then(setSt).catch(() => {});
@@ -798,6 +803,26 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   const updateGroup = (id: string, p: Partial<GGroup>) => rerender((g) => { const x = g.groups.find((y) => y.id === id); if (x) Object.assign(x, p); });
   const updateEdge = (id: string, p: Partial<GEdge>) => rerender((g) => { const x = g.edges.find((y) => y.id === id); if (x) Object.assign(x, p); });
 
+  // arc42 document export: the images come from the version on the canvas.
+  const [docExport, setDocExport] = useState<DocFormat | null>(null);
+  const [docSignal, setDocSignal] = useState<DocSignal | null>(null);
+  const docImages = async () => {
+    const a = apiRef.current;
+    if (!a) return {};
+    const elements = a.getSceneElements().filter((e) => !e.id.startsWith("__review"));
+    const appState = { ...a.getAppState(), exportBackground: true, viewBackgroundColor: "#ffffff" };
+    if (docExport === "pdf") {
+      const svg = await exportToSvg({ elements, appState, files: a.getFiles(), exportPadding: 24 });
+      return { svg: new XMLSerializer().serializeToString(svg) };
+    }
+    const blob = await exportToBlob({ elements, appState: { ...appState, exportScale: 2 }, files: a.getFiles(), mimeType: "image/png", exportPadding: 24 });
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return { png: btoa(bin) };
+  };
+  const canExportDoc = view === "production" && !previewing && latest > 0 && !(pending && pending.view === "production");
+
   const exportImage = async (kind: "png" | "svg") => {
     const a = apiRef.current;
     if (!a) return;
@@ -871,6 +896,11 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
           <div className="menu-list">
             <button className="ghost" onClick={() => { exportMenu.current!.open = false; void exportImage("png"); }}>PNG image</button>
             <button className="ghost" onClick={() => { exportMenu.current!.open = false; void exportImage("svg"); }}>SVG image</button>
+            <div className="menu-sep" />
+            <button className="ghost" disabled={!canExportDoc} title={canExportDoc ? "" : "Open a Production version (not during a review)"}
+              onClick={() => { exportMenu.current!.open = false; setDocExport("docx"); }}>arc42 document · Word</button>
+            <button className="ghost" disabled={!canExportDoc} title={canExportDoc ? "" : "Open a Production version (not during a review)"}
+              onClick={() => { exportMenu.current!.open = false; setDocExport("pdf"); }}>arc42 document · PDF</button>
           </div>
         </details>
         <button className="ghost" onClick={() => setSettingsOpen(true)}>Settings</button>
@@ -958,6 +988,10 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
             </div>
           </div>
         </div>
+      )}
+      {docExport && (
+        <ExportDoc version={viewing ?? latest} format={docExport} signal={docSignal} images={docImages}
+          onClose={() => setDocExport(null)} onDone={(text) => toastIt(text)} />
       )}
       {record && <RecordViewer id={record} onClose={() => setRecord(null)} onOpen={setRecord} />}
       {settingsOpen && (

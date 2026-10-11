@@ -7,6 +7,7 @@
 //	production/vNNN.excalidraw  one file per Production Diagram version
 //	production/vNNN.json        that version's meta and Design Rationale snapshot
 //	gap-reports/vNNN-<time>.json  Gap Reports, never edited after they are written
+//	documents/vNNN-arc42.json   the Assistant's text for that version's arc42 document
 //	.designer/                runtime state (Assistant Session, Proposals); not for git
 package project
 
@@ -33,6 +34,7 @@ const (
 	fileDraft   = "rough-draft.excalidraw"
 	dirProd     = "production"
 	dirReports  = "gap-reports"
+	dirDocs     = "documents"
 	dirState    = ".designer"
 )
 
@@ -299,6 +301,22 @@ func (p *Project) SetRationale(n int, rationale json.RawMessage) error {
 	}
 	v.Rationale = rationale
 	return p.writeVersion(v, scene)
+}
+
+// ---- arc42 document text
+
+// SaveDocText writes the document text of version n (replacing an older one).
+func (p *Project) SaveDocText(n int, data []byte) error {
+	return p.write(filepath.Join(dirDocs, verName(n)+"-arc42.json"), data)
+}
+
+// DocText reads the document text of version n; nil if there is none.
+func (p *Project) DocText(n int) ([]byte, error) {
+	b, err := os.ReadFile(p.path(dirDocs, verName(n)+"-arc42.json"))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	return b, err
 }
 
 // ---- Gap Reports

@@ -324,10 +324,11 @@ func (a *App) Decide(d Decision) (DecisionResult, error) {
 			if latest != p.BaseVersion {
 				return res, fmt.Errorf("the diagram moved on to v%d since this Proposal was made", latest)
 			}
-			if _, err := scene.Parse(d.Scene, true); err != nil {
+			g, err := scene.Parse(d.Scene, true)
+			if err != nil {
 				return res, err
 			}
-			rat := a.updatedRationaleLocked(latest, p.Payload.Changes, acc)
+			rat := a.updatedRationaleLocked(latest, p.Payload.Changes, acc, g)
 			v, err := a.P.SaveVersion(d.Scene, "proposal", p.Payload.Title, p.ID, rat)
 			if err != nil {
 				return res, err
@@ -357,7 +358,7 @@ func (a *App) Decide(d Decision) (DecisionResult, error) {
 
 // updatedRationaleLocked keeps the Design Rationale current: added Nodes get
 // their why and practices, removed Nodes lose their entry.
-func (a *App) updatedRationaleLocked(version int, changes []*proposal.Change, acc map[string]bool) json.RawMessage {
+func (a *App) updatedRationaleLocked(version int, changes []*proposal.Change, acc map[string]bool, g *scene.Graph) json.RawMessage {
 	v, _, err := a.P.Version(version)
 	if err != nil {
 		return nil
@@ -369,7 +370,9 @@ func (a *App) updatedRationaleLocked(version int, changes []*proposal.Change, ac
 	if r.Nodes == nil {
 		r.Nodes = map[string]*proposal.NodeRationale{}
 	}
+	refs := refsOf(changes)
 	for _, ch := range changes {
+		ch.Why = a.nameAliasesLocked(ch.Why, g, refs)
 		if !acc[ch.ID] {
 			continue
 		}
@@ -406,6 +409,7 @@ func (a *App) acceptConversionLocked(p *Pending, d Decision) (DecisionResult, er
 	if len(g.Nodes) == 0 {
 		return res, errors.New("the converted diagram is empty")
 	}
+	a.nameRationaleLocked(p.Payload.Rationale, g, refsOf(p.Payload.Changes))
 	rat, _ := json.Marshal(p.Payload.Rationale)
 	v, err := a.P.SaveVersion(d.Scene, "conversion", p.Payload.Title, p.ID, rat)
 	if err != nil {

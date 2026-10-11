@@ -32,7 +32,7 @@ type tool struct {
 	fn         func(args json.RawMessage) (string, error)
 }
 
-// tools are the 6 tools from tickets 011/012.
+// tools are the 6 tools from tickets 011/012, plus submit_document for the arc42 export.
 func (a *App) tools() []tool {
 	changeSchema := map[string]any{"type": "object", "description": "One operation; see the system prompt for the fields of each op.",
 		"properties": map[string]any{
@@ -125,6 +125,17 @@ func (a *App) tools() []tool {
 				"recommendations": arr("security practices that matter here and aren't applied", map[string]any{"type": "object"}),
 			}, "version", "items"),
 			a.submitGapReportLocked},
+		{"submit_document", "Submit the arc42 document text during a document task.",
+			obj(map[string]any{
+				"version":    map[string]any{"type": "integer"},
+				"overview":   str("2–4 sentences"),
+				"components": map[string]any{"type": "object", "description": "node alias → 1–4 responsibilities (strings); every Node"},
+				"groups":     map[string]any{"type": "object", "description": "group alias → one-sentence purpose"},
+				"scenarios":  arr("2–5 runtime flows: {title, summary, steps:[{from, to, what}]}; steps follow Edges", map[string]any{"type": "object"}),
+				"concepts":   arr("crosscutting concepts: {topic, text, nodes[]}", map[string]any{"type": "object"}),
+				"quality":    arr("quality scenarios: {attribute, requirement, scenario, response, nodes[]}", map[string]any{"type": "object"}),
+			}, "version", "overview", "components", "scenarios"),
+			a.submitDocumentLocked},
 	}
 }
 

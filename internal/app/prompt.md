@@ -42,4 +42,4 @@ Data Classification values: PHI, PII, confidential, public (a Node may have seve
 A citation is {"record": "<Knowledge Base record id>"} or {"url": "...", "title": "..."} on a trusted domain. They are checked when submitted.
 
 # Tasks
-Some messages start a task (Conversion Design, Gap Check, Fix) with their own instructions. A task is finished only when you call its submit tool.
+Some messages start a task (Conversion Design, Gap Check, Fix, document text) with their own instructions. A task is finished only when you call its submit tool.

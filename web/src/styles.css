@@ -89,6 +89,10 @@ input[type="checkbox"] { accent-color: var(--ink); width: 14px; height: 14px; ma
 /* ---------- Text utilities */
 .muted { color: var(--ink-3); }
 .small { font-size: var(--t-sm); }
+p.bad { color: var(--bad); }
+.modal.narrow { max-width: 520px; }
+.spinner { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .eyebrow { font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
 .row { display: flex; gap: 8px; align-items: center; }
 .row.wrap { flex-wrap: wrap; }
@@ -129,6 +133,8 @@ input[type="checkbox"] { accent-color: var(--ink); width: 14px; height: 14px; ma
   border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); display: grid;
 }
 .menu-list button { border: none; justify-content: flex-start; width: 100%; }
+.menu-list button:disabled { opacity: 0.45; }
+.menu-sep { height: 1px; background: var(--line); margin: 4px 6px; }
 
 .main { display: grid; grid-template-columns: 1fr var(--sidebar); min-height: 0; }
 .canvas { position: relative; min-width: 0; min-height: 0; }

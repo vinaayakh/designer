@@ -18,6 +18,7 @@ import (
 	"github.com/vinaayakh/designer/internal/app"
 	"github.com/vinaayakh/designer/internal/brief"
 	"github.com/vinaayakh/designer/internal/project"
+	"github.com/vinaayakh/designer/internal/report"
 	"github.com/vinaayakh/designer/internal/scene"
 )
 
@@ -274,6 +275,71 @@ func (s *Server) Handler() http.Handler {
 		return a.Fix(in.Report, in.Records)
 	}))
 
+	// arc42 document: its AI-written text, then the export itself.
+	api.HandleFunc("GET /api/document/{n}", func(w http.ResponseWriter, r *http.Request) {
+		n, err := strconv.Atoi(r.PathValue("n"))
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		written, stale, err := a.DocumentStatus(n)
+		if err != nil {
+			fail(w, 404, err)
+			return
+		}
+		writeJSON(w, map[string]bool{"written": written, "stale": stale})
+	})
+	api.HandleFunc("POST /api/document", s.action(func(r *http.Request) error {
+		var in struct{ Version int }
+		if err := read(r, &in); err != nil {
+			return err
+		}
+		return a.WriteDocument(in.Version)
+	}))
+	api.HandleFunc("POST /api/export/{n}/{format}", func(w http.ResponseWriter, r *http.Request) {
+		n, err := strconv.Atoi(r.PathValue("n"))
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		var in struct {
+			SVG string `json:"svg"`
+			PNG []byte `json:"png"` // base64 in JSON
+		}
+		if err := read(r, &in); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		din, err := a.DocumentInput(n)
+		if err != nil {
+			fail(w, 404, err)
+			return
+		}
+		doc := report.Build(din)
+		name := fmt.Sprintf("%s-v%d-arc42", fileSafe(din.Project), n)
+		switch r.PathValue("format") {
+		case "docx":
+			out, err := report.DOCX(doc, in.PNG)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.docx"`, name))
+			_, _ = w.Write(out)
+		case "html":
+			if in.SVG != "" && !strings.HasPrefix(strings.TrimSpace(in.SVG), "<svg") {
+				fail(w, 400, errors.New("svg must be an SVG document"))
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.html"`, name))
+			_, _ = w.Write(report.HTML(doc, in.SVG))
+		default:
+			fail(w, 400, errors.New("format must be docx or html"))
+		}
+	})
+
 	api.HandleFunc("GET /api/assistant", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, a.Status()) })
 	api.HandleFunc("POST /api/assistant/warm", s.action(func(r *http.Request) error { return a.Warm() }))
 	api.HandleFunc("POST /api/assistant/chat", s.action(func(r *http.Request) error {
@@ -373,6 +439,23 @@ func (s *Server) guard(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// fileSafe makes a Project name usable in a download's file name.
+func fileSafe(name string) string {
+	out := strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_':
+			return r
+		case r == ' ' || r == '.':
+			return '-'
+		}
+		return -1
+	}, name)
+	if out == "" {
+		return "design"
+	}
+	return out
 }
 
 func (s *Server) action(fn func(r *http.Request) error) http.HandlerFunc {

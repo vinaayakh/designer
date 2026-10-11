@@ -350,6 +350,14 @@ func (a *App) submitGapReportLocked(raw json.RawMessage) (string, error) {
 			Status: "outside", Finding: "This is a policy or procedure, which a diagram can't show.", ByRuntime: true})
 	}
 	slices.SortStableFunc(rep.Items, func(x, y GapItem) int { return strings.Compare(x.Record, y.Record) })
+	if g, err := a.versionGraph(gs.Version); err == nil {
+		for i := range rep.Items {
+			rep.Items[i].Finding = a.nameAliasesLocked(rep.Items[i].Finding, g, nil)
+		}
+		for i := range rep.Recommendations {
+			rep.Recommendations[i].Finding = a.nameAliasesLocked(rep.Recommendations[i].Finding, g, nil)
+		}
+	}
 	data, _ := json.Marshal(rep)
 	ref, err := a.P.SaveReport(gs.Version, data)
 	if err != nil {

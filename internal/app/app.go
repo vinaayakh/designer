@@ -71,6 +71,7 @@ type App struct {
 	idle      *time.Timer
 	lastTask  *taskSpec // for Retry
 	gap       *gapSpec  // the Gap Check in progress
+	doc       *docSpec  // the document task in progress
 	clients   int
 	noClients *time.Timer
 	claudeVer string

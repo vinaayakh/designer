@@ -48,9 +48,27 @@ export const api = {
   decide: (d: { id: string; revision: number; action: "accept" | "reject" | "reply" | "reject_change" | "clarify"; change?: string; accepted?: string[]; scene?: unknown; reply?: string }) =>
     call<{ version?: number }>("POST", "/api/proposal/decision", d),
 
+  documentStatus: (n: number) => call<{ written: boolean; stale: boolean }>("GET", `/api/document/${n}`),
+  writeDocument: (version: number) => call("POST", "/api/document", { version }),
+
   settings: () => call<Settings>("GET", "/api/settings"),
   saveSettings: (s: Settings) => call<Settings>("PUT", "/api/settings", s),
 };
+
+/** POSTs and returns the response as a file (Content-Disposition names it). */
+export async function download(path: string, body: unknown): Promise<{ blob: Blob; name: string }> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "X-Designer": "1", "X-Client": CLIENT_ID, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.error ?? `${res.status} ${res.statusText}`);
+  }
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "document";
+  return { blob: await res.blob(), name };
+}
 
 export type ServerEvent = { type: string; data: any };
 

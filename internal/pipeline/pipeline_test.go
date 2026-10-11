@@ -130,7 +130,7 @@ func TestStatusAndStaleness(t *testing.T) {
 	if st := StatusOf(s, now); st.Kind != "ready" {
 		t.Errorf("ready: %+v", st)
 	}
-	v := &Version{Step: "design-doc", N: 1, Created: t0.Add(time.Second), StepVersion: 1, Inputs: Inputs{BriefHash: "b1", Production: 2, Upstream: map[string]int{"requirements": 1}}, Cites: map[string]register.Status{"ASM-004": register.Open}}
+	v := &Version{Step: "design-doc", N: 1, Created: t0.Add(time.Second), StepVersion: 1, Inputs: Inputs{BriefHash: "b1", Production: 2, Upstream: map[string]int{"requirements": 1}, AnswersAt: t0}, Cites: map[string]register.Status{"ASM-004": register.Open}}
 	now.Latest["design-doc"] = v
 	now.Entries["ASM-004"] = register.Entry{ID: "ASM-004", Status: register.Open}
 	if st := StatusOf(s, now); st.Kind != "current" {

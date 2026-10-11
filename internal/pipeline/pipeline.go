@@ -442,7 +442,7 @@ func StatusOf(s *Step, now Now) Status {
 		}
 	}
 	for _, a := range now.Answers[s.ID] {
-		if a.At.After(v.Created) {
+		if a.At.After(v.Inputs.AnswersAt) { // answered after the answers it was written from
 			st.Reasons = append(st.Reasons, "answers changed since it was written")
 			break
 		}

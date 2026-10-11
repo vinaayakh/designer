@@ -139,6 +139,14 @@ func (a *App) tools() []tool {
 				"quality":    arr("quality scenarios: {attribute, requirement, scenario, response, nodes[]}", map[string]any{"type": "object"}),
 			}, "version", "overview", "components", "scenarios"),
 			a.submitDocumentLocked},
+		{"submit_step", "Submit a Document Pipeline document during a Step task: its written sections, new Register entries (with +refs) and citations.",
+			obj(map[string]any{
+				"step":     str("the Step ID from the task"),
+				"sections": map[string]any{"type": "object", "description": "section id → {body} | {items: [...]} | {rows: [[...]]}, optional cites"},
+				"entries":  arr("new Register entries: {ref: \"+name\", type, statement, fields, links: [aliases]}", map[string]any{"type": "object"}),
+				"cites":    arr("entry IDs or +refs the document relies on beyond those in the text", map[string]any{"type": "string"}),
+			}, "step", "sections"),
+			a.submitStepLocked},
 	}
 }
 

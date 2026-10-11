@@ -1,0 +1,46 @@
+# Threat model (wayfinder/doc-pipeline ticket 006). Structure from the Threat Modeling Manifesto's
+# four questions (CC BY 4.0, adapted, credit below); threats per element with STRIDE.
+id: threat-model
+title: Threat model (STRIDE)
+version: 1
+template: "Threat Modeling Manifesto four questions (CC BY 4.0, adapted) with STRIDE per element"
+credit: "Structure adapted from the Threat Modeling Manifesto (threatmodelingmanifesto.org), CC BY 4.0."
+diagram: production
+uses: [requirements]
+creates: [RISK, DEC, ASM, Q]
+instructions: |
+  Model threats for this design. The data flow diagram and the STRIDE categories that apply to each element
+  were computed for you (below): write a concrete threat for the applicable categories, most important first
+  (flows that cross a trust boundary and stores of classified data), and group low-risk ones. For each threat
+  give likelihood and impact (low/medium/high) and a response: mitigate (name the mitigation and the
+  component or Knowledge Base practice that provides it), eliminate, transfer or accept.
+  Every threat without a mitigation on the diagram is a RISK entry linked to the elements involved.
+  Every accepted threat is a RISK plus a DEC that accepts it.
+questions:
+  - id: actors
+    label: Threat actors
+    question: Which threat actors concern you?
+    kind: multi
+    values: ["External attacker", "Malicious insider", "Compromised third party", "Compromised user account"]
+    creates: CON
+    fields: {origin: technical}
+  - id: assets
+    label: Most valuable assets
+    question: Which data or capabilities matter most if they leak or stop?
+    kind: list
+    creates: CON
+    fields: {origin: technical}
+  - id: offdiagram
+    label: Controls not on the diagram
+    question: Security controls that exist but aren't drawn (e.g. SSO for staff), one per line.
+    kind: list
+    creates: CON
+    fields: {origin: technical}
+sections:
+  - {id: scope, title: "1. What are we working on?", kind: prose, guidance: "Scope, the assets that matter, and the trust boundaries, in a few sentences."}
+  - {id: dfd, title: Data flow diagram, kind: derived, deriver: dfd}
+  - {id: threats, title: "2. What can go wrong?", kind: table, columns: [Element, STRIDE, Threat, Likelihood, Impact], guidance: "One row per concrete threat; STRIDE is one of Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege."}
+  - {id: responses, title: "3. What are we going to do about it?", kind: table, columns: [Threat, Response, Mitigation], guidance: "One row per threat above: mitigate (with the mitigation and what provides it), eliminate, transfer or accept."}
+  - {id: risks, title: Open risks, kind: entries, types: [RISK]}
+  - {id: review, title: "4. Did we do a good job?", kind: prose, guidance: "Coverage: elements and flows reviewed, threats by response, what is left open and why."}
+  - {id: assumptions, title: Assumptions, kind: entries, types: [ASM]}

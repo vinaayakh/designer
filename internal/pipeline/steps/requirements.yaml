@@ -1,0 +1,73 @@
+# Requirements spec (wayfinder/doc-pipeline ticket 004). Structure follows the ISO/IEC/IEEE 29148
+# software requirements outline (structure only, in our own words).
+id: requirements
+title: Requirements spec
+version: 1
+template: "ISO/IEC/IEEE 29148 software requirements outline (structure only, our wording)"
+diagram: rough
+creates: [REQ, ASM, NG, Q]
+instructions: |
+  Write the requirements for this system from the user's answers, the Design Brief and the Rough Draft.
+  Every functional requirement you derive from the diagram (flows, edge labels, notes, node labels) is a
+  REQ entry with kind "functional", a priority (must/should/could), a testable "acceptance" criterion and a
+  "rationale"; say in the statement which flow it comes from. Draft 3–7 user journeys if the user gave none.
+  Do not restate non-functional targets or constraints: they are already entries (cite them).
+questions:
+  - id: problem
+    label: Problem statement
+    question: What problem does this system solve, and for whom?
+    kind: text
+    blocking: true
+    creates: REQ
+    fields: {kind: goal, priority: must}
+  - id: roles
+    label: Users and roles
+    question: Who uses it? One role per line.
+    kind: list
+    blocking: true
+    creates: CON
+    fields: {origin: organisational}
+  - id: journeys
+    label: Top user journeys
+    question: The 3–7 user journeys that matter most, one per line.
+    kind: list
+    creates: REQ
+    fields: {kind: functional, priority: must}
+  - id: metrics
+    label: Success metrics
+    question: How will you know it works? One per line.
+    kind: list
+    creates: REQ
+    fields: {kind: goal, priority: should}
+  - id: nongoals
+    label: Non-goals
+    question: What will this system explicitly not do? One per line.
+    kind: list
+    creates: NG
+    fields: {kind: non-goal}
+  - id: retention
+    label: Data retention
+    question: How long is customer data kept?
+    kind: choice
+    values: ["30 days", "1 year", "7 years", "Until the customer deletes it"]
+    creates: CON
+    fields: {origin: regulatory}
+  - id: external
+    label: External systems not on the diagram
+    question: Systems this one depends on or feeds that aren't drawn. One per line.
+    kind: list
+    creates: CON
+    fields: {origin: technical}
+sections:
+  - {id: purpose, title: Purpose and problem statement, kind: prose, guidance: "Two or three sentences: the problem, who has it, and what success looks like (cite the goal REQs)."}
+  - {id: scope, title: Scope, kind: prose, guidance: "What is in scope (the components and flows on the Rough Draft), at a high level."}
+  - {id: nongoals, title: Non-goals and out of scope, kind: entries, types: [NG]}
+  - {id: roles, title: Users and roles, kind: list, guidance: "One line per role: who they are and what they do with the system."}
+  - {id: constraints, title: Operating environment and constraints, kind: entries, types: [CON]}
+  - {id: journeys, title: User journeys, kind: list, guidance: "One line per journey, from the user's answers or drafted from the Rough Draft's flows."}
+  - {id: functional, title: Functional requirements, kind: entries, types: [REQ], filter: {kind: [functional, goal]}}
+  - {id: quality, title: Quality requirements, kind: entries, types: [REQ], filter: {kind: [non-functional]}}
+  - {id: interfaces, title: External interfaces, kind: derived, deriver: external}
+  - {id: verification, title: Verification, kind: table, columns: [Requirement, Method, How], guidance: "One row per functional or quality REQ: method is test, inspection, analysis or demonstration."}
+  - {id: assumptions, title: Assumptions, kind: entries, types: [ASM]}
+  - {id: questions, title: Open questions, kind: entries, types: [Q]}

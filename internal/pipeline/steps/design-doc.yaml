@@ -1,0 +1,43 @@
+# Design doc and ADRs (wayfinder/doc-pipeline ticket 005). The common design doc / RFC outline
+# (structure only, our wording); ADRs are DEC entries rendered in MADR 4.0.
+id: design-doc
+title: Design doc + ADRs
+version: 1
+template: "Design doc / RFC outline (structure only); ADRs in MADR 4.0"
+diagram: production
+requires: [requirements]
+creates: [DEC, RISK, ASM, Q]
+instructions: |
+  Write the design document a reviewer reads to understand and approve this design: why it looks the way it
+  does. Build on the Requirements spec (cite its REQ, CON and NG entries) and the Production diagram.
+  Record each significant design decision that isn't already a DEC entry as a new DEC (with chose, over and
+  because), and each risk or drawback as a RISK (likelihood, impact, mitigation).
+questions:
+  - id: rollout
+    label: Rollout
+    question: Is this a new system, or does it replace or extend one?
+    kind: choice
+    values: ["New (greenfield)", "Replaces an existing system", "Extends an existing system"]
+    creates: CON
+    fields: {origin: organisational}
+  - id: rejected
+    label: Alternatives you rejected
+    question: Designs you considered and dropped, one per line, with why.
+    kind: list
+    creates: DEC
+  - id: reviewers
+    label: Reviewers
+    question: Who reviews this document? Names, one per line (for document control only).
+    kind: list
+sections:
+  - {id: context, title: Context and scope, kind: prose, guidance: "The problem and scope in brief, from the Requirements spec. Cite its goal REQs."}
+  - {id: goals, title: Goals, kind: entries, types: [REQ], filter: {kind: [goal]}}
+  - {id: nongoals, title: Non-goals, kind: entries, types: [NG]}
+  - {id: overview, title: Design overview, kind: prose, guidance: "The overall shape: the main request path through the components, the boundaries, and why it is shaped this way."}
+  - {id: detail, title: Detailed design, kind: list, guidance: "One item per boundary or tier: its components, their responsibilities, and how data moves between them."}
+  - {id: data, title: Data, kind: prose, guidance: "Data stores, what they hold and its classification, and how classified data flows."}
+  - {id: crosscutting, title: Cross-cutting concerns, kind: list, guidance: "Security, reliability, observability, compliance and cost: one item each, specific to this design."}
+  - {id: alternatives, title: Alternatives considered, kind: entries, types: [DEC]}
+  - {id: risks, title: Risks and drawbacks, kind: entries, types: [RISK]}
+  - {id: rollout, title: Rollout and migration, kind: prose, guidance: "How it goes live, from the rollout answer; phases and cut-over if it replaces a system."}
+  - {id: questions, title: Open questions, kind: entries, types: [Q]}

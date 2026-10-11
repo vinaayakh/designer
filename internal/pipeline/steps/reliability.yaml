@@ -1,0 +1,53 @@
+# Reliability & DR (wayfinder/doc-pipeline ticket 007). An SLO document (concepts and structure
+# only), a failure-mode table and a contingency plan in NIST SP 800-34's phases (public domain).
+id: reliability
+title: Reliability & DR
+version: 1
+template: "SLO document, failure modes (FMEA), NIST SP 800-34 contingency plan phases"
+diagram: production
+requires: [requirements]
+derive: [failure_modes]
+creates: [RISK, DEC, ASM, Q]
+instructions: |
+  Write the reliability and disaster-recovery plan for this design against the Brief's targets (cite the
+  REQ entries for availability, latency, RPO and RTO). The error budget and a failure-mode skeleton were
+  computed for you (below): fill in effect, detection and mitigation for each failure mode, using the
+  components on the diagram. Every number you use must come from the Brief, the user's answers or an ASM
+  entry you create. Every target the design can't meet is a RISK linked to the components involved.
+questions:
+  - id: critical
+    label: Critical journeys
+    question: Which user journeys must stay up? One per line.
+    kind: list
+    creates: REQ
+    fields: {kind: non-functional, priority: must}
+  - id: mtd
+    label: Maximum tolerable downtime
+    question: How long can the business survive a full outage?
+    kind: choice
+    values: ["1 hour", "4 hours", "24 hours", "3 days"]
+    creates: REQ
+    fields: {kind: non-functional, priority: must}
+  - id: deps
+    label: Dependency availability
+    question: Availability of the services you depend on (e.g. "identity provider 99.95%"), one per line.
+    kind: list
+    creates: CON
+    fields: {origin: technical}
+  - id: oncall
+    label: On-call
+    question: Who responds to incidents?
+    kind: choice
+    values: ["Dedicated on-call rota", "Business hours only", "Nobody yet"]
+    creates: CON
+    fields: {origin: organisational}
+sections:
+  - {id: journeys, title: Service and critical journeys, kind: prose, guidance: "What must stay up, for whom, from the critical journeys and the Requirements spec."}
+  - {id: slos, title: SLIs and SLOs, kind: table, columns: [Journey, SLI, Target, Window], guidance: "One row per critical journey; targets from the Brief's REQ entries; window 28 days unless stated."}
+  - {id: budget, title: Error budget, kind: derived, deriver: error_budget}
+  - {id: policy, title: Error budget policy, kind: prose, guidance: "What happens when the budget is spent (e.g. freeze features, prioritise reliability work)."}
+  - {id: failures, title: Failure modes, kind: table, columns: [Component, Failure mode, Effect, Detection, Mitigation], guidance: "Start from the failure-mode skeleton; one row per realistic failure."}
+  - {id: recovery, title: Backup and recovery, kind: table, columns: [Data store, Backup, RPO, RTO, Restore test], guidance: "One row per data store, against the Brief's RPO and RTO."}
+  - {id: contingency, title: Contingency plan, kind: list, guidance: "NIST SP 800-34 phases: activation and notification, recovery, reconstitution; then testing and maintenance."}
+  - {id: risks, title: Risks and gaps, kind: entries, types: [RISK]}
+  - {id: assumptions, title: Assumptions, kind: entries, types: [ASM]}

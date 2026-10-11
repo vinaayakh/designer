@@ -193,16 +193,71 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   const latestRef = useRef(latest);
   latestRef.current = latest;
 
+  // Each view's scroll and zoom (per Project) is kept across reloads, so a scene opens where you
+  // left it, in one step: the saved view is applied with the elements, not after them.
+  const viewportKey = () => `designer.viewport:${st.project.dir}:${viewRef.current}`;
+  const readViewport = (): { scrollX: number; scrollY: number; zoom: number } | null => {
+    try {
+      const v = JSON.parse(localStorage.getItem(viewportKey()) ?? "null");
+      const ok = v && [v.scrollX, v.scrollY, v.zoom].every(Number.isFinite) && v.zoom >= 0.1 && v.zoom <= 30;
+      return ok ? v : null;
+    } catch {
+      return null;
+    }
+  };
+  const viewportToSave = useRef<{ key: string; v: { scrollX: number; scrollY: number; zoom: number } } | null>(null);
+  const viewportTimer = useRef<number | undefined>(undefined);
+  const viewportShown = useRef(false); // Excalidraw's empty start (100%, 0,0) isn't a view to remember
+  const writeViewport = useCallback(() => {
+    window.clearTimeout(viewportTimer.current);
+    viewportTimer.current = undefined;
+    const p = viewportToSave.current;
+    viewportToSave.current = null;
+    if (!p) return;
+    try {
+      localStorage.setItem(p.key, JSON.stringify(p.v));
+    } catch {
+      // storage unavailable: the view just won't be remembered
+    }
+  }, []);
+  useEffect(() => {
+    window.addEventListener("pagehide", writeViewport);
+    return () => window.removeEventListener("pagehide", writeViewport);
+  }, [writeViewport]);
+
+  const showGen = useRef(0);
+  const sceneSwapping = useRef(false); // between clearing the canvas and the new scene landing: never autosave
   const show = useCallback((s: Scene, fit = true) => {
     const a = apiRef.current;
     if (!a) return;
+    const gen = ++showGen.current;
     a.setElementRenderOverrides(null);
     a.addFiles(Object.values(s.files));
-    a.updateScene({ elements: s.elements, captureUpdate: CaptureUpdateAction.NEVER });
-    a.history.clear();
-    lastSaved.current = hashElementsVersion(s.elements);
-    setUnsaved("");
-    if (fit && s.elements.length) a.setViewport({ target: s.elements.filter((e) => !e.isDeleted), fit: "scale-down", offsets: { ui: true } });
+    const saved = fit ? readViewport() : null;
+    const finish = () => {
+      if (gen !== showGen.current) return; // a newer scene took over
+      a.updateScene({ elements: s.elements, captureUpdate: CaptureUpdateAction.NEVER });
+      a.history.clear();
+      viewportShown.current = true;
+      lastSaved.current = hashElementsVersion(s.elements);
+      sceneSwapping.current = false;
+      setUnsaved("");
+      if (fit && !saved && s.elements.length) a.setViewport({ target: s.elements.filter((e) => !e.isDeleted), fit: "scale-down", offsets: { ui: true }, animation: false });
+    };
+    if (!saved) return finish();
+    // Excalidraw takes new elements at once but a new view only when React next commits, so a
+    // frame could show the diagram at the old zoom (100% after a reload). Clear the canvas, set
+    // the view, and add the elements once the view has landed.
+    sceneSwapping.current = true;
+    a.updateScene({ elements: [], appState: { scrollX: saved.scrollX, scrollY: saved.scrollY, zoom: { value: saved.zoom } as any }, captureUpdate: CaptureUpdateAction.NEVER });
+    const landed = () => {
+      const st = a.getAppState();
+      return st.zoom.value === saved.zoom && st.scrollX === saved.scrollX && st.scrollY === saved.scrollY;
+    };
+    let tries = 0;
+    const wait = () => (landed() || ++tries > 10 ? finish() : requestAnimationFrame(wait));
+    queueMicrotask(wait);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchScene = useCallback(async (v: View, n?: number): Promise<Scene> => {
@@ -527,7 +582,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   const saving = useRef(false);
   const saveNow = useCallback(async () => {
     const a = apiRef.current;
-    if (!a || modeRef.current !== "edit" || saving.current) return;
+    if (!a || modeRef.current !== "edit" || saving.current || sceneSwapping.current) return;
     window.clearTimeout(retryTimer.current);
     const els = a.getSceneElements();
     const h = hashElementsVersion(els);
@@ -594,6 +649,13 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   }, [cat, cloud, refreshGraph]);
 
   const onChange = useCallback((elements: readonly ExcalidrawElement[], appState: AppState) => {
+    // Remember where this view is scrolled and zoomed (written at most every 400 ms, and on leaving).
+    const key = viewportKey();
+    const last = viewportToSave.current?.v;
+    if (viewportShown.current && (!last || last.scrollX !== appState.scrollX || last.scrollY !== appState.scrollY || last.zoom !== appState.zoom.value)) {
+      viewportToSave.current = { key, v: { scrollX: appState.scrollX, scrollY: appState.scrollY, zoom: appState.zoom.value } };
+      if (viewportTimer.current === undefined) viewportTimer.current = window.setTimeout(writeViewport, 400);
+    }
     // Selection → Nodes for the Assistant's context and the inspector.
     const owners = new Set<string>();
     for (const id of Object.keys(appState.selectedElementIds ?? {})) {
@@ -604,7 +666,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
     }
     const sel = [...owners];
     setSelection((prev) => (prev.join() === sel.join() ? prev : sel));
-    if (modeRef.current !== "edit") return;
+    if (modeRef.current !== "edit" || sceneSwapping.current) return;
     if (hashElementsVersion(elements) === lastSaved.current) return;
     if (unsavedRef.current === "") setUnsaved("pending");
     if (unsavedRef.current === "failed") return; // the retry saves everything, these edits too

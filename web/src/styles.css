@@ -148,9 +148,10 @@ p.bad { color: var(--bad); }
 
 /* ---------- Sidebar */
 .sidebar { border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; background: var(--surface); }
-.sidebar-tabs { display: flex; gap: 18px; padding: 0 16px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+/* Wraps instead of scrolling: a scrolling bar with a hidden scrollbar hid tabs past its edge. */
+.sidebar-tabs { display: flex; flex-wrap: wrap; column-gap: 14px; padding: 0 16px; border-bottom: 1px solid var(--line); }
 .sidebar-tabs button {
-  height: 42px; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 0; background: none;
+  height: 40px; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 0; background: none; white-space: nowrap;
   color: var(--ink-3); font-weight: 500;
 }
 .sidebar-tabs button:hover:not(:disabled) { background: none; color: var(--ink); }

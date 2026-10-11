@@ -1,0 +1,84 @@
+import type { Brief, Graph, KBRecord, Pending, ReportRef, Settings, State, Version, GapReport, Issue } from "./types";
+
+/** Identifies this tab, so it can ignore its own save notifications. */
+export const CLIENT_ID = Math.random().toString(36).slice(2);
+
+async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method,
+    headers: { "X-Designer": "1", "X-Client": CLIENT_ID, ...(body !== undefined ? { "Content-Type": "application/json" } : {}) },
+    body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
+  });
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new Error(data?.error ?? `${res.status} ${res.statusText}`);
+  return data as T;
+}
+
+export const api = {
+  state: () => call<State>("GET", "/api/state"),
+  saveBrief: (b: Brief) => call<{ complete: boolean; compact: string }>("PUT", "/api/brief", b),
+  rename: (name: string) => call("PUT", "/api/project", { name }),
+
+  rough: () => call<unknown>("GET", "/api/rough"),
+  saveRough: (sceneJSON: string) => call("PUT", "/api/rough", sceneJSON),
+  versions: () => call<Version[] | null>("GET", "/api/versions"),
+  version: (n: number) => call<{ version: Version; scene: unknown }>("GET", `/api/versions/${n}`),
+  saveVersion: (scene: unknown, source: "edit" | "tidy" | "restore", base: number, summary = "") =>
+    call<Version>("POST", "/api/versions", { scene, source, base, summary }),
+  graph: (view: string) => call<{ graph: Graph; version: number }>("GET", `/api/graph/${view}`),
+
+  reports: () => call<ReportRef[] | null>("GET", "/api/reports"),
+  report: (file: string) => call<GapReport>("GET", `/api/reports/${encodeURIComponent(file)}`),
+  record: (id: string) => call<KBRecord>("GET", `/api/kb/records/${encodeURIComponent(id)}`),
+
+  precheck: () => call<Issue[] | null>("GET", "/api/precheck"),
+  convert: () => call("POST", "/api/convert", {}),
+  gapCheck: (version: number) => call("POST", "/api/gapcheck", { version }),
+  fix: (report: string, records: string[]) => call("POST", "/api/fix", { report, records }),
+
+  warm: () => call("POST", "/api/assistant/warm", {}),
+  chat: (text: string, view: string, selection: string[]) => call("POST", "/api/assistant/chat", { text, view, selection }),
+  interrupt: () => call("POST", "/api/assistant/interrupt", {}),
+  retry: () => call("POST", "/api/assistant/retry", {}),
+  resetSession: () => call("POST", "/api/assistant/reset", {}),
+
+  pending: () => call<Pending | null>("GET", "/api/proposal"),
+  simulate: (accepted: string[] | null) => call<{ graph: Graph; base: Graph }>("POST", "/api/proposal/simulate", { accepted }),
+  decide: (d: { id: string; revision: number; action: "accept" | "reject" | "reply" | "reject_change" | "clarify"; change?: string; accepted?: string[]; scene?: unknown; reply?: string }) =>
+    call<{ version?: number }>("POST", "/api/proposal/decision", d),
+
+  settings: () => call<Settings>("GET", "/api/settings"),
+  saveSettings: (s: Settings) => call<Settings>("PUT", "/api/settings", s),
+};
+
+export type ServerEvent = { type: string; data: any };
+
+/** Subscribes to the runtime's event stream, reconnecting automatically. */
+export function subscribe(onEvent: (e: ServerEvent) => void, onConnection: (up: boolean) => void): () => void {
+  let es: EventSource | null = null;
+  let closed = false;
+  let retry: number | undefined;
+  const open = () => {
+    es = new EventSource("/api/events");
+    es.onopen = () => onConnection(true);
+    es.onmessage = (m) => {
+      try {
+        onEvent(JSON.parse(m.data));
+      } catch {
+        /* ignore malformed */
+      }
+    };
+    es.onerror = () => {
+      onConnection(false);
+      es?.close();
+      if (!closed) retry = window.setTimeout(open, 1500);
+    };
+  };
+  open();
+  return () => {
+    closed = true;
+    window.clearTimeout(retry);
+    es?.close();
+  };
+}

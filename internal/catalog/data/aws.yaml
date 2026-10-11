@@ -1,0 +1,111 @@
+# AWS Cloud Catalog, v1 (ticket 017).
+# Entry: id, name (full official name), kind, icon (key into the downloaded icon set; null → generic),
+# hipaa (on AWS's HIPAA Eligible Services list), docs, aliases.
+# TODO before release: hipaa flags were written from memory and are UNVERIFIED (hipaa_as_of is null
+# until checked against https://aws.amazon.com/compliance/hipaa-eligible-services-reference/).
+# Icon keys are filled in by the icon-sync script once the icon download is built.
+provider: aws
+display: AWS
+group_names: { network: VPC, account: AWS account, zone: Availability Zone }
+hipaa_as_of: null
+icon_set: null
+
+services:
+  # compute
+  - { id: aws.ec2, name: Amazon EC2, kind: compute.vm, hipaa: true, aliases: [ec2, instance, vm, server] }
+  - { id: aws.lightsail, name: Amazon Lightsail, kind: compute.vm, hipaa: true, aliases: [lightsail, vps] }
+  - { id: aws.ecs-fargate, name: Amazon ECS on AWS Fargate, kind: compute.container, hipaa: true, aliases: [ecs, fargate, containers, docker] }
+  - { id: aws.ecs-ec2, name: Amazon ECS on EC2, kind: compute.container, hipaa: true, aliases: [ecs] }
+  - { id: aws.app-runner, name: AWS App Runner, kind: compute.container, hipaa: true, aliases: [app runner] }
+  - { id: aws.eks, name: Amazon EKS, kind: compute.kubernetes, hipaa: true, aliases: [eks, kubernetes, k8s] }
+  - { id: aws.lambda, name: AWS Lambda, kind: compute.function, hipaa: true, aliases: [lambda, function, serverless] }
+  - { id: aws.elastic-beanstalk, name: AWS Elastic Beanstalk, kind: compute.web-app, hipaa: true, aliases: [beanstalk] }
+  - { id: aws.amplify-hosting, name: AWS Amplify Hosting, kind: compute.web-app, hipaa: false, aliases: [amplify, static site, spa hosting] }
+  - { id: aws.batch, name: AWS Batch, kind: compute.batch, hipaa: true, aliases: [batch, jobs] }
+  - { id: aws.glue, name: AWS Glue, kind: compute.batch, hipaa: true, aliases: [glue, etl] }
+  - { id: aws.emr, name: Amazon EMR, kind: compute.batch, hipaa: true, aliases: [emr, spark, hadoop] }
+  - { id: aws.bedrock, name: Amazon Bedrock, kind: compute.ai-model, hipaa: true, aliases: [bedrock, llm, genai] }
+  - { id: aws.sagemaker, name: Amazon SageMaker AI, kind: compute.ai-model, hipaa: true, aliases: [sagemaker, ml, model endpoint] }
+
+  # data
+  - { id: aws.rds-postgres, name: Amazon RDS for PostgreSQL, kind: data.relational, hipaa: true, aliases: [rds, postgres, postgresql] }
+  - { id: aws.rds-mysql, name: Amazon RDS for MySQL, kind: data.relational, hipaa: true, aliases: [rds, mysql] }
+  - { id: aws.rds-mariadb, name: Amazon RDS for MariaDB, kind: data.relational, hipaa: true, aliases: [rds, mariadb] }
+  - { id: aws.rds-sqlserver, name: Amazon RDS for SQL Server, kind: data.relational, hipaa: true, aliases: [rds, sql server, mssql] }
+  - { id: aws.rds-oracle, name: Amazon RDS for Oracle, kind: data.relational, hipaa: true, aliases: [rds, oracle] }
+  - { id: aws.aurora-postgres, name: Amazon Aurora PostgreSQL-Compatible Edition, kind: data.relational, hipaa: true, aliases: [aurora, postgres] }
+  - { id: aws.aurora-mysql, name: Amazon Aurora MySQL-Compatible Edition, kind: data.relational, hipaa: true, aliases: [aurora, mysql] }
+  - { id: aws.aurora-dsql, name: Amazon Aurora DSQL, kind: data.relational, hipaa: false, aliases: [dsql, distributed sql] }
+  - { id: aws.documentdb, name: Amazon DocumentDB (with MongoDB compatibility), kind: data.document, hipaa: true, aliases: [documentdb, mongodb, mongo] }
+  - { id: aws.dynamodb, name: Amazon DynamoDB, kind: data.key-value, hipaa: true, aliases: [dynamodb, dynamo, nosql] }
+  - { id: aws.keyspaces, name: Amazon Keyspaces (for Apache Cassandra), kind: data.key-value, hipaa: true, aliases: [keyspaces, cassandra, wide column] }
+  - { id: aws.neptune, name: Amazon Neptune, kind: data.graph, hipaa: true, aliases: [neptune, graph] }
+  - { id: aws.elasticache-redis, name: Amazon ElastiCache (Redis OSS), kind: data.cache, hipaa: true, aliases: [elasticache, redis, cache] }
+  - { id: aws.elasticache-valkey, name: Amazon ElastiCache (Valkey), kind: data.cache, hipaa: true, aliases: [elasticache, valkey, cache] }
+  - { id: aws.elasticache-memcached, name: Amazon ElastiCache (Memcached), kind: data.cache, hipaa: true, aliases: [elasticache, memcached, cache] }
+  - { id: aws.memorydb, name: Amazon MemoryDB, kind: data.cache, hipaa: true, aliases: [memorydb, redis] }
+  - { id: aws.dax, name: Amazon DynamoDB Accelerator (DAX), kind: data.cache, hipaa: true, aliases: [dax] }
+  - { id: aws.s3, name: Amazon S3, kind: data.object, hipaa: true, aliases: [s3, bucket, blob, object storage] }
+  - { id: aws.s3-glacier, name: Amazon S3 Glacier, kind: data.object, hipaa: true, aliases: [glacier, archive] }
+  - { id: aws.efs, name: Amazon EFS, kind: data.file, hipaa: true, aliases: [efs, nfs, shared file system] }
+  - { id: aws.fsx, name: Amazon FSx, kind: data.file, hipaa: true, aliases: [fsx, smb, windows file share, lustre] }
+  - { id: aws.opensearch, name: Amazon OpenSearch Service, kind: data.search, hipaa: true, aliases: [opensearch, elasticsearch, search] }
+  - { id: aws.redshift, name: Amazon Redshift, kind: data.warehouse, hipaa: true, aliases: [redshift, warehouse] }
+  - { id: aws.athena, name: Amazon Athena, kind: data.warehouse, hipaa: true, aliases: [athena, query s3] }
+  - { id: aws.timestream, name: Amazon Timestream, kind: data.time-series, hipaa: true, aliases: [timestream, time series] }
+  - { id: aws.backup, name: AWS Backup, kind: data.backup, hipaa: true, aliases: [backup, vault] }
+
+  # network
+  - { id: aws.route53, name: Amazon Route 53, kind: network.dns, hipaa: true, aliases: [route 53, route53, dns] }
+  - { id: aws.cloudfront, name: Amazon CloudFront, kind: network.cdn, hipaa: true, aliases: [cloudfront, cdn] }
+  - { id: aws.global-accelerator, name: AWS Global Accelerator, kind: network.cdn, hipaa: true, aliases: [global accelerator, anycast] }
+  - { id: aws.alb, name: Application Load Balancer, kind: network.load-balancer, hipaa: true, aliases: [alb, elb, load balancer] }
+  - { id: aws.nlb, name: Network Load Balancer, kind: network.load-balancer, hipaa: true, aliases: [nlb, elb, tcp load balancer] }
+  - { id: aws.gwlb, name: Gateway Load Balancer, kind: network.load-balancer, hipaa: true, aliases: [gwlb, appliance] }
+  - { id: aws.api-gateway, name: Amazon API Gateway, kind: network.api-gateway, hipaa: true, aliases: [api gateway, apigw, rest api, http api] }
+  - { id: aws.appsync, name: AWS AppSync, kind: network.api-gateway, hipaa: true, aliases: [appsync, graphql] }
+  - { id: aws.internet-gateway, name: Internet gateway, kind: network.internet-gateway, hipaa: true, aliases: [igw, internet gateway] }
+  - { id: aws.nat-gateway, name: NAT gateway, kind: network.nat, hipaa: true, aliases: [nat, nat gateway] }
+  - { id: aws.vpc-gateway-endpoint, name: VPC gateway endpoint, kind: network.private-endpoint, hipaa: true, aliases: [gateway endpoint, s3 endpoint, dynamodb endpoint] }
+  - { id: aws.privatelink, name: AWS PrivateLink (interface endpoint), kind: network.private-endpoint, hipaa: true, aliases: [privatelink, interface endpoint, vpc endpoint] }
+  - { id: aws.transit-gateway, name: AWS Transit Gateway, kind: network.transit, hipaa: true, aliases: [transit gateway, tgw] }
+  - { id: aws.vpc-peering, name: VPC peering, kind: network.transit, hipaa: true, aliases: [peering] }
+  - { id: aws.site-to-site-vpn, name: AWS Site-to-Site VPN, kind: network.hybrid-link, hipaa: true, aliases: [vpn, ipsec] }
+  - { id: aws.client-vpn, name: AWS Client VPN, kind: network.hybrid-link, hipaa: true, aliases: [client vpn, remote access] }
+  - { id: aws.direct-connect, name: AWS Direct Connect, kind: network.hybrid-link, hipaa: true, aliases: [direct connect, dx] }
+
+  # security
+  - { id: aws.cognito, name: Amazon Cognito, kind: security.identity, hipaa: true, aliases: [cognito, user pool, login, auth] }
+  - { id: aws.iam-identity-center, name: AWS IAM Identity Center, kind: security.identity, hipaa: true, aliases: [sso, identity center, workforce] }
+  - { id: aws.kms, name: AWS Key Management Service (AWS KMS), kind: security.key-management, hipaa: true, aliases: [kms, keys, cmk] }
+  - { id: aws.cloudhsm, name: AWS CloudHSM, kind: security.key-management, hipaa: true, aliases: [hsm, cloudhsm] }
+  - { id: aws.secrets-manager, name: AWS Secrets Manager, kind: security.secrets, hipaa: true, aliases: [secrets manager, secrets, credentials] }
+  - { id: aws.ssm-parameter-store, name: AWS Systems Manager Parameter Store, kind: security.secrets, hipaa: true, aliases: [parameter store, ssm] }
+  - { id: aws.waf, name: AWS WAF, kind: security.waf, hipaa: true, aliases: [waf] }
+  - { id: aws.network-firewall, name: AWS Network Firewall, kind: security.firewall, hipaa: true, aliases: [network firewall, firewall] }
+  - { id: aws.shield, name: AWS Shield, kind: security.ddos, hipaa: true, aliases: [shield, ddos] }
+  - { id: aws.guardduty, name: Amazon GuardDuty, kind: security.threat-detection, hipaa: true, aliases: [guardduty, threat detection] }
+  - { id: aws.security-hub, name: AWS Security Hub, kind: security.threat-detection, hipaa: true, aliases: [security hub, posture] }
+  - { id: aws.inspector, name: Amazon Inspector, kind: security.threat-detection, hipaa: true, aliases: [inspector, vulnerability scanning] }
+  - { id: aws.macie, name: Amazon Macie, kind: security.threat-detection, hipaa: true, aliases: [macie, pii discovery] }
+
+  # messaging
+  - { id: aws.sqs, name: Amazon SQS, kind: messaging.queue, hipaa: true, aliases: [sqs, queue] }
+  - { id: aws.mq, name: Amazon MQ, kind: messaging.queue, hipaa: true, aliases: [amazon mq, rabbitmq, activemq] }
+  - { id: aws.sns, name: Amazon SNS, kind: messaging.topic, hipaa: true, aliases: [sns, pub/sub, fan-out] }
+  - { id: aws.kinesis-data-streams, name: Amazon Kinesis Data Streams, kind: messaging.stream, hipaa: true, aliases: [kinesis, stream] }
+  - { id: aws.data-firehose, name: Amazon Data Firehose, kind: messaging.stream, hipaa: true, aliases: [firehose, delivery stream] }
+  - { id: aws.msk, name: Amazon MSK, kind: messaging.stream, hipaa: true, aliases: [msk, kafka] }
+  - { id: aws.eventbridge, name: Amazon EventBridge, kind: messaging.event-bus, hipaa: true, aliases: [eventbridge, event bus, events] }
+  - { id: aws.step-functions, name: AWS Step Functions, kind: messaging.workflow, hipaa: true, aliases: [step functions, state machine, workflow] }
+  - { id: aws.ses, name: Amazon SES, kind: messaging.notification, hipaa: true, aliases: [ses, email] }
+  - { id: aws.pinpoint, name: Amazon Pinpoint, kind: messaging.notification, hipaa: true, aliases: [pinpoint, sms, push] }
+
+  # observability
+  - { id: aws.cloudwatch-logs, name: Amazon CloudWatch Logs, kind: observability.logs, hipaa: true, aliases: [cloudwatch logs, logs, logging] }
+  - { id: aws.cloudwatch, name: Amazon CloudWatch, kind: observability.metrics, hipaa: true, aliases: [cloudwatch, metrics, alarms, monitoring] }
+  - { id: aws.managed-prometheus, name: Amazon Managed Service for Prometheus, kind: observability.metrics, hipaa: true, aliases: [prometheus] }
+  - { id: aws.managed-grafana, name: Amazon Managed Grafana, kind: observability.metrics, hipaa: true, aliases: [grafana, dashboards] }
+  - { id: aws.x-ray, name: AWS X-Ray, kind: observability.tracing, hipaa: true, aliases: [x-ray, xray, tracing] }
+  - { id: aws.cloudtrail, name: AWS CloudTrail, kind: observability.audit, hipaa: true, aliases: [cloudtrail, audit log] }
+  - { id: aws.config, name: AWS Config, kind: observability.audit, hipaa: true, aliases: [aws config, config rules, compliance] }

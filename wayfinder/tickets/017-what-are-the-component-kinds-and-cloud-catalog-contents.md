@@ -41,7 +41,7 @@ Decided with vinu, 2026-10-10.
 - **Seven categories:** the six from the layout ticket plus **`observability`**. Clients and third-party SaaS are `external.*`; analytics is `data.warehouse` / `compute.batch`.
 - The pilot's `data.keyvalue` is renamed `data.key-value` in `kb/records/`.
 
-**The v1 Kind list (46)**
+**The v1 Kind list (48)**
 
 | Category | Kinds |
 |---|---|

@@ -1,0 +1,103 @@
+# Azure Cloud Catalog, v1 (ticket 017). Same entry shape as aws.yaml.
+# TODO before release: hipaa flags were written from memory and are UNVERIFIED (hipaa_as_of is null
+# until checked against Microsoft's HIPAA/HITRUST in-scope services list).
+provider: azure
+display: Azure
+group_names: { network: VNet, account: Azure subscription, zone: Availability Zone }
+hipaa_as_of: null
+icon_set: null
+
+services:
+  # compute
+  - { id: azure.vm, name: Azure Virtual Machines, kind: compute.vm, hipaa: true, aliases: [vm, virtual machine, server] }
+  - { id: azure.vmss, name: Azure Virtual Machine Scale Sets, kind: compute.vm, hipaa: true, aliases: [vmss, scale set] }
+  - { id: azure.container-apps, name: Azure Container Apps, kind: compute.container, hipaa: true, aliases: [container apps, aca, containers] }
+  - { id: azure.container-instances, name: Azure Container Instances, kind: compute.container, hipaa: true, aliases: [aci, container instances] }
+  - { id: azure.aks, name: Azure Kubernetes Service (AKS), kind: compute.kubernetes, hipaa: true, aliases: [aks, kubernetes, k8s] }
+  - { id: azure.functions, name: Azure Functions, kind: compute.function, hipaa: true, aliases: [functions, function app, serverless] }
+  - { id: azure.app-service, name: Azure App Service, kind: compute.web-app, hipaa: true, aliases: [app service, web app] }
+  - { id: azure.static-web-apps, name: Azure Static Web Apps, kind: compute.web-app, hipaa: false, aliases: [static web apps, spa hosting] }
+  - { id: azure.batch, name: Azure Batch, kind: compute.batch, hipaa: true, aliases: [batch, jobs] }
+  - { id: azure.data-factory, name: Azure Data Factory, kind: compute.batch, hipaa: true, aliases: [data factory, adf, etl] }
+  - { id: azure.hdinsight, name: Azure HDInsight, kind: compute.batch, hipaa: true, aliases: [hdinsight, hadoop, spark] }
+  - { id: azure.stream-analytics, name: Azure Stream Analytics, kind: compute.batch, hipaa: true, aliases: [stream analytics] }
+  - { id: azure.databricks, name: Azure Databricks, kind: compute.batch, hipaa: true, aliases: [databricks, spark] }
+  - { id: azure.openai, name: Azure OpenAI in Azure AI Foundry Models, kind: compute.ai-model, hipaa: true, aliases: [azure openai, openai, llm, genai] }
+  - { id: azure.machine-learning, name: Azure Machine Learning, kind: compute.ai-model, hipaa: true, aliases: [azure ml, model endpoint] }
+
+  # data
+  - { id: azure.sql-database, name: Azure SQL Database, kind: data.relational, hipaa: true, aliases: [azure sql, sql server, mssql] }
+  - { id: azure.sql-managed-instance, name: Azure SQL Managed Instance, kind: data.relational, hipaa: true, aliases: [sql mi, managed instance] }
+  - { id: azure.postgres-flexible, name: Azure Database for PostgreSQL flexible server, kind: data.relational, hipaa: true, aliases: [postgres, postgresql] }
+  - { id: azure.mysql-flexible, name: Azure Database for MySQL flexible server, kind: data.relational, hipaa: true, aliases: [mysql] }
+  - { id: azure.cosmos-postgres, name: Azure Cosmos DB for PostgreSQL, kind: data.relational, hipaa: true, aliases: [cosmos postgres, citus] }
+  - { id: azure.cosmos-nosql, name: Azure Cosmos DB for NoSQL, kind: data.document, hipaa: true, aliases: [cosmos, cosmos db, document] }
+  - { id: azure.cosmos-mongodb, name: Azure Cosmos DB for MongoDB, kind: data.document, hipaa: true, aliases: [cosmos mongo, mongodb] }
+  - { id: azure.cosmos-table, name: Azure Cosmos DB for Table, kind: data.key-value, hipaa: true, aliases: [cosmos table] }
+  - { id: azure.cosmos-cassandra, name: Azure Cosmos DB for Apache Cassandra, kind: data.key-value, hipaa: true, aliases: [cassandra] }
+  - { id: azure.table-storage, name: Azure Table Storage, kind: data.key-value, hipaa: true, aliases: [table storage] }
+  - { id: azure.cosmos-gremlin, name: Azure Cosmos DB for Apache Gremlin, kind: data.graph, hipaa: true, aliases: [gremlin, graph] }
+  - { id: azure.managed-redis, name: Azure Managed Redis, kind: data.cache, hipaa: true, aliases: [redis, cache] }
+  - { id: azure.cache-redis, name: Azure Cache for Redis, kind: data.cache, hipaa: true, aliases: [redis, cache] }
+  - { id: azure.blob-storage, name: Azure Blob Storage, kind: data.object, hipaa: true, aliases: [blob, storage account, object storage] }
+  - { id: azure.data-lake-storage, name: Azure Data Lake Storage, kind: data.object, hipaa: true, aliases: [adls, data lake] }
+  - { id: azure.files, name: Azure Files, kind: data.file, hipaa: true, aliases: [azure files, smb, file share] }
+  - { id: azure.netapp-files, name: Azure NetApp Files, kind: data.file, hipaa: true, aliases: [netapp, nfs] }
+  - { id: azure.ai-search, name: Azure AI Search, kind: data.search, hipaa: true, aliases: [cognitive search, ai search, search] }
+  - { id: azure.synapse, name: Azure Synapse Analytics, kind: data.warehouse, hipaa: true, aliases: [synapse, warehouse] }
+  - { id: azure.fabric, name: Microsoft Fabric, kind: data.warehouse, hipaa: true, aliases: [fabric, lakehouse] }
+  - { id: azure.data-explorer, name: Azure Data Explorer, kind: data.time-series, hipaa: true, aliases: [adx, kusto, time series] }
+  - { id: azure.backup, name: Azure Backup, kind: data.backup, hipaa: true, aliases: [backup, recovery services vault] }
+
+  # network
+  - { id: azure.dns, name: Azure DNS, kind: network.dns, hipaa: true, aliases: [dns] }
+  - { id: azure.private-dns, name: Azure Private DNS, kind: network.dns, hipaa: true, aliases: [private dns] }
+  - { id: azure.front-door, name: Azure Front Door, kind: network.cdn, hipaa: true, aliases: [front door, afd, cdn] }
+  - { id: azure.cdn, name: Azure Content Delivery Network, kind: network.cdn, hipaa: true, aliases: [cdn] }
+  - { id: azure.load-balancer, name: Azure Load Balancer, kind: network.load-balancer, hipaa: true, aliases: [load balancer, lb] }
+  - { id: azure.application-gateway, name: Azure Application Gateway, kind: network.load-balancer, hipaa: true, aliases: [app gateway, application gateway, l7] }
+  - { id: azure.traffic-manager, name: Azure Traffic Manager, kind: network.load-balancer, hipaa: true, aliases: [traffic manager, dns load balancing] }
+  - { id: azure.api-management, name: Azure API Management, kind: network.api-gateway, hipaa: true, aliases: [apim, api management, api gateway] }
+  - { id: azure.public-ip, name: Azure public IP address, kind: network.internet-gateway, hipaa: true, aliases: [public ip, internet] }
+  - { id: azure.nat-gateway, name: Azure NAT Gateway, kind: network.nat, hipaa: true, aliases: [nat, nat gateway] }
+  - { id: azure.private-endpoint, name: Azure Private Endpoint (Azure Private Link), kind: network.private-endpoint, hipaa: true, aliases: [private endpoint, private link] }
+  - { id: azure.service-endpoint, name: Virtual network service endpoint, kind: network.private-endpoint, hipaa: true, aliases: [service endpoint] }
+  - { id: azure.virtual-wan, name: Azure Virtual WAN, kind: network.transit, hipaa: true, aliases: [virtual wan, vwan, hub] }
+  - { id: azure.vnet-peering, name: Virtual network peering, kind: network.transit, hipaa: true, aliases: [peering] }
+  - { id: azure.vpn-gateway, name: Azure VPN Gateway, kind: network.hybrid-link, hipaa: true, aliases: [vpn, vpn gateway] }
+  - { id: azure.expressroute, name: Azure ExpressRoute, kind: network.hybrid-link, hipaa: true, aliases: [expressroute, dedicated link] }
+  - { id: azure.bastion, name: Azure Bastion, kind: network.hybrid-link, hipaa: true, aliases: [bastion, jump box, remote access] }
+
+  # security
+  - { id: azure.entra-id, name: Microsoft Entra ID, kind: security.identity, hipaa: true, aliases: [entra, azure ad, aad, sso] }
+  - { id: azure.entra-external-id, name: Microsoft Entra External ID, kind: security.identity, hipaa: true, aliases: [external id, b2c, customer identity, login] }
+  - { id: azure.key-vault-keys, name: Azure Key Vault (keys), kind: security.key-management, hipaa: true, aliases: [key vault, keys, cmk] }
+  - { id: azure.managed-hsm, name: Azure Key Vault Managed HSM, kind: security.key-management, hipaa: true, aliases: [hsm, managed hsm] }
+  - { id: azure.key-vault-secrets, name: Azure Key Vault (secrets), kind: security.secrets, hipaa: true, aliases: [key vault, secrets] }
+  - { id: azure.waf, name: Azure Web Application Firewall, kind: security.waf, hipaa: true, aliases: [waf] }
+  - { id: azure.firewall, name: Azure Firewall, kind: security.firewall, hipaa: true, aliases: [firewall] }
+  - { id: azure.ddos-protection, name: Azure DDoS Protection, kind: security.ddos, hipaa: true, aliases: [ddos] }
+  - { id: azure.defender-for-cloud, name: Microsoft Defender for Cloud, kind: security.threat-detection, hipaa: true, aliases: [defender, posture, threat detection] }
+  - { id: azure.sentinel, name: Microsoft Sentinel, kind: security.threat-detection, hipaa: true, aliases: [sentinel, siem] }
+
+  # messaging
+  - { id: azure.service-bus-queue, name: Azure Service Bus (queues), kind: messaging.queue, hipaa: true, aliases: [service bus, queue] }
+  - { id: azure.queue-storage, name: Azure Queue Storage, kind: messaging.queue, hipaa: true, aliases: [storage queue, queue] }
+  - { id: azure.service-bus-topic, name: Azure Service Bus (topics), kind: messaging.topic, hipaa: true, aliases: [service bus topic, pub/sub] }
+  - { id: azure.web-pubsub, name: Azure Web PubSub, kind: messaging.topic, hipaa: true, aliases: [web pubsub, websockets, signalr] }
+  - { id: azure.signalr, name: Azure SignalR Service, kind: messaging.topic, hipaa: true, aliases: [signalr, real-time] }
+  - { id: azure.iot-hub, name: Azure IoT Hub, kind: messaging.stream, hipaa: true, aliases: [iot hub, devices, telemetry] }
+  - { id: azure.event-hubs, name: Azure Event Hubs, kind: messaging.stream, hipaa: true, aliases: [event hubs, kafka, stream] }
+  - { id: azure.event-grid, name: Azure Event Grid, kind: messaging.event-bus, hipaa: true, aliases: [event grid, events] }
+  - { id: azure.logic-apps, name: Azure Logic Apps, kind: messaging.workflow, hipaa: true, aliases: [logic apps, workflow] }
+  - { id: azure.durable-functions, name: Azure Durable Functions, kind: messaging.workflow, hipaa: true, aliases: [durable functions, orchestration] }
+  - { id: azure.communication-services, name: Azure Communication Services, kind: messaging.notification, hipaa: true, aliases: [acs, email, sms] }
+  - { id: azure.notification-hubs, name: Azure Notification Hubs, kind: messaging.notification, hipaa: true, aliases: [notification hubs, push] }
+
+  # observability
+  - { id: azure.log-analytics, name: Azure Monitor Logs (Log Analytics), kind: observability.logs, hipaa: true, aliases: [log analytics, logs, kusto] }
+  - { id: azure.monitor, name: Azure Monitor, kind: observability.metrics, hipaa: true, aliases: [monitor, metrics, alerts] }
+  - { id: azure.managed-grafana, name: Azure Managed Grafana, kind: observability.metrics, hipaa: true, aliases: [grafana] }
+  - { id: azure.application-insights, name: Application Insights, kind: observability.tracing, hipaa: true, aliases: [app insights, apm, tracing] }
+  - { id: azure.activity-log, name: Azure Activity Log, kind: observability.audit, hipaa: true, aliases: [activity log, audit] }
+  - { id: azure.policy, name: Azure Policy, kind: observability.audit, hipaa: true, aliases: [policy, compliance] }

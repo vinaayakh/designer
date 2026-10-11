@@ -1,0 +1,73 @@
+# Component Kinds (48) and group kinds, v1.
+# Decided in "What are the Component Kinds and Cloud Catalog contents?" (ticket 017).
+# ID = <category>.<name>; the prefix IS the category (Record globs + card tint).
+# gloss: a few words, shipped in the static system prompt. icon: Tabler (outline) name.
+# holds_data: the Kind may carry a Data Classification (holds or receives data).
+categories: [compute, data, network, security, messaging, observability, external]
+
+kinds:
+  # compute
+  - { id: compute.vm, gloss: virtual machine, icon: server }
+  - { id: compute.container, gloss: managed container service, icon: box }
+  - { id: compute.kubernetes, gloss: Kubernetes cluster, icon: hexagons }
+  - { id: compute.function, gloss: serverless function, icon: lambda }
+  - { id: compute.web-app, gloss: PaaS web app hosting, icon: app-window }
+  - { id: compute.batch, gloss: batch jobs / ETL, icon: stack-2 }
+  - { id: compute.ai-model, gloss: hosted AI model endpoint, icon: brain }
+  # data
+  - { id: data.relational, gloss: relational database, icon: database, holds_data: true }
+  - { id: data.document, gloss: document database, icon: file-database, holds_data: true }
+  - { id: data.key-value, gloss: key-value store, icon: key, holds_data: true }
+  - { id: data.graph, gloss: graph database, icon: affiliate, holds_data: true }
+  - { id: data.cache, gloss: in-memory cache, icon: bolt, holds_data: true }
+  - { id: data.object, gloss: object storage, icon: bucket, holds_data: true }
+  - { id: data.file, gloss: shared file system, icon: folders, holds_data: true }
+  - { id: data.search, gloss: search index, icon: zoom-code, holds_data: true }
+  - { id: data.warehouse, gloss: data warehouse / analytics, icon: building-warehouse, holds_data: true }
+  - { id: data.time-series, gloss: time-series database, icon: chart-line, holds_data: true }
+  - { id: data.backup, gloss: backup vault, icon: archive, holds_data: true }
+  # network
+  - { id: network.dns, gloss: DNS, icon: world-www }
+  - { id: network.cdn, gloss: CDN / edge cache, icon: world-bolt }
+  - { id: network.load-balancer, gloss: load balancer, icon: arrows-split }
+  - { id: network.api-gateway, gloss: API gateway, icon: api }
+  - { id: network.internet-gateway, gloss: internet gateway, icon: world }
+  - { id: network.nat, gloss: NAT gateway, icon: arrows-exchange }
+  - { id: network.private-endpoint, gloss: private endpoint to a service, icon: plug-connected }
+  - { id: network.transit, gloss: transit hub between networks, icon: route }
+  - { id: network.hybrid-link, gloss: VPN or dedicated link to on-prem, icon: link }
+  # security
+  - { id: security.identity, gloss: user identity provider, icon: id-badge-2 }
+  - { id: security.key-management, gloss: encryption key management, icon: key }
+  - { id: security.secrets, gloss: secrets store, icon: lock }
+  - { id: security.waf, gloss: web application firewall, icon: shield-check }
+  - { id: security.firewall, gloss: network firewall, icon: wall }
+  - { id: security.ddos, gloss: DDoS protection, icon: shield-bolt }
+  - { id: security.threat-detection, gloss: threat detection, icon: radar }
+  # messaging
+  - { id: messaging.queue, gloss: message queue, icon: list-details, holds_data: true }
+  - { id: messaging.topic, gloss: pub/sub topic, icon: broadcast, holds_data: true }
+  - { id: messaging.stream, gloss: event stream, icon: timeline-event, holds_data: true }
+  - { id: messaging.event-bus, gloss: event bus / router, icon: route-2, holds_data: true }
+  - { id: messaging.workflow, gloss: workflow orchestration, icon: hierarchy }
+  - { id: messaging.notification, gloss: email / SMS / push, icon: mail }
+  # observability
+  - { id: observability.logs, gloss: log store, icon: file-text, holds_data: true }
+  - { id: observability.metrics, gloss: metrics and alerts, icon: chart-histogram }
+  - { id: observability.tracing, gloss: distributed tracing, icon: timeline }
+  - { id: observability.audit, gloss: audit trail, icon: file-certificate, holds_data: true }
+  # external
+  - { id: external.user, gloss: a person / actor, icon: user }
+  - { id: external.client, gloss: browser / mobile / desktop app, icon: device-mobile }
+  - { id: external.service, gloss: third-party API or SaaS, icon: cloud, holds_data: true }
+  - { id: external.system, gloss: partner, on-prem or legacy system, icon: building, holds_data: true }
+
+group_kinds:
+  - { id: region, gloss: cloud region, icon: map-pin }
+  - { id: zone, gloss: availability zone, icon: layout-columns }
+  - { id: network, gloss: virtual network (VPC / VNet), icon: network }
+  - { id: subnet, gloss: "subnet: public, private or isolated", icon: layout-grid, tiers: [public, private, isolated] }
+  - { id: account, gloss: cloud account / subscription, icon: building-bank }
+  - { id: boundary, gloss: trust zone (on-prem, third party, DMZ), icon: border-outer }
+
+data_classes: [PHI, PII, confidential, public]   # badge order: most sensitive first

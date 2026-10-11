@@ -1,0 +1,145 @@
+# Design Brief schema, version 1.
+# The one source for the wizard, the runtime validator and the Knowledge Base CI.
+# Decided in "What are the Design Brief field IDs and answer values?" (ticket 018).
+version: 1
+fields:
+  - id: cloud
+    label: Target cloud
+    question: Which cloud will this run on?
+    required: true
+    values:
+      - { id: generic, label: Generic (provider-neutral), hint: Component Kinds only, no vendor services }
+      - { id: aws, label: AWS, hint: Uses the AWS Cloud Catalog }
+      - { id: azure, label: Azure, hint: Uses the Azure Cloud Catalog }
+
+  - id: compliance
+    label: Compliance
+    question: Which compliance regimes must it meet?
+    required: true
+    multi: true
+    exclusive: none
+    values:
+      - { id: none, label: None, hint: No regulated data }
+      - { id: soc2, label: SOC 2, hint: Customers expect a SOC 2 report (common for B2B SaaS) }
+      - { id: hipaa, label: HIPAA, hint: Handles US health information (PHI) }
+
+  - id: cap
+    label: CAP trade-off
+    question: The network between two of your servers breaks for two minutes. A user tries to save something. What should happen?
+    help: >-
+      When parts of a distributed system can't reach each other (a network partition), it must choose:
+      refuse or delay requests so every copy stays correct (CP), or keep answering and reconcile
+      conflicting copies afterwards (AP). "CA" only exists on a single machine, so it isn't offered.
+    required: true
+    values:
+      - { id: cp, label: "Make them wait or show an error", hint: "CP: stay correct, may refuse requests (e.g. a bank transfer)" }
+      - { id: ap, label: "Accept it and sort out conflicts later", hint: "AP: stay up, may serve stale data (e.g. a social feed)" }
+
+  - id: users
+    label: Expected users
+    question: Roughly how many people will use it?
+    values:
+      - { id: lt-1k, label: "< 1k" }
+      - { id: 1k-100k, label: "1k–100k" }
+      - { id: 100k-1m, label: "100k–1M" }
+      - { id: 1m-plus, label: "1M+" }
+
+  - id: latency
+    label: Latency
+    question: How fast must a typical request feel?
+    values:
+      - { id: seconds, label: Seconds are fine }
+      - { id: lt-300ms, label: "Snappy (< 300 ms)" }
+      - { id: lt-50ms, label: "Real-time (< 50 ms)" }
+
+  - id: throughput
+    label: Peak throughput
+    question: What is the busiest load you expect?
+    values:
+      - { id: lt-100, label: "< 100 req/s" }
+      - { id: 100-1k, label: "100–1k req/s" }
+      - { id: 1k-10k, label: "1k–10k req/s" }
+      - { id: 10k-plus, label: "10k+ req/s" }
+
+  - id: read_write_bias
+    short: rw
+    label: Read/write bias
+    question: Is it mostly reading or mostly writing data?
+    values:
+      - { id: read-heavy, label: Read-heavy }
+      - { id: balanced, label: Balanced }
+      - { id: write-heavy, label: Write-heavy }
+
+  - id: availability
+    label: Availability target
+    question: How much downtime is acceptable per year?
+    values:
+      - { id: "99", label: "99% (~3.5 days)" }
+      - { id: "99.9", label: "99.9% (~9 h)" }
+      - { id: "99.95", label: "99.95% (~4.4 h)" }
+      - { id: "99.99", label: "99.99% (~53 min)" }
+
+  - id: data_volume
+    label: Data volume & growth
+    question: How much data, and how fast does it grow?
+    values:
+      - { id: gb-slow, label: "GBs, slow growth" }
+      - { id: tb-steady, label: "TBs, steady growth" }
+      - { id: tb-fast, label: "TBs, fast growth" }
+      - { id: pb, label: PBs }
+
+  - id: rpo
+    label: RPO (data loss)
+    question: After a disaster, how much recent data can you afford to lose?
+    values:
+      - { id: 1d, label: A day }
+      - { id: 1h, label: An hour }
+      - { id: minutes, label: Minutes }
+      - { id: zero, label: None }
+
+  - id: rto
+    label: RTO (recovery time)
+    question: How long can you be down while recovering?
+    values:
+      - { id: 1d, label: A day }
+      - { id: hours, label: Hours }
+      - { id: minutes, label: Minutes }
+      - { id: seconds, label: Seconds }
+
+  - id: regions
+    label: Regions
+    question: Where are your users served from?
+    screen: regions
+    values:
+      - { id: single, label: One region }
+      - { id: multi, label: Multi-region }
+
+  - id: residency
+    label: Data residency
+    question: Must data stay in one place?
+    screen: regions
+    values:
+      - { id: none, label: No requirement }
+      - { id: eu, label: Data must stay in the EU }
+      - { id: us, label: Data must stay in the US }
+
+  - id: budget
+    label: Budget sensitivity
+    question: Cost first or performance first?
+    values:
+      - { id: cost-first, label: Lowest cost }
+      - { id: balanced, label: Balanced }
+      - { id: performance-first, label: Performance first }
+
+  - id: ops_maturity
+    label: Team / ops maturity
+    question: Who will run this in production?
+    values:
+      - { id: small-team, label: "Small team, no on-call" }
+      - { id: ops-team, label: Dedicated ops team }
+      - { id: sre, label: Mature SRE practice }
+
+notes:
+  label: Notes
+  question: Anything else the design must respect? (e.g. "must integrate with on-prem SAP")
+  max: 500

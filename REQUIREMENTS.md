@@ -137,7 +137,7 @@ _(Being specified on its own planning map: [wayfinder/doc-pipeline/map.md](wayfi
 - ✅ **Gaps:** a token-free pre-check, then a per-Step wizard (answers are confirmed entries, `unknown` becomes an open assumption), open questions recorded as `Q` entries instead of live questions, chat entries only through an accepted review card, diagram gaps as `RISK` entries with Draft a fix.
 - ✅ **Documents** are written once as `documents/<step>/vNNN.json` plus a rendered Markdown copy; ADRs are rendered `DEC` entries (MADR 4.0); a document pack zip is the audit hand-off.
 - ✅ **Contents** of the Requirements spec (ISO 29148 outline), Design doc and ADRs, Threat model (STRIDE-per-element, Threat Modeling Manifesto) and Reliability & DR (SLOs, failure modes, NIST 800-34 plan): see tickets 004–007 on the map.
-- ❓ The Documents panel, Step wizard and Register view: prototype ticket 010.
+- ✅ **UI** ([ticket 010](wayfinder/doc-pipeline/tickets/010-what-do-the-documents-panel-and-step-wizard-look-like.md)): a Documents tab in the sidebar with a Step stepper, a one-question-per-screen wizard and a Register tab (Confirm / Reject / Draft a fix).
 
 ## Product shape (decided)
 - ✅ **Solo-first.** One user per install. Avoid choices that would block adding teams later.

@@ -1,15 +1,16 @@
-// Smooth wheel panning and zooming for large diagrams.
+// Smooth panning and zooming for large diagrams.
 //
 // Excalidraw redraws every visible element on each pan or zoom step, so the
-// cost grows with the diagram. While the wheel is moving, this shows a copy of
-// the last frame instead and moves it with a CSS transform (the GPU does
-// that), and only hands the final position to Excalidraw once the wheel stops.
-// When the copy has drifted far (edges uncovered, or blurry after zooming), it
-// refreshes: one real redraw, then a new copy.
+// cost grows with the diagram. While a wheel or trackpad gesture or a drag-pan
+// is under way, this shows a copy of the last frame instead and moves it with
+// a CSS transform (the GPU does that), and only hands the final position to
+// Excalidraw when the gesture ends. When the copy has drifted far (edges
+// uncovered, or blurry after zooming), it refreshes: one real redraw, then a
+// new copy.
 //
-// The viewport maths mirrors Excalidraw's own wheel handling (zoom step, cap
-// per event, zoom around the cursor, normalisation), so where you end up is
-// exactly where Excalidraw would have put you.
+// The viewport maths mirrors Excalidraw's own wheel and pan handling (zoom
+// step, cap per event, zoom around the cursor, normalisation), so where you
+// end up is exactly where Excalidraw would have put you.
 
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { perf } from "./perf";
@@ -51,7 +52,53 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
   let started = 0, events = 0, refreshes = 0;
   // Excalidraw zooms around the last pointer position it saw (from pointer moves, starting at 0,0), not the wheel event's.
   const pointer = { x: 0, y: 0 };
-  const onPointerMove = (e: PointerEvent) => { pointer.x = e.clientX; pointer.y = e.clientY; };
+
+  // Drag pans (hand tool, Space + drag, middle button, any drag in read-only views): Excalidraw
+  // starts its pan as usual (cursor, state, clean-up stay its own). It shows the "grabbing"
+  // cursor exactly when it does, so the first move checks that, and only then do the moves go to
+  // the snapshot instead (scroll changes by the movement over zoom, as in Excalidraw). The release
+  // hands the final viewport over.
+  let drag: { x: number; y: number; confirmed: boolean } | null = null;
+  const interactiveCanvas = () => root.querySelector<HTMLCanvasElement>("canvas.excalidraw__canvas.interactive");
+  const onPointerDown = (e: PointerEvent) => {
+    const st = getApi()?.getAppState();
+    const candidate = e.isPrimary && (e.button === 0 || e.button === 1) && e.target instanceof HTMLCanvasElement && st && !st.editingTextElement;
+    if (!candidate) {
+      finishNow();
+      return;
+    }
+    window.clearTimeout(settle); // a wheel gesture still showing carries on if this turns out to be a pan
+    drag = { x: e.clientX, y: e.clientY, confirmed: false };
+  };
+  const onPointerMove = (e: PointerEvent) => {
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
+    if (!drag || !e.isPrimary) return;
+    if (!drag.confirmed) {
+      const api = getApi();
+      if (!api || interactiveCanvas()?.style.cursor !== "grabbing" || (!overlay && !begin(api))) {
+        drag = null; // not a pan (selecting, dragging a shape…): Excalidraw's as usual
+        finishNow();
+        return;
+      }
+      drag.confirmed = true;
+    }
+    e.stopPropagation(); // Excalidraw's own pan move would redraw everything
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    events++;
+    cur = { ...cur!, scrollX: cur!.scrollX + dx / cur!.zoom, scrollY: cur!.scrollY + dy / cur!.zoom };
+    place();
+  };
+  const onPointerUp = (e: PointerEvent) => {
+    if (!drag || !e.isPrimary) return;
+    const was = drag;
+    drag = null;
+    if (was.confirmed) void end();
+    else finishNow();
+  };
+
 
   const staticCanvas = () => root.querySelector<HTMLCanvasElement>("canvas.excalidraw__canvas.static");
   const viewOf = (api: ExcalidrawImperativeAPI): View => {
@@ -190,17 +237,23 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
   };
 
   // Anything else (a click, a key, a resize) ends the gesture first.
-  const finishNow = () => { if (overlay) void end(); };
+  const finishNow = () => { if (overlay && !drag?.confirmed) void end(); };
+  const onKeyDown = (e: KeyboardEvent) => { if (!e.repeat && e.code !== "Space") finishNow(); };
+  const onBlur = () => { if (drag) { const was = drag; drag = null; if (was.confirmed) void end(); } };
   root.addEventListener("wheel", onWheel, { capture: true, passive: false });
-  window.addEventListener("pointermove", onPointerMove, { capture: true, passive: true });
-  root.addEventListener("pointerdown", finishNow, true);
-  window.addEventListener("keydown", finishNow, true);
+  window.addEventListener("pointermove", onPointerMove, { capture: true });
+  root.addEventListener("pointerdown", onPointerDown, true);
+  window.addEventListener("pointerup", onPointerUp, true);
+  window.addEventListener("keydown", onKeyDown, true);
+  window.addEventListener("blur", onBlur);
   window.addEventListener("resize", finishNow);
   return () => {
     root.removeEventListener("wheel", onWheel, { capture: true });
     window.removeEventListener("pointermove", onPointerMove, { capture: true });
-    root.removeEventListener("pointerdown", finishNow, true);
-    window.removeEventListener("keydown", finishNow, true);
+    root.removeEventListener("pointerdown", onPointerDown, true);
+    window.removeEventListener("pointerup", onPointerUp, true);
+    window.removeEventListener("keydown", onKeyDown, true);
+    window.removeEventListener("blur", onBlur);
     window.removeEventListener("resize", finishNow);
     window.clearTimeout(settle);
     overlay?.remove();

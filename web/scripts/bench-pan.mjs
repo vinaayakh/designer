@@ -5,7 +5,7 @@
 // Opens the page, fits the diagram, then measures every animation frame while it
 //   1. pans with the wheel at a trackpad's event rate (--hz per second, 2 per frame at 120),
 //   2. zooms with ctrl+wheel (pinch),
-//   3. drags with space held (hand tool),
+//   3. drags with the hand tool,
 //   4. pans at 1x zoom (reading distance).
 // --throttle slows the CPU (4 ≈ a mid-range laptop). Saving is blocked, so any project is safe.
 // For readable profiles, build with `npx vite build --minify false` first.
@@ -79,16 +79,16 @@ await phase("pinch zoom", async () => {
     await sleep(16);
   }
 });
+await page.evaluate(() => window.__designerCanvas.setActiveTool({ type: "hand" }));
 await phase("hand drag", async () => {
-  await page.keyboard.down("Space");
   await page.mouse.down();
   for (let i = 0; i < 180; i++) {
     const a = (i / 180) * Math.PI * 4;
     await page.mouse.move(cx + Math.cos(a) * 250, cy + Math.sin(a) * 150);
   }
   await page.mouse.up();
-  await page.keyboard.up("Space");
 });
+await page.evaluate(() => window.__designerCanvas.setActiveTool({ type: "selection" }));
 await page.evaluate(() => window.__designerCanvas.updateScene({ appState: { zoom: { value: 1 }, scrollX: -400, scrollY: -300 } }));
 await sleep(500);
 await phase("pan at 1x", async () => {

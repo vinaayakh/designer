@@ -28,7 +28,9 @@ Each Assistant turn logs `assistant turn` with its kind, model, wall time, time 
 
 To find problems: `grep '"level":"WARN"\|"level":"ERROR"' designer.log`, or filter by `"msg":"slow request"`, `"msg":"assistant turn"`, `"msg":"dropped frames"`, `"msg":"resources"`.
 
-`npm run bench:pan -- [url] [--throttle 4] [--dpr 2] [--rough] [--hz 120]` (in `web/`, needs Microsoft Edge) measures frame times, dropped frames, long tasks and script time while panning with the wheel, pinch-zooming, dragging with the hand tool and panning at 1x zoom. Saving is blocked, so it is safe on a real project. Build with `npx vite build --minify false` for readable profiles.
+`npm run bench:pan -- [url] [--throttle 4] [--dpr 2] [--rough] [--hz 120] [--no-snapshot]` (in `web/`, needs Microsoft Edge) measures frame times, dropped frames, long tasks and script time while panning with the wheel, pinch-zooming, dragging with the hand tool and panning at 1x zoom. Saving is blocked, so it is safe on a real project. Build with `npx vite build --minify false` for readable profiles.
+
+While you pan or zoom (wheel, trackpad, hand tool, Space + drag, middle button), the canvas moves a snapshot of the last frame instead of letting Excalidraw redraw every element, and hands the final position to Excalidraw when the gesture ends (`web/src/snapshotPan.ts`). To compare with Excalidraw's own handling, run `localStorage.setItem("designer.snapshotPan", "off")` in the browser console and reload.
 
 For frontend work, run `bin/designer --no-open .` and `npm run dev` in `web/` (Vite proxies `/api` to port 4717).
 

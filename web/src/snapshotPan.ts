@@ -18,8 +18,11 @@ import { perf } from "./perf";
 type View = { scrollX: number; scrollY: number; zoom: number };
 
 const SETTLE_MS = 140; // hand over to Excalidraw this long after the last wheel event
-const MAX_SHIFT = 0.3; // refresh once the copy has moved this share of the viewport
-const MAX_SCALE = 1.5; // …or been scaled this much either way
+// A refresh is a full Excalidraw redraw (costly on big diagrams), so it only happens when the copy
+// no longer covers the screen: zooming in shows part of the copy (just softer), panning and
+// zooming out uncover edges.
+const MAX_UNCOVERED = 0.25; // refresh once this share of the viewport isn't covered by the copy
+const MAX_MAGNIFY = 4; // …or the copy is this magnified (too soft)
 const MIN_ZOOM = 0.1, MAX_ZOOM = 30, ZOOM_CAP = 10; // Excalidraw's
 
 const normalizeZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round((z + Number.EPSILON) * 1e6) / 1e6));
@@ -51,7 +54,7 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
   let ending = false;
   let started = 0, events = 0, refreshes = 0;
   // What each gesture cost, for the log (see report()).
-  let stats = { kind: "", firstInput: 0, firstFrameMs: -1, copyMs: 0, refreshMs: [] as number[], handoverMs: 0, worstFrameMs: 0 };
+  let stats = { kind: "", firstInput: 0, firstFrameMs: -1, copyMs: 0, refreshMs: [] as number[], handoverMs: 0, worstFrameMs: 0, zoomFrom: 0, canvasPx: 0 };
   let frameWatch = 0;
   const skipped: Record<string, number> = {}; // wheel events left to Excalidraw, by reason
   const watchFrames = () => {
@@ -149,8 +152,9 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
     const ty = (cur.scrollY - base.scrollY) * cur.zoom;
     copy.style.transform = `matrix(${k},0,0,${k},${tx},${ty})`;
     const r = overlay!.getBoundingClientRect();
-    const drift = Math.max(Math.abs(tx) / r.width, Math.abs(ty) / r.height);
-    if (!refreshing && !ending && (drift > MAX_SHIFT || k > MAX_SCALE || k < 1 / MAX_SCALE)) void refresh();
+    const w = r.width, h = r.height;
+    const covered = (Math.max(0, Math.min(w, tx + w * k) - Math.max(0, tx)) * Math.max(0, Math.min(h, ty + h * k) - Math.max(0, ty))) / (w * h);
+    if (!refreshing && !ending && (1 - covered > MAX_UNCOVERED || k > MAX_MAGNIFY)) void refresh();
   };
 
   const begin = (api: ExcalidrawImperativeAPI): boolean => {
@@ -165,7 +169,7 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
     overlay.appendChild(copy);
     const c0 = performance.now();
     snapshot(src);
-    stats = { kind: "", firstInput: 0, firstFrameMs: -1, copyMs: performance.now() - c0, refreshMs: [], handoverMs: 0, worstFrameMs: 0 };
+    stats = { kind: "", firstInput: 0, firstFrameMs: -1, copyMs: performance.now() - c0, refreshMs: [], handoverMs: 0, worstFrameMs: 0, zoomFrom: api.getAppState().zoom.value, canvasPx: src.width * src.height };
     watchFrames();
     // Above both canvases, below Excalidraw's toolbars.
     const interactive = root.querySelector<HTMLCanvasElement>("canvas.excalidraw__canvas.interactive");
@@ -255,6 +259,8 @@ export function attachSnapshotPan(root: HTMLElement, getApi: () => ExcalidrawImp
       gesture: s.kind || "unknown", events, refreshes, settle_ms: SETTLE_MS,
       first_frame_ms: r(s.firstFrameMs), copy_ms: r(s.copyMs), refresh_ms_max: r(Math.max(0, ...s.refreshMs)), handover_ms: r(s.handoverMs),
       worst_frame_ms: r(s.worstFrameMs),
+      zoom_from: r(s.zoomFrom * 100) / 100, zoom_to: r((getApi()?.getAppState().zoom.value ?? 0) * 100) / 100,
+      dpr: window.devicePixelRatio, canvas_mpx: r(s.canvasPx / 1e6), elements: getApi()?.getSceneElements().length,
     };
     const reasons = Object.entries(skipped).filter(([, n]) => n);
     if (reasons.length) {

@@ -57,3 +57,9 @@
 **Licence Tier**: How freely a Record may reuse one of its sources: public domain (quote verbatim), attribution (adapt with credit), or facts-only (IDs and facts in our own words, plus a link).
 
 **Trusted Source**: An external source the AI may search when the Knowledge Base has no answer.
+
+**Document Pipeline**: The set of Steps that turn a Project (Design Brief, Rough Draft, Production Diagram, earlier documents) into standard engineering documents, such as the Requirements spec, Design doc, Threat model and Reliability & DR. Each document version records what it was built from.
+
+**Step**: One stage of the Document Pipeline that produces one kind of document. It declares the inputs and the information it needs; what's missing is asked for (wizard first, then chat, or a Proposal for the diagram), and the Assistant writes the document. A document whose inputs have changed since it was written is **stale**.
+
+**Register**: The Project's shared, append-only audit trail. Its **entries** are requirements (REQ), assumptions (ASM), constraints (CON), non-goals and out of scope (NG), decisions (DEC), risks (RISK) and open questions (Q). An entry's text never changes; a correction is a new entry that **supersedes** it. Each records where it came from, the Step that introduced it and its status (open, confirmed, rejected or superseded); documents cite the entries they rely on. An `unknown` answer becomes an assumption here, never a silent default.

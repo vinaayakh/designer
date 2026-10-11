@@ -126,6 +126,19 @@ An internal, curated database of records that the AI consults **first**:
   - **Model:** a per-install setting (default: Claude Code's own default), switchable mid-session.
   - **Version check:** the Claude Code version is checked against a tested range. The `--bare`/API-key risk is accepted.
 
+### R11 — Document Pipeline
+_(Being specified on its own planning map: [wayfinder/doc-pipeline/map.md](wayfinder/doc-pipeline/map.md).)_
+- ✅ From the Rough Draft, Design Brief and Production Diagram, Designer produces the **standard documents a senior software engineer is expected to write**, each built by a **Step** on the outputs of earlier Steps.
+- ✅ First documents: **Requirements spec, Design doc / RFC with ADRs, Threat model (STRIDE), Reliability & DR**. The arc42 export stays and should share their sources.
+- ✅ **Audit trail:** one shared, append-only **Register** per Project of requirements (REQ), assumptions (ASM), constraints (CON), non-goals and out of scope (NG), decisions (DEC), risks (RISK) and open questions (Q), each with its source, the Step that introduced it and its status. Every document version cites the entries and input versions it used.
+- ✅ **Missing information:** a short wizard per Step first (`unknown` allowed, recorded as an assumption), then the Assistant asks in chat, and diagram gaps become Proposals.
+- ✅ **Register format** ([What is the Register format?](wayfinder/doc-pipeline/tickets/001-what-is-the-register-format.md)): an append-only, hash-chained event log in `register/log.jsonl`; types REQ, ASM, CON, NG, DEC, RISK, Q; runtime-assigned IDs; the Assistant proposes, only the user confirms or rejects; the Brief stays its own source and Rationale assumptions and trade-offs move into the Register.
+- ✅ **Steps** are built-in YAML with token-free derivers; order Brief → Requirements → (Conversion) → Design doc, Threat model, Reliability & DR → arc42; documents record what they were built from and go stale, never regenerating by themselves; one `submit_step` tool.
+- ✅ **Gaps:** a token-free pre-check, then a per-Step wizard (answers are confirmed entries, `unknown` becomes an open assumption), open questions recorded as `Q` entries instead of live questions, chat entries only through an accepted review card, diagram gaps as `RISK` entries with Draft a fix.
+- ✅ **Documents** are written once as `documents/<step>/vNNN.json` plus a rendered Markdown copy; ADRs are rendered `DEC` entries (MADR 4.0); a document pack zip is the audit hand-off.
+- ✅ **Contents** of the Requirements spec (ISO 29148 outline), Design doc and ADRs, Threat model (STRIDE-per-element, Threat Modeling Manifesto) and Reliability & DR (SLOs, failure modes, NIST 800-34 plan): see tickets 004–007 on the map.
+- ❓ The Documents panel, Step wizard and Register view: prototype ticket 010.
+
 ## Product shape (decided)
 - ✅ **Solo-first.** One user per install. Avoid choices that would block adding teams later.
 - ✅ Runtime written in **Go** (single static binary, frontend and Knowledge Base built in). Rust was considered, but this workload (local server, launching the agent process, file I/O) would see no noticeable speed gain, and Go has the official MCP SDK and the px0 precedent.

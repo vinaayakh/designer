@@ -23,6 +23,7 @@ import (
 	"github.com/vinaayakh/designer/internal/kb"
 	"github.com/vinaayakh/designer/internal/obs"
 	"github.com/vinaayakh/designer/internal/project"
+	"github.com/vinaayakh/designer/internal/register"
 	"github.com/vinaayakh/designer/internal/scene"
 )
 
@@ -55,6 +56,7 @@ func newSessionState() *sessionState {
 type App struct {
 	P     *project.Project
 	Cat   *catalog.Catalog
+	Reg   *register.Register // the audit trail (wayfinder/doc-pipeline)
 	KB    *kb.KB
 	Bin   string // Claude Code binary
 	Token string // bearer token for /mcp and /hook
@@ -107,6 +109,9 @@ func New(p *project.Project, cat *catalog.Catalog, k *kb.KB) (*App, error) {
 	}
 	if a.sess.Sent == nil {
 		a.sess.Sent = map[string]scene.Snapshot{}
+	}
+	if err := a.openRegister(); err != nil {
+		return nil, err
 	}
 	return a, nil
 }

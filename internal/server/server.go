@@ -108,7 +108,11 @@ func (s *Server) Handler() http.Handler {
 			fail(w, 400, err)
 			return
 		}
+		if err := a.SyncBrief(); err != nil {
+			slog.Error("register: syncing the Brief failed", "err", err)
+		}
 		a.Notify("brief.saved", map[string]any{"client": r.Header.Get("X-Client")})
+		a.Notify("register", nil)
 		writeJSON(w, map[string]any{"ok": true, "complete": b.Complete(), "compact": b.Compact()})
 	})
 

@@ -8,6 +8,7 @@
 //	production/vNNN.json        that version's meta and Design Rationale snapshot
 //	gap-reports/vNNN-<time>.json  Gap Reports, never edited after they are written
 //	documents/vNNN-arc42.json   the Assistant's text for that version's arc42 document
+//	register/log.jsonl          the Register: append-only, hash-chained audit trail
 //	.designer/                runtime state (Assistant Session, Proposals); not for git
 package project
 
@@ -90,6 +91,9 @@ func Open(dir string) (*Project, error) {
 func (p *Project) path(parts ...string) string {
 	return filepath.Join(append([]string{p.Dir}, parts...)...)
 }
+
+// RegisterPath is the Register's event log.
+func (p *Project) RegisterPath() string { return p.path("register", "log.jsonl") }
 
 // StateDir is the runtime-owned folder inside the Project.
 func (p *Project) StateDir() string { return p.path(dirState) }

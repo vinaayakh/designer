@@ -3,6 +3,7 @@ import { Excalidraw, MainMenu, convertToExcalidrawElements, viewportCoordsToScen
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import "@excalidraw/excalidraw/index.css";
+import { attachSnapshotPan, snapshotPanEnabled } from "./snapshotPan";
 
 export interface CanvasProps {
   onApi: (api: ExcalidrawImperativeAPI) => void;
@@ -49,6 +50,8 @@ export const Canvas = memo(function Canvas({ onApi, onChange, viewMode, onViewCl
     };
   }, []);
 
+  // Wheel gestures: by default a moving snapshot (snapshotPan.ts). With it switched off,
+  // the fallback below still saves work:
   // Excalidraw redraws the whole scene for every wheel event, and precision touchpads send about
   // two per frame. Wheel events are held and handed over as one at the next animation frame
   // (Excalidraw draws after that frame's paint anyway, so nothing shows later). Pans add up
@@ -57,6 +60,7 @@ export const Canvas = memo(function Canvas({ onApi, onChange, viewMode, onViewCl
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
+    if (snapshotPanEnabled()) return attachSnapshotPan(el, () => apiRef.current);
     const ZOOM_STEP_CAP = 10; // Excalidraw clamps a wheel zoom to ±10 per event
     const ours = new WeakSet<Event>();
     let acc: { dx: number; dy: number; last: WheelEvent; zoom: boolean } | null = null;

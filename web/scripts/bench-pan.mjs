@@ -1,6 +1,6 @@
 // Pan and zoom benchmark for a running Designer (Microsoft Edge via playwright-core).
 //
-//   node scripts/bench-pan.mjs [url=http://127.0.0.1:4717/] [--throttle 4] [--dpr 2] [--rough] [--hz 120]
+//   node scripts/bench-pan.mjs [url=http://127.0.0.1:4717/] [--throttle 4] [--dpr 2] [--rough] [--hz 120] [--no-snapshot]
 //
 // Opens the page, fits the diagram, then measures every animation frame while it
 //   1. pans with the wheel at a trackpad's event rate (--hz per second, 2 per frame at 120),
@@ -18,6 +18,7 @@ const throttle = +opt("throttle", 1), dpr = +opt("dpr", 1), hz = +opt("hz", 120)
 
 const browser = await chromium.launch({ channel: "msedge", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1500, height: 900 }, deviceScaleFactor: dpr });
+if (args.includes("--no-snapshot")) await ctx.addInitScript(() => localStorage.setItem("designer.snapshotPan", "off"));
 const page = await ctx.newPage();
 await page.route("**/api/versions", (r) => (r.request().method() === "POST" ? r.fulfill({ status: 409, body: "{}" }) : r.continue()));
 await page.route("**/api/rough", (r) => (r.request().method() === "PUT" ? r.fulfill({ status: 409, body: "{}" }) : r.continue()));
@@ -64,7 +65,7 @@ async function phase(name, run) {
   console.log(`  ${name.padEnd(14)} fps ${(gaps.length / (wall / 1000)).toFixed(1).padStart(5)}  p50 ${pct(0.5)}  p95 ${pct(0.95)}  p99 ${pct(0.99)}  max ${(gaps.at(-1) ?? 0).toFixed(0).padStart(4)}ms  dropped ${String(dropped).padStart(3)}  long tasks ${long.length} (${Math.round(long.reduce((a, b) => a + b, 0))}ms)  script ${Math.round((s1 - s0) * 1000)}ms (${(((s1 - s0) * 1000) / wall * 100).toFixed(0)}% of main thread)`);
 }
 
-console.log(`${url}  elements ${scene.elements}  fit zoom ${scene.zoom}  throttle ${throttle}x  dpr ${dpr}  wheel ${hz}/s`);
+console.log(`${url}  snapshot ${args.includes("--no-snapshot") ? "off" : "on"}  elements ${scene.elements}  fit zoom ${scene.zoom}  throttle ${throttle}x  dpr ${dpr}  wheel ${hz}/s`);
 await phase("wheel pan", async () => {
   for (let i = 0; i < 240; i++) {
     const dir = Math.floor(i / 60) % 4;

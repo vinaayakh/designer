@@ -17,6 +17,20 @@ export default defineConfig({
   build: { target: "es2022", outDir: "dist", emptyOutDir: true, sourcemap: false },
   server: {
     port: 5173,
-    proxy: { "/api": { target: "http://127.0.0.1:4717", changeOrigin: false } },
+    // The runtime refuses requests whose Host or Origin isn't its own (internal/server guard). Pages
+    // served by this dev server are the runtime's own UI, so their Host and Origin are rewritten
+    // to the runtime's; requests from any other origin keep theirs and are still refused.
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:4717",
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on("proxyReq", (req) => {
+            const origin = req.getHeader("origin");
+            if (origin === "http://localhost:5173" || origin === "http://127.0.0.1:5173") req.setHeader("origin", "http://127.0.0.1:4717");
+          });
+        },
+      },
+    },
   },
 });

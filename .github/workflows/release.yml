@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to (re)build and publish, e.g. v0.2.0'
+        required: true
+
+permissions:
+  contents: write     # create the GitHub Release
+  id-token: write     # sign build provenance
+  attestations: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Tag matches VERSION
+        id: version
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          VER="$(tr -d ' \r\n' < VERSION)"
+          if [ "$TAG" != "v$VER" ]; then
+            echo "::error::Tag $TAG does not match VERSION ($VER). Use 'make release V=x.y.z' to bump and tag together."
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          case "$VER" in *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;; *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;; esac
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build the frontend
+        run: make web
+
+      - name: Vet and test
+        run: make test
+
+      - name: Third-party notices are current
+        run: node scripts/third-party-notices.mjs --check
+
+      - name: Build release archives
+        run: SKIP_WEB=1 VERSION=${{ steps.version.outputs.version }} scripts/dist.sh
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="${{ steps.version.outputs.version }}" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > dist/notes.md
+          if [ ! -s dist/notes.md ]; then
+            echo "::error::CHANGELOG.md has no '## [${{ steps.version.outputs.version }}]' section"
+            exit 1
+          fi
+          cat >> dist/notes.md <<'EOF'
+
+          ---
+          Install: `curl -fsSL https://raw.githubusercontent.com/vinaayakh/designer/main/scripts/install.sh | sh` (macOS, Linux) or `irm https://raw.githubusercontent.com/vinaayakh/designer/main/scripts/install.ps1 | iex` (Windows). Designer needs [Claude Code](https://claude.com/claude-code), logged in. Verify a download with `checksums.txt`, or with `gh attestation verify <file> --repo vinaayakh/designer`.
+          EOF
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'dist/designer_*'
+
+      - name: Publish the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Designer ${{ steps.version.outputs.tag }}
+          body_path: dist/notes.md
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          files: |
+            dist/designer_*
+            dist/checksums.txt

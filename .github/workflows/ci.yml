@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Frontend, vet, tests, notices
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # The frontend is embedded with go:embed, so it is built before anything Go.
+      - name: Build the frontend
+        run: make web
+
+      - name: Vet and test (includes the Knowledge Base lint and copy check)
+        run: make test
+
+      - name: Third-party notices are current
+        run: |
+          make notices
+          if ! git diff --exit-code THIRD_PARTY_NOTICES.md; then
+            echo "::error::THIRD_PARTY_NOTICES.md is out of date: run 'make notices' and commit it"
+            exit 1
+          fi
+
+      - name: Every release platform builds
+        run: SKIP_WEB=1 scripts/dist.sh
+
+  test-windows:
+    name: Tests on Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build the frontend
+        working-directory: web
+        run: npm ci && npm run build
+
+      - name: Test
+        run: go test ./...

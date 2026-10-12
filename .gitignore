@@ -2,3 +2,4 @@
 kb/.cache/
 worktrees
 bin/
+dist/

@@ -329,5 +329,6 @@ p.bad { color: var(--bad); }
 .sidebar > .docs-proposed { margin: 8px 10px 0; }
 .docs-proposed > p { margin: 0; }
 .docs-proposed .docs-entry { flex: none; }
+.docs-pack { display: flex; justify-content: flex-end; margin: -2px 0 6px; }
 .docs-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .docs-proposed textarea { width: 100%; box-sizing: border-box; }

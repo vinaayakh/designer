@@ -1,7 +1,7 @@
 // The Documents tab (wayfinder/doc-pipeline ticket 010, variant A): the Document Pipeline as a
 // stepper of Steps, each with its wizard and document, and the Register beside it.
 import { useEffect, useState } from "react";
-import { api } from "../api";
+import { api, download } from "../api";
 import { Markdown } from "../Markdown";
 import type { EntryType, PipelineStep, PipelineView, ProposedEntry, RegisterEntry, StepQuestion } from "../types";
 
@@ -29,6 +29,18 @@ export function Documents({ view, onError, onHighlight, onChanged }: {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [reading]);
+  const [packing, setPacking] = useState(false);
+  const downloadPack = () => {
+    setPacking(true);
+    download("/api/documents/pack", {}).then(({ blob, name }) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }, onError).finally(() => setPacking(false));
+  };
   if (!view) return <div className="docs"><p className="muted small">Loading…</p></div>;
   const entries = view.entries ?? [];
   const openCount = entries.filter((e) => e.status === "open").length;
@@ -40,6 +52,12 @@ export function Documents({ view, onError, onHighlight, onChanged }: {
         <button className={tab === "pipeline" ? "on" : ""} onClick={() => setTab("pipeline")}>Pipeline</button>
         <button className={tab === "register" ? "on" : ""} onClick={() => setTab("register")}>
           Register {openCount > 0 && <span className="pill warn">{openCount} open</span>}
+        </button>
+      </div>
+      <div className="docs-pack">
+        <button className="small" disabled={packing || !view.steps.some((s) => s.versions?.length)} onClick={downloadPack}
+          title="A zip of every current document, an ADR per decision, the Register with its history and raw log, and an index">
+          {packing ? "Preparing…" : "Download document pack"}
         </button>
       </div>
       {view.integrity && <p className="docs-warn">The Register's history was edited outside Designer: {view.integrity}</p>}

@@ -177,3 +177,35 @@ func TestStoreAndMarkdown(t *testing.T) {
 		t.Error("answers not saved")
 	}
 }
+
+func TestPack(t *testing.T) {
+	t0 := time.Date(2026, 10, 12, 9, 0, 0, 0, time.UTC)
+	old := register.Entry{ID: "DEC-003", Type: register.DEC, Statement: "Use Postgres for orders", Status: register.Superseded, SupersededBy: "DEC-007", Created: t0,
+		Fields: map[string]string{"chose": "Postgres", "over": "DynamoDB", "because": "orders are relational."}, Source: register.Source{Kind: "import"}, Links: []string{"db"}}
+	byID := map[string]register.Entry{"DEC-003": old, "DEC-007": {ID: "DEC-007", Type: register.DEC}}
+	label := func(id string) string { return map[string]string{"db": "Orders DB"}[id] }
+	adr := ADR(old, byID, label)
+	for _, want := range []string{"status: superseded by ADR-0007", "date: 2026-10-12", "# ADR-0003: Use Postgres for orders", "* DynamoDB", `Chosen option: "Postgres", because orders are relational.`, "Applies to: Orders DB."} {
+		if !strings.Contains(adr, want) {
+			t.Errorf("ADR missing %q:\n%s", want, adr)
+		}
+	}
+	if n := ADRName(old); n != "adr/ADR-0003-use-postgres-for-orders.md" {
+		t.Errorf("name %s", n)
+	}
+	old.History = []register.Change{{At: t0, Actor: "runtime", Status: register.Open, Reason: "imported"}, {At: t0, Actor: "user", Status: register.Superseded, Reason: "changed | mind"}}
+	reg := RegisterMarkdown("Shop", []register.Entry{old}, "", label)
+	if !strings.Contains(reg, "| 2026-10-12 09:00 | user | superseded | changed \\| mind |") || !strings.Contains(reg, "**Linked to:** Orders DB") {
+		t.Errorf("register:\n%s", reg)
+	}
+	docs := []PackDoc{
+		{Step: Get("requirements"), Version: &Version{N: 2, Created: t0, Inputs: Inputs{Production: 3}}, Status: Status{Kind: "stale", Text: "Out of date", Reasons: []string{"Production is now v4"}}},
+		{Step: Get("design-doc"), Status: Status{Kind: "ready", Text: "Ready to write"}},
+	}
+	idx := Index("Shop", docs, []register.Entry{old}, "line 4: hash mismatch", t0)
+	for _, want := range []string{"[Requirements spec](documents/requirements-v2.md) | v2, 12 Oct 2026 | Design Brief, Production v3 | **stale**: Production is now v4", "| Design doc", "not written", "**The hash chain is broken:** line 4", "| Decisions | 0 | 0 | 0 | 1 |"} {
+		if !strings.Contains(idx, want) {
+			t.Errorf("index missing %q:\n%s", want, idx)
+		}
+	}
+}

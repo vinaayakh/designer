@@ -4,6 +4,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -401,6 +402,17 @@ func (s *Server) Handler() http.Handler {
 		return a.SetEntryStatus(r.PathValue("id"), in.Status, in.Reason, in.Replacement)
 	}))
 	api.HandleFunc("POST /api/register/{id}/fix", s.action(func(r *http.Request) error { return a.FixEntry(r.PathValue("id")) }))
+	api.HandleFunc("POST /api/documents/pack", func(w http.ResponseWriter, r *http.Request) {
+		var buf bytes.Buffer
+		if err := a.DocumentPack(&buf); err != nil {
+			fail(w, 500, err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/zip")
+		m, _ := a.P.Meta()
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s-documents.zip"`, fileSafe(m.Name)))
+		_, _ = w.Write(buf.Bytes())
+	})
 	api.HandleFunc("POST /api/proposed-entries/{id}", s.action(func(r *http.Request) error {
 		var in struct {
 			Accept    bool   `json:"accept"`

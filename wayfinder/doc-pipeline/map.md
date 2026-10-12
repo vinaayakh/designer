@@ -42,7 +42,7 @@ An **implementation-ready spec for the Document Pipeline**: the shared Register 
 - **Regenerating only what changed.** Staleness is decided (ticket 002: whole documents, never automatic). Whether a stale document can be regenerated per section to save tokens, and how a regenerated version shows what changed since the last one, is still open.
 - **Traceability views.** A requirement → component → Control → document matrix, and a "what changed since the last export" view, built from the Register. Shape depends on the Register format.
 - **Audit export.** Exporting the Register (and which document versions cited which entries) as a standalone audit report, possibly alongside the compliance appendix. Depends on the Register format and output formats.
-- **Token budget per Step.** How much context each Step sends (Register entries, earlier documents, diagram) and when to summarise earlier documents instead of sending them whole.
+- **Token budget per Step.** How much context each Step sends (Register entries, earlier documents, diagram) and when to summarise earlier documents instead of sending them whole. Measured 2026-10-12 on the test copy (Opus, 74 Register entries): a step message is 30–38k characters (~9–10k tokens), dominated by the full live Register listing, which grows with every document; each document costs $0.19–0.51 and 40–75 s, mostly one submission. Likely lever: send only the entry types a Step cites plus the ones it may create, and summarise the rest by count.
 - **The later documents** (data inventory and privacy, operational readiness, compliance mapping / SSP, test strategy): in scope for the pipeline's design (the Step format must fit them) but specified after the first four.
 
 ## Out of scope

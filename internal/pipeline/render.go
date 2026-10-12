@@ -45,6 +45,18 @@ func Assemble(s *Step, written map[string]Written, in Input, entries []register.
 		}
 		return ok
 	}
+	in.Written = written
+	// Entries the written text relies on, for sections scoped to them.
+	relied := map[string]bool{}
+	for _, w := range written {
+		text := w.Body + " " + strings.Join(w.Items, " ")
+		for _, r := range w.Rows {
+			text += " " + strings.Join(r, " ")
+		}
+		for _, id := range append(idRef.FindAllString(text, -1), w.Cites...) {
+			relied[id] = true
+		}
+	}
 	for id := range written {
 		if !slices.ContainsFunc(s.Sections, func(d SectionDef) bool { return d.ID == id && d.Written() }) {
 			problems = append(problems, fmt.Sprintf("there is no section %q to write (written sections: %s)", id, strings.Join(writtenIDs(s), ", ")))
@@ -96,6 +108,9 @@ func Assemble(s *Step, written map[string]Written, in Input, entries []register.
 			sec.Cites = checkCites(where, w.Cites, strings.Join(text, "\n"))
 		case "entries":
 			for _, e := range EntriesFor(d, entries) {
+				if d.Scope == "relied" && !relied[e.ID] && e.Step != s.ID {
+					continue
+				}
 				sec.Entries = append(sec.Entries, e.ID)
 			}
 			sec.Cites = sec.Entries
@@ -163,6 +178,9 @@ func Markdown(s *Step, v *Version, project string, entries []register.Entry) str
 		}
 	}
 	fmt.Fprintf(&b, "| Register | cites %d entries, %d still open (unconfirmed) |\n", len(v.Cites), open)
+	if len(v.Records) > 0 {
+		fmt.Fprintf(&b, "| Knowledge Base | %s |\n", strings.Join(v.Records, ", "))
+	}
 	if v.Model != "" {
 		fmt.Fprintf(&b, "| Written by | the Assistant (%s), from the sources above |\n", v.Model)
 	}

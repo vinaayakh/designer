@@ -130,7 +130,7 @@ func TestStatusAndStaleness(t *testing.T) {
 	if st := StatusOf(s, now); st.Kind != "ready" {
 		t.Errorf("ready: %+v", st)
 	}
-	v := &Version{Step: "design-doc", N: 1, Created: t0.Add(time.Second), StepVersion: 1, Inputs: Inputs{BriefHash: "b1", Production: 2, Upstream: map[string]int{"requirements": 1}, AnswersAt: t0}, Cites: map[string]register.Status{"ASM-004": register.Open}}
+	v := &Version{Step: "design-doc", N: 1, Created: t0.Add(time.Second), StepVersion: s.Version, Inputs: Inputs{BriefHash: "b1", Production: 2, Upstream: map[string]int{"requirements": 1}, AnswersAt: t0}, Cites: map[string]register.Status{"ASM-004": register.Open}}
 	now.Latest["design-doc"] = v
 	now.Entries["ASM-004"] = register.Entry{ID: "ASM-004", Status: register.Open}
 	if st := StatusOf(s, now); st.Kind != "current" {
@@ -207,5 +207,33 @@ func TestPack(t *testing.T) {
 		if !strings.Contains(idx, want) {
 			t.Errorf("index missing %q:\n%s", want, idx)
 		}
+	}
+}
+
+func TestAssumedErrorBudgetAndReliedAssumptions(t *testing.T) {
+	s := Get("reliability")
+	entries := []register.Entry{
+		{ID: "ASM-016", Type: register.ASM, Status: register.Open, Statement: "availability 99.9%"},
+		{ID: "ASM-001", Type: register.ASM, Status: register.Open, Statement: "users unknown"},
+		{ID: "ASM-030", Type: register.ASM, Status: register.Open, Statement: "written by this step", Step: "reliability"},
+	}
+	written := map[string]Written{
+		"slos": {Rows: [][]string{{"Place an order", "non-5xx share", "99.9% (ASM-016); p95 < 300 ms", "28 days"}, {"Track", "non-5xx", "99.5 %", "28 days"}}},
+	}
+	secs, _ := Assemble(s, written, Input{Graph: graph(), Brief: brief.New()}, entries)
+	var budget, asm SectionOut
+	for _, x := range secs {
+		switch x.ID {
+		case "budget":
+			budget = x
+		case "assumptions":
+			asm = x
+		}
+	}
+	if len(budget.Rows) != 4 || budget.Rows[0][0] != "99.5% (assumed)" || budget.Rows[2][2] != "40 min 19 s" {
+		t.Errorf("budget from assumed SLO targets: %v %q", budget.Rows, budget.Body)
+	}
+	if strings.Join(asm.Entries, ",") != "ASM-016,ASM-030" {
+		t.Errorf("assumptions relied on: %v", asm.Entries)
 	}
 }

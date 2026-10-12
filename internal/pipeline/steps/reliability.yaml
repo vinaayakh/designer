@@ -2,7 +2,7 @@
 # only), a failure-mode table and a contingency plan in NIST SP 800-34's phases (public domain).
 id: reliability
 title: Reliability & DR
-version: 1
+version: 2
 template: "SLO document, failure modes (FMEA), NIST SP 800-34 contingency plan phases"
 diagram: production
 requires: [requirements]
@@ -50,4 +50,4 @@ sections:
   - {id: recovery, title: Backup and recovery, kind: table, columns: [Data store, Backup, RPO, RTO, Restore test], guidance: "One row per data store, against the Brief's RPO and RTO."}
   - {id: contingency, title: Contingency plan, kind: list, guidance: "NIST SP 800-34 phases: activation and notification, recovery, reconstitution; then testing and maintenance."}
   - {id: risks, title: Risks and gaps, kind: entries, types: [RISK]}
-  - {id: assumptions, title: Assumptions, kind: entries, types: [ASM]}
+  - {id: assumptions, title: Assumptions, kind: entries, types: [ASM], scope: relied}

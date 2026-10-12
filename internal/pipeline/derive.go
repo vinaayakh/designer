@@ -3,6 +3,7 @@ package pipeline
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -21,8 +22,9 @@ type Derived struct {
 
 // Input is what derivers read.
 type Input struct {
-	Graph *scene.Graph
-	Brief *brief.Brief
+	Graph   *scene.Graph
+	Brief   *brief.Brief
+	Written map[string]Written // the sections the Assistant wrote (set by Assemble)
 }
 
 type deriver func(in Input) Derived
@@ -182,19 +184,47 @@ func deriveErrorBudget(in Input) Derived {
 	if in.Brief != nil {
 		v = in.Brief.Get("availability")
 	}
-	pct, err := strconv.ParseFloat(v, 64)
-	if err != nil {
+	label := "%g%%"
+	pcts := []float64{}
+	if pct, err := strconv.ParseFloat(v, 64); err == nil {
+		pcts = append(pcts, pct)
+	} else {
+		// No target in the Brief: use the availability targets this document assumes in its SLO table.
+		for _, r := range in.Written["slos"].Rows {
+			if len(r) < 3 {
+				continue
+			}
+			for _, m := range percent.FindAllStringSubmatch(r[2], -1) {
+				if p, err := strconv.ParseFloat(m[1], 64); err == nil && p >= 90 && p < 100 && !slices.Contains(pcts, p) {
+					pcts = append(pcts, p)
+				}
+			}
+		}
+		label = "%g%% (assumed)"
+		d.Columns[0] = "SLO target"
+		d.Note = "The Design Brief has no availability target; these budgets use the targets assumed in the SLO table."
+	}
+	if len(pcts) == 0 {
 		d.Note = "The Design Brief has no availability target, so there is no error budget yet (it's an assumption)."
-		d.Prompt = d.Note
+		d.Prompt = "The Design Brief has no availability target: state the target you assume in the SLO table (e.g. 99.9%), citing the assumption, and the error budget is computed from it."
 		return d
 	}
-	for _, days := range []int{28, 365} {
-		mins := (1 - pct/100) * float64(days) * 24 * 60
-		d.Rows = append(d.Rows, []string{fmt.Sprintf("%g%%", pct), fmt.Sprintf("%d days", days), duration(mins)})
+	slices.Sort(pcts)
+	for _, pct := range pcts {
+		for _, days := range []int{28, 365} {
+			mins := (1 - pct/100) * float64(days) * 24 * 60
+			d.Rows = append(d.Rows, []string{fmt.Sprintf(label, pct), fmt.Sprintf("%d days", days), duration(mins)})
+		}
 	}
-	d.Prompt = table(d)
+	if d.Note == "" {
+		d.Prompt = table(d)
+	} else {
+		d.Prompt = "The Design Brief has no availability target: state the target you assume in the SLO table (e.g. 99.9%), citing the assumption, and the error budget is computed from it."
+	}
 	return d
 }
+
+var percent = regexp.MustCompile(`(\d{2}(?:\.\d+)?)\s?%`)
 
 func duration(mins float64) string {
 	switch {

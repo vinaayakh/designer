@@ -172,9 +172,19 @@ func (a *App) Answer(stepID, qid string, values []string, unknown bool) error {
 		// entry's source names the question); a single answer reads "Label: value".
 		statement := func(v string) string {
 			if q.Kind == "list" || q.Kind == "multi" {
-				return v
+				return q.Prefix + v
 			}
 			return q.Label + ": " + v
+		}
+		fields := func(v string) map[string]string {
+			if q.ValueField == "" {
+				return q.Fields
+			}
+			f := map[string]string{q.ValueField: v}
+			for k, x := range q.Fields {
+				f[k] = x
+			}
+			return f
 		}
 		var fresh []string
 		for _, v := range clean {
@@ -188,7 +198,7 @@ func (a *App) Answer(stepID, qid string, values []string, unknown bool) error {
 		src := register.Source{Kind: "wizard", Ref: ref}
 		olds := mapValues(keep)
 		for i, v := range fresh {
-			n := register.New{Type: q.Creates, Statement: statement(v), Fields: q.Fields, Source: src, Status: register.Confirmed}
+			n := register.New{Type: q.Creates, Statement: statement(v), Fields: fields(v), Source: src, Status: register.Confirmed}
 			var e register.Entry
 			if i < len(olds) { // a changed value replaces an old one
 				e, err = a.Reg.Supersede(register.ActorUser, stepID, "", olds[i], n, "the answer changed")
@@ -398,8 +408,9 @@ Then call submit_step once:
 {"step": %q,
  "sections": {"<section id>": {"body": "..."} | {"items": ["..."]} | {"rows": [["..."]]}, ...},   // every section you write
  "entries": [{"ref": "+short-name", "type": one of %s, "statement": "...", "fields": {...}, "links": ["n3"]}],   // new Register entries (they start open: the user confirms them)
- "cites": ["REQ-001", "+short-name"]}   // entries the document relies on beyond those named in the text
+ "cites": ["REQ-001", "+short-name", {"record": "practice.x"}]}   // entries the document relies on beyond those named in the text, and Knowledge Base Records it draws on
 Cite entries by ID in the text (e.g. "(REQ-004)"); a new entry is cited by its "+ref" until it's numbered. Field values: REQ kind goal/functional/non-functional, priority must/should/could, acceptance, rationale; ASM assumed, if_wrong; NG kind non-goal/out-of-scope, reason; DEC chose, over, because; RISK likelihood/impact low/medium/high, mitigation, owner. Links are diagram aliases.
+Inside text, name components by their labels as written on the diagram, never by alias (no n3, no ranges like n20–n25).
 Write plainly and specifically for this design. Never change the diagram. If submit_step reports problems, fix them all and submit again. Then reply with one sentence.`, s.ID, strings.Join(types, "/"))
 	return sb.String(), nil
 }
@@ -422,13 +433,31 @@ func (a *App) submitStepLocked(raw json.RawMessage) (string, error) {
 			Fields    map[string]string `json:"fields"`
 			Links     []string          `json:"links"`
 		} `json:"entries"`
-		Cites []string `json:"cites"`
+		Cites []json.RawMessage `json:"cites"`
 	}
 	if err := json.Unmarshal(raw, &in); err != nil {
 		return "", fmt.Errorf("submission: %w", err)
 	}
 	s := sp.Step
 	var problems []string
+	// cites holds Register entry IDs (or +refs) and Knowledge Base Records as {"record": id}.
+	var cited, records []string
+	for _, c := range in.Cites {
+		var id string
+		var rec struct{ Record string }
+		switch {
+		case json.Unmarshal(c, &id) == nil:
+			cited = append(cited, id)
+		case json.Unmarshal(c, &rec) == nil && rec.Record != "":
+			if a.KB.Get(rec.Record) == nil {
+				problems = append(problems, fmt.Sprintf("cites Knowledge Base Record %q, which doesn't exist (use search_kb)", rec.Record))
+			} else if !slices.Contains(records, rec.Record) {
+				records = append(records, rec.Record)
+			}
+		default:
+			problems = append(problems, fmt.Sprintf(`cites %s: give an entry ID ("REQ-004" or "+ref") or a Knowledge Base Record ({"record": "practice.x"})`, c))
+		}
+	}
 	if in.Step != s.ID {
 		problems = append(problems, fmt.Sprintf("step must be %q", s.ID))
 	}
@@ -470,7 +499,7 @@ func (a *App) submitStepLocked(raw json.RawMessage) (string, error) {
 	written := withRefsAsIDs(in.Sections)
 	_, more := pipeline.Assemble(s, written, din, stand)
 	problems = append(problems, more...)
-	for _, c := range in.Cites {
+	for _, c := range cited {
 		if !slices.ContainsFunc(stand, func(e register.Entry) bool { return e.ID == c }) {
 			problems = append(problems, fmt.Sprintf("cites %q, which isn't in the Register or this submission", c))
 		}
@@ -529,14 +558,14 @@ func (a *App) submitStepLocked(raw json.RawMessage) (string, error) {
 	for _, e := range entries {
 		status[e.ID] = e.Status
 	}
-	for _, c := range in.Cites {
+	for _, c := range cited {
 		cites[swap(c)] = status[swap(c)]
 	}
 	for _, id := range made {
 		cites[id] = status[id]
 	}
 	v := &pipeline.Version{Step: s.ID, Created: time.Now().UTC().Truncate(time.Second), StepVersion: s.Version, Model: modelOrDefault(a.settings.ConversionModel),
-		Inputs: sp.In, Cites: cites, NewEntries: made, Summary: pipeline.Summary(s, sections), Sections: sections}
+		Inputs: sp.In, Cites: cites, Records: records, NewEntries: made, Summary: pipeline.Summary(s, sections), Sections: sections}
 	m, _ := a.P.Meta()
 	// Number it first so the Markdown shows the right version.
 	vs, _ := a.pipeStore().Versions(s.ID)

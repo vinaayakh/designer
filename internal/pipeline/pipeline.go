@@ -39,6 +39,10 @@ type Question struct {
 	Blocking bool              `yaml:"blocking" json:"blocking,omitempty"`
 	Creates  register.Type     `yaml:"creates" json:"creates,omitempty"` // "" = document control only
 	Fields   map[string]string `yaml:"fields" json:"fields,omitempty"`
+	// Prefix starts each entry's statement (e.g. "Rejected: "), and ValueField also stores the
+	// answer in that field (e.g. a rejected alternative is the DEC's "over").
+	Prefix     string `yaml:"prefix" json:"prefix,omitempty"`
+	ValueField string `yaml:"value_field" json:"valueField,omitempty"`
 }
 
 // SectionDef is one section of a Step's document.
@@ -51,6 +55,9 @@ type SectionDef struct {
 	Types    []register.Type     `yaml:"types" json:"types,omitempty"`
 	Filter   map[string][]string `yaml:"filter" json:"filter,omitempty"` // entries: field → allowed values
 	Deriver  string              `yaml:"deriver" json:"deriver,omitempty"`
+	// Scope "relied" lists only the entries the document cites in its text or adds itself;
+	// otherwise an entries section lists every live entry of its types.
+	Scope string `yaml:"scope" json:"scope,omitempty"`
 }
 
 // Written reports whether the Assistant writes this section.
@@ -303,6 +310,7 @@ type Version struct {
 	Model       string                     `json:"model,omitempty"`
 	Inputs      Inputs                     `json:"inputs"`
 	Cites       map[string]register.Status `json:"cites"`                // every entry it relies on, with its status when written
+	Records     []string                   `json:"records,omitempty"`    // Knowledge Base Records it draws on
 	NewEntries  []string                   `json:"newEntries,omitempty"` // entries this version proposed
 	Summary     string                     `json:"summary"`              // a few lines for downstream Steps
 	Sections    []SectionOut               `json:"sections"`

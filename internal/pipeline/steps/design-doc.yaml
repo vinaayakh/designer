@@ -2,7 +2,7 @@
 # (structure only, our wording); ADRs are DEC entries rendered in MADR 4.0.
 id: design-doc
 title: Design doc + ADRs
-version: 1
+version: 2
 template: "Design doc / RFC outline (structure only); ADRs in MADR 4.0"
 diagram: production
 requires: [requirements]
@@ -25,6 +25,8 @@ questions:
     question: Designs you considered and dropped, one per line, with why.
     kind: list
     creates: DEC
+    prefix: "Rejected: "
+    value_field: over
   - id: reviewers
     label: Reviewers
     question: Who reviews this document? Names, one per line (for document control only).

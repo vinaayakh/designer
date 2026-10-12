@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
@@ -340,6 +341,10 @@ func (a *App) Decide(d Decision) (DecisionResult, error) {
 			}
 		}
 		_ = a.P.RemoveState(pendingFile)
+		if len(p.Payload.Addresses) > 0 {
+			a.resolveEntries(p, res.Version)
+			a.emit("register", nil)
+		}
 		status := "accepted"
 		if len(declined) > 0 {
 			status = "partially_accepted"
@@ -420,6 +425,10 @@ func (a *App) acceptConversionLocked(p *Pending, d Decision) (DecisionResult, er
 	}
 	_ = a.P.RemoveState(pendingFile)
 	res.Version = v.N
+	if err := a.importRationale(); err != nil {
+		slog.Warn("register: couldn't import the Design Rationale", "err", err)
+	}
+	a.emit("register", nil)
 	a.queueFeedbackLocked(fmt.Sprintf(`{"proposal":%q,"revision":%d,"status":"accepted","new_version":%d} (Conversion accepted: Production v%d exists and the Rough Draft is frozen)`, p.ID, p.Revision, v.N, v.N))
 	a.emit("proposal.closed", map[string]any{"id": p.ID, "status": "accepted", "version": v.N, "conversion": true})
 	// The Gap Check runs automatically on the accepted version (ticket 011).

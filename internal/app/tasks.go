@@ -63,6 +63,7 @@ func (a *App) designMessageLocked() (string, error) {
 	sb.WriteString("TASK: Conversion Design.\n\n")
 	sb.WriteString(ctx)
 	sb.WriteString("\n\n")
+	sb.WriteString(a.requirementsDigest())
 	if export := a.Cat.Export(cloud); export != "" {
 		sb.WriteString(export + "\n")
 	} else {

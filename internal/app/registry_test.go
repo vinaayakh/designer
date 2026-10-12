@@ -1,10 +1,12 @@
 package app
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/vinaayakh/designer/internal/brief"
 	"github.com/vinaayakh/designer/internal/project"
+	"github.com/vinaayakh/designer/internal/proposal"
 	"github.com/vinaayakh/designer/internal/register"
 )
 
@@ -80,4 +82,25 @@ func firstValue(t *testing.T, field string) string {
 	}
 	t.Fatalf("no value for %s", field)
 	return ""
+}
+
+func TestConversionSeesRegisterAndFixesResolve(t *testing.T) {
+	a := pipelineApp(t)
+	req, _ := a.Reg.Create(register.ActorUser, "requirements", "", register.New{Type: register.REQ, Statement: "Customers can track an order", Fields: map[string]string{"kind": "functional"}, Source: register.Source{Kind: "wizard"}, Status: register.Confirmed}, "")
+	asm, _ := a.Reg.Create(register.ActorAssistant, "requirements", "", register.New{Type: register.ASM, Statement: "Orders are paid by card", Source: register.Source{Kind: "assistant"}}, "")
+	d := a.requirementsDigest()
+	if !strings.Contains(d, req.ID+" Customers can track an order") || strings.Contains(d, asm.ID) || strings.Contains(d, "brief") {
+		t.Errorf("digest has confirmed non-Brief REQ/CON/NG only:\n%s", d)
+	}
+	risk, _ := a.Reg.Create(register.ActorAssistant, "reliability", "", register.New{Type: register.RISK, Statement: "No backup for the DB", Links: []string{"db"}, Source: register.Source{Kind: "assistant"}}, "")
+	p := &Pending{ID: "P-4", Payload: &proposal.Payload{Title: "Add a backup vault", Addresses: []string{"register:" + risk.ID, "gap:x"}}}
+	a.resolveEntries(p, 5)
+	old, _ := a.Reg.Get(risk.ID)
+	if old.Status != register.Superseded {
+		t.Fatalf("the risk should be superseded, is %s", old.Status)
+	}
+	dec, _ := a.Reg.Get(old.SupersededBy)
+	if dec.Type != register.DEC || dec.Status != register.Confirmed || !strings.Contains(dec.Source.Ref, "Production v5") || len(dec.Links) != 1 {
+		t.Errorf("resolution: %+v", dec)
+	}
 }

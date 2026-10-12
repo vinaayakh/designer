@@ -139,3 +139,47 @@ func (a *App) openRegister() error {
 	}
 	return a.importRationale()
 }
+
+// requirementsDigest lists the confirmed requirements, constraints and non-goals the user added
+// beyond the Design Brief (which the Assistant already sees), for Conversion to design against.
+func (a *App) requirementsDigest() string {
+	var lines []string
+	for _, e := range a.Reg.Entries() {
+		if e.Status != register.Confirmed || e.Source.Kind == "brief" {
+			continue
+		}
+		if e.Type == register.REQ || e.Type == register.CON || e.Type == register.NG {
+			lines = append(lines, fmt.Sprintf("- %s %s", e.ID, truncate(e.Statement, 300)))
+		}
+	}
+	if len(lines) == 0 {
+		return ""
+	}
+	return "Register (confirmed requirements, constraints and non-goals; design for them, and cite their IDs in assumptions that rely on them):\n" + strings.Join(lines, "\n") + "\n\n"
+}
+
+// resolveEntries closes the Register entries a Proposal addressed ("register:RISK-003") once it is
+// accepted: each is superseded by a confirmed decision naming the Proposal, so documents citing it
+// go stale and the trail shows how it was resolved.
+func (a *App) resolveEntries(p *Pending, version int) {
+	for _, ad := range p.Payload.Addresses {
+		id, ok := strings.CutPrefix(ad, "register:")
+		if !ok {
+			continue
+		}
+		e, found := a.Reg.Get(id)
+		if !found || !e.Live() {
+			continue
+		}
+		where := "the Rough Draft"
+		if version > 0 {
+			where = fmt.Sprintf("Production v%d", version)
+		}
+		n := register.New{Type: register.DEC, Statement: truncate(fmt.Sprintf("Resolve %s by %s", id, p.Payload.Title), 600), Status: register.Confirmed,
+			Source: register.Source{Kind: "user", Ref: fmt.Sprintf("Proposal %s, %s", p.ID, where)}, Links: e.Links,
+			Fields: map[string]string{"chose": p.Payload.Title, "because": truncate(fmt.Sprintf("resolves %s: %s", id, e.Statement), 600)}}
+		if _, err := a.Reg.Supersede(register.ActorUser, e.Step, "", id, n, "resolved by accepted Proposal "+p.ID); err != nil {
+			slog.Warn("register: couldn't resolve entry", "id", id, "err", err)
+		}
+	}
+}

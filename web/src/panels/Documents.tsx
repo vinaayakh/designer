@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Markdown } from "../Markdown";
-import type { EntryType, PipelineStep, PipelineView, RegisterEntry, StepQuestion } from "../types";
+import type { EntryType, PipelineStep, PipelineView, ProposedEntry, RegisterEntry, StepQuestion } from "../types";
 
 const TYPE_NAMES: Record<EntryType, string> = {
   REQ: "Requirements", CON: "Constraints", ASM: "Assumptions", NG: "Non-goals & out of scope", DEC: "Decisions", RISK: "Risks", Q: "Open questions",
@@ -67,6 +67,7 @@ export function Documents({ view, onError, onHighlight, onChanged }: {
 
       {tab === "register" && (
         <div className="docs-register">
+          {!!view.proposed?.length && <ProposedEntries items={view.proposed} onError={onError} onChanged={onChanged} />}
           {entries.length === 0 && <p className="muted small">Nothing yet. Answers, the Design Brief and written documents add entries here.</p>}
           {TYPES.map((t) => {
             const es = entries.filter((e) => e.type === t);
@@ -210,6 +211,40 @@ function EntryCard({ e, onHighlight, act }: { e: RegisterEntry; onHighlight: (id
         {e.status === "open" && <button className="small ok-outline" onClick={() => act(api.entryStatus(e.id, "confirmed"))}>Confirm</button>}
         {(e.status === "open" || e.status === "confirmed") && <button className="small" onClick={reject}>Reject…</button>}
         {(e.type === "RISK" || e.type === "Q") && (e.status === "open" || e.status === "confirmed") && <button className="small" onClick={() => act(api.fixEntry(e.id))}>Draft a fix</button>}
+      </div>
+    </div>
+  );
+}
+
+// Entries the Assistant proposed in chat: nothing reaches the Register until you accept it.
+export function ProposedEntries({ items, onError, onChanged }: { items: ProposedEntry[]; onError: (e: unknown) => void; onChanged: () => void }) {
+  return (
+    <div className="docs-proposed" role="region" aria-label="Proposed Register entries">
+      <p className="small"><strong>The Assistant proposes {items.length === 1 ? "a Register entry" : `${items.length} Register entries`}</strong> <span className="muted">from your chat. Nothing is recorded until you accept.</span></p>
+      {items.map((p) => <ProposedCard key={p.id} p={p} onError={onError} onChanged={onChanged} />)}
+    </div>
+  );
+}
+
+function ProposedCard({ p, onError, onChanged }: { p: ProposedEntry; onError: (e: unknown) => void; onChanged: () => void }) {
+  const [text, setText] = useState(p.entry.statement);
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const decide = (accept: boolean) => {
+    setBusy(true);
+    api.decideProposed(p.id, accept, accept && text !== p.entry.statement ? text : "").then(onChanged, onError).finally(() => setBusy(false));
+  };
+  const fields = Object.entries(p.entry.fields ?? {});
+  return (
+    <div className="docs-entry open">
+      <div className="row"><span className="pill">{TYPE_NAMES[p.entry.type]}</span>{p.replaces && <span className="pill warn">replaces {p.replaces}</span>}</div>
+      {editing ? <textarea rows={4} value={text} onChange={(e) => setText(e.target.value)} aria-label="Statement" /> : <p className="docs-clamp" title={text}>{text}</p>}
+      {fields.length > 0 && <p className="muted small">{fields.map(([k, v]) => `${k}: ${v}`).join(" · ")}</p>}
+      {p.entry.source.text && <p className="muted small" title={p.entry.source.text}>From: “{p.entry.source.text.length > 120 ? p.entry.source.text.slice(0, 120) + "…" : p.entry.source.text}”</p>}
+      <div className="row">
+        <button className="small ok-outline" disabled={busy || !text.trim()} onClick={() => decide(true)}>Accept</button>
+        {!editing && <button className="small" disabled={busy} onClick={() => setEditing(true)}>Edit</button>}
+        <button className="small" disabled={busy} onClick={() => decide(false)}>Reject</button>
       </div>
     </div>
   );

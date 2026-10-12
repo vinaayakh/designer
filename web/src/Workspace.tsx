@@ -8,7 +8,7 @@ import { perf } from "./perf";
 import { Canvas } from "./Canvas";
 import { Chat, toolText, type ChatItem } from "./panels/Chat";
 import { Review, changeStatus, reviewStart, reviewSteps, type ReviewState } from "./panels/Review";
-import { Documents } from "./panels/Documents";
+import { Documents, ProposedEntries } from "./panels/Documents";
 import { ConversionPanel, RationaleView } from "./panels/Rationale";
 import { GapPanel } from "./panels/Gap";
 import { Inspector, type NodePatch } from "./panels/Inspector";
@@ -728,7 +728,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   const [pipelineView, setPipelineView] = useState<PipelineView | null>(null);
   const refreshPipeline = useCallback(() => { api.pipeline().then(setPipelineView, () => {}); }, []);
   useEffect(refreshPipeline, [refreshPipeline]);
-  const PIPELINE_EVENTS = ["pipeline", "assistant.started", "assistant.done", "proposal.closed", "brief.saved", "scene.saved", "register"];
+  const PIPELINE_EVENTS = ["pipeline", "assistant.started", "assistant.done", "proposal.closed", "brief.saved", "scene.saved", "register", "register.proposed"];
 
   const handlers = useRef<(e: ServerEvent) => void>(() => {});
   handlers.current = (e: ServerEvent) => {
@@ -1041,6 +1041,9 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
           <nav className="sidebar-tabs">
             {tabs.map(([t, l]) => <button key={t} className={tab === t ? "on" : ""} onClick={() => setTab(t)}>{l}</button>)}
           </nav>
+          {tab === "assistant" && !!pipelineView?.proposed?.length && (
+            <ProposedEntries items={pipelineView.proposed} onError={fail} onChanged={refreshPipeline} />
+          )}
           {tab === "assistant" && (
             <Chat
               items={items}

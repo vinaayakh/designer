@@ -401,6 +401,17 @@ func (s *Server) Handler() http.Handler {
 		return a.SetEntryStatus(r.PathValue("id"), in.Status, in.Reason, in.Replacement)
 	}))
 	api.HandleFunc("POST /api/register/{id}/fix", s.action(func(r *http.Request) error { return a.FixEntry(r.PathValue("id")) }))
+	api.HandleFunc("POST /api/proposed-entries/{id}", s.action(func(r *http.Request) error {
+		var in struct {
+			Accept    bool   `json:"accept"`
+			Statement string `json:"statement"`
+		}
+		if err := read(r, &in); err != nil {
+			return err
+		}
+		_, err := a.DecideProposedEntry(r.PathValue("id"), in.Accept, in.Statement)
+		return err
+	}))
 
 	// Observability: this run's metrics, and timings and errors from the browser.
 	api.HandleFunc("GET /api/metrics", func(w http.ResponseWriter, r *http.Request) {

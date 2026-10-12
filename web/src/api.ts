@@ -74,6 +74,7 @@ export const api = {
   docVersion: (step: string, n: number) => call<{ version: DocVersionInfo; markdown: string }>("GET", `/api/pipeline/${step}/v/${n}`),
   entryStatus: (id: string, status: "confirmed" | "rejected", reason = "", replacement = "") => call("POST", `/api/register/${id}/status`, { status, reason, replacement }),
   fixEntry: (id: string) => call("POST", `/api/register/${id}/fix`, {}),
+  decideProposed: (id: string, accept: boolean, statement = "") => call("POST", `/api/proposed-entries/${id}`, { accept, statement }),
 
   settings: () => call<Settings>("GET", "/api/settings"),
   saveSettings: (s: Settings) => call<Settings>("PUT", "/api/settings", s),

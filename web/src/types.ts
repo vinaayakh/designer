@@ -80,7 +80,8 @@ export interface PipelineStep {
   requires?: string[]; uses?: string[]; questions: StepQuestion[];
   status: StepStatus; answers?: Record<string, StepAnswer>; versions: number[] | null; latest?: DocVersionInfo;
 }
-export interface PipelineView { steps: PipelineStep[]; entries: RegisterEntry[] | null; integrity?: string }
+export interface ProposedEntry { id: string; created: string; replaces?: string; entry: { type: EntryType; statement: string; fields?: Record<string, string>; links?: string[]; source: { kind: string; text?: string } } }
+export interface PipelineView { steps: PipelineStep[]; entries: RegisterEntry[] | null; proposed?: ProposedEntry[]; integrity?: string }
 
 export interface State {
   project: { name: string; dir: string; created: string; frozenAt?: string | null };

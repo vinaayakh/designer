@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -102,5 +103,49 @@ func TestConversionSeesRegisterAndFixesResolve(t *testing.T) {
 	dec, _ := a.Reg.Get(old.SupersededBy)
 	if dec.Type != register.DEC || dec.Status != register.Confirmed || !strings.Contains(dec.Source.Ref, "Production v5") || len(dec.Links) != 1 {
 		t.Errorf("resolution: %+v", dec)
+	}
+}
+
+func TestProposeEntries(t *testing.T) {
+	a := pipelineApp(t)
+	a.turn = &Turn{Kind: "chat", spec: &taskSpec{kind: "chat", text: "we must keep data in the EU, no mobile app"}}
+	bad := `{"entries":[{"type":"CON","statement":"Data stays in the EU"},{"type":"XX","statement":"?"},{"type":"NG","statement":"No mobile app","links":["n99"]}]}`
+	if _, err := a.proposeEntriesLocked(json.RawMessage(bad)); err == nil || !strings.Contains(err.Error(), "entry 2") || !strings.Contains(err.Error(), "n99") {
+		t.Fatalf("problems are all reported: %v", err)
+	}
+	if len(a.proposedLocked().Entries) != 0 {
+		t.Fatal("nothing is proposed while there are problems")
+	}
+	good := `{"entries":[{"type":"CON","statement":"Data stays in the EU","fields":{"origin":"regulatory"}},{"type":"NG","statement":"No mobile app","fields":{"kind":"non-goal"}}]}`
+	if _, err := a.proposeEntriesLocked(json.RawMessage(good)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.proposeEntriesLocked(json.RawMessage(good)); err == nil {
+		t.Error("the same entries can't be proposed twice")
+	}
+	n := len(a.Reg.Entries())
+	ps := a.ProposedEntries()
+	e, err := a.DecideProposedEntry(ps[0].ID, true, "Customer data stays in the EU")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e.Status != register.Confirmed || e.Source.Kind != "chat" || !strings.Contains(e.Source.Text, "EU") || e.Statement != "Customer data stays in the EU" {
+		t.Errorf("accepted: %+v", e)
+	}
+	if _, err := a.DecideProposedEntry(ps[1].ID, false, ""); err != nil {
+		t.Fatal(err)
+	}
+	asm, _ := a.Reg.Create(register.ActorAssistant, "requirements", "", register.New{Type: register.ASM, Statement: "About 10k users", Source: register.Source{Kind: "assistant"}}, "")
+	if _, err := a.proposeEntriesLocked(json.RawMessage(`{"entries":[{"type":"REQ","statement":"Up to 50k users","fields":{"kind":"non-functional"},"replaces":"` + asm.ID + `"}]}`)); err != nil {
+		t.Fatal(err)
+	}
+	n++
+	r, err := a.DecideProposedEntry(a.ProposedEntries()[0].ID, true, "")
+	if err != nil || r.Supersedes != asm.ID {
+		t.Fatalf("replaces supersedes: %+v %v", r, err)
+	}
+	n++
+	if len(a.Reg.Entries()) != n+1 || len(a.ProposedEntries()) != 0 {
+		t.Errorf("one accepted, one rejected: %d entries, %d waiting", len(a.Reg.Entries())-n, len(a.ProposedEntries()))
 	}
 }

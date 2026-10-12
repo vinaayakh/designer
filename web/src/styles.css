@@ -324,3 +324,10 @@ p.bad { color: var(--bad); }
 .docs-entry p { margin: 0; }
 .docs-entry.rejected, .docs-entry.superseded { opacity: 0.55; }
 .docs-reader { max-width: 860px; }
+
+.docs-proposed { margin: 0 0 8px; padding: 8px 10px; border: 1px solid var(--accent, #4a7cff); border-radius: 8px; background: color-mix(in srgb, var(--accent, #4a7cff) 6%, transparent); display: flex; flex-direction: column; gap: 6px; max-height: 45vh; overflow: auto; }
+.sidebar > .docs-proposed { margin: 8px 10px 0; }
+.docs-proposed > p { margin: 0; }
+.docs-proposed .docs-entry { flex: none; }
+.docs-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.docs-proposed textarea { width: 100%; box-sizing: border-box; }

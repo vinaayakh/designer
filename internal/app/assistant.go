@@ -42,6 +42,7 @@ type Turn struct {
 // fresh context.
 type taskSpec struct {
 	kind, expect, model string
+	text                string // the user's chat message, kept with entries proposed from it
 	build               func() (string, error)
 }
 
@@ -459,7 +460,7 @@ func (a *App) Chat(text, view string, selection []string) error {
 	if text == "" {
 		return errors.New("empty message")
 	}
-	return a.run(&taskSpec{kind: "chat", build: func() (string, error) {
+	return a.run(&taskSpec{kind: "chat", text: text, build: func() (string, error) {
 		ctx, err := a.contextLocked(view, selection)
 		if err != nil {
 			return "", err

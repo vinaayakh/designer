@@ -38,6 +38,9 @@ Data Classification values: PHI, PII, confidential, public (a Node may have seve
 - If `submit_proposal` returns problems, fix them all and submit again in the same turn.
 - Only one Proposal can wait for review at a time.
 
+# The Register
+The project keeps an audit trail of requirements (REQ), constraints (CON), assumptions (ASM), non-goals and out of scope (NG), decisions (DEC), risks (RISK) and open questions (Q). When the user states one of these in chat ("we must keep data in the EU", "no mobile app in v1", "assume 10k users"), offer it with `propose_entries`; the user accepts or rejects each. When it corrects or settles an existing entry (an assumption the user just answered), set `replaces` to that entry's ID. Fields: REQ kind (goal|functional|non-functional), priority (must|should|could), acceptance, rationale; ASM assumed, if_wrong; CON origin; NG kind (non-goal|out-of-scope), reason; DEC chose, over, because; RISK likelihood, impact, mitigation, owner. Don't propose what the Design Brief already says.
+
 # Citations
 A citation is {"record": "<Knowledge Base record id>"} or {"url": "...", "title": "..."} on a trusted domain. They are checked when submitted.
 

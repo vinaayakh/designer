@@ -45,9 +45,10 @@ type EntryView struct {
 
 // PipelineView is everything the Documents tab needs.
 type PipelineView struct {
-	Steps     []StepView  `json:"steps"`
-	Entries   []EntryView `json:"entries"`
-	Integrity string      `json:"integrity,omitempty"`
+	Steps     []StepView       `json:"steps"`
+	Entries   []EntryView      `json:"entries"`
+	Proposed  []*ProposedEntry `json:"proposed,omitempty"` // from chat, waiting for review
+	Integrity string           `json:"integrity,omitempty"`
 }
 
 func (a *App) briefHash() string {
@@ -93,8 +94,9 @@ func (a *App) Pipeline() (PipelineView, error) {
 	if a.turn != nil && a.turn.Kind == "step" && a.step != nil {
 		writing = a.step.Step.ID
 	}
+	proposed := a.proposedLocked().Entries
 	a.mu.Unlock()
-	view := PipelineView{Integrity: a.Reg.Integrity()}
+	view := PipelineView{Integrity: a.Reg.Integrity(), Proposed: proposed}
 	citedBy := map[string][]string{}
 	for _, s := range pipeline.Steps() {
 		sv := StepView{Step: s, Status: pipeline.StatusOf(s, now), Answers: now.Answers[s.ID], Latest: now.Latest[s.ID]}

@@ -147,6 +147,11 @@ func (a *App) tools() []tool {
 				"cites":    arr("entry IDs or +refs the document relies on beyond those in the text", map[string]any{"type": "string"}),
 			}, "step", "sections"),
 			a.submitStepLocked},
+		{"propose_entries", "Propose Register entries (requirements, constraints, assumptions, non-goals, decisions, risks, open questions) from what the user said in chat. They are recorded only if the user accepts each one.",
+			obj(map[string]any{
+				"entries": arr("1–10 entries: {type: REQ|CON|ASM|NG|DEC|RISK|Q, statement, fields, links: [aliases], replaces: optional live entry ID it supersedes}", map[string]any{"type": "object"}),
+			}, "entries"),
+			a.proposeEntriesLocked},
 	}
 }
 

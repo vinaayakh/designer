@@ -10,8 +10,9 @@ const TYPE_NAMES: Record<EntryType, string> = {
 };
 const TYPES: EntryType[] = ["REQ", "CON", "ASM", "NG", "DEC", "RISK", "Q"];
 
-export function Documents({ view, onError, onHighlight, onChanged }: {
+export function Documents({ view, onError, onHighlight, onChanged, onArc42 }: {
   view: PipelineView | null;
+  onArc42: (format: "docx" | "pdf") => void;
   onError: (e: unknown) => void;
   onHighlight: (ids: string[]) => void;
   onChanged: () => void;
@@ -80,6 +81,23 @@ export function Documents({ view, onError, onHighlight, onChanged }: {
               </li>
             );
           })}
+          <li className={`docs-step ${view.arc42?.written && !view.arc42.stale ? "current" : "waiting"}`}>
+            <button className="docs-step-head" onClick={() => setOpen(open === "arc42" ? "" : "arc42")} aria-expanded={open === "arc42"}>
+              <span className="docs-step-title">arc42 architecture document</span>
+              <span className={`pill ${!view.arc42 ? "" : view.arc42.stale ? "bad" : view.arc42.written ? "ok" : "accent"}`}>
+                {!view.arc42 ? "Needs a Production diagram" : view.arc42.stale ? `Text out of date (v${view.arc42.version})` : view.arc42.written ? `Written for v${view.arc42.version}` : "Ready to export"}
+              </span>
+            </button>
+            {open === "arc42" && (
+              <div className="docs-step-body">
+                <p className="muted small">arc42 template (our wording, credited) · from the Production diagram, Gap Report and the Register: its requirements, assumptions, decisions (as ADRs) and risks are the same entries the other documents cite.</p>
+                <div className="row">
+                  <button className="primary" disabled={!view.arc42} onClick={() => onArc42("docx")}>Export Word</button>
+                  <button disabled={!view.arc42} onClick={() => onArc42("pdf")}>Export PDF</button>
+                </div>
+              </div>
+            )}
+          </li>
         </ol>
       )}
 

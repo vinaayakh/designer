@@ -13,6 +13,7 @@ import (
 
 	"github.com/vinaayakh/designer/internal/kb"
 	"github.com/vinaayakh/designer/internal/proposal"
+	"github.com/vinaayakh/designer/internal/register"
 	"github.com/vinaayakh/designer/internal/scene"
 )
 
@@ -175,5 +176,33 @@ func TestDOCXRejectsBadImage(t *testing.T) {
 	}
 	if _, err := DOCX(Build(fixture(false)), nil); err != nil {
 		t.Fatalf("no image should still work: %v", err)
+	}
+}
+
+func TestRegisterSections(t *testing.T) {
+	in := fixture(true)
+	e := func(id string, ty register.Type, st register.Status, text string, f map[string]string) register.Entry {
+		return register.Entry{ID: id, Type: ty, Status: st, Statement: text, Fields: f, Source: register.Source{Kind: "wizard"}}
+	}
+	in.Entries = []register.Entry{
+		e("REQ-004", register.REQ, register.Open, "Customers can track an order", map[string]string{"kind": "functional", "priority": "must"}),
+		e("CON-007", register.CON, register.Confirmed, "Data stays in the EU", nil),
+		e("ASM-002", register.ASM, register.Open, "Orders are paid by card", nil),
+		e("ASM-001", register.ASM, register.Superseded, "Old assumption", nil),
+		e("NG-001", register.NG, register.Confirmed, "No mobile app in v1", nil),
+		e("DEC-012", register.DEC, register.Confirmed, "Database for orders", map[string]string{"chose": "Postgres", "over": "DynamoDB", "because": "orders are relational"}),
+		e("RISK-003", register.RISK, register.Open, "No backup for the DB", map[string]string{"likelihood": "medium", "impact": "high", "mitigation": "add a backup vault"}),
+		e("Q-001", register.Q, register.Open, "Which payment provider?", nil),
+	}
+	out := string(HTML(Build(in), ""))
+	for _, want := range []string{"Customers can track an order", "Data stays in the EU", "Orders are paid by card", "No mobile app in v1", "ADR-0012: Database for orders", "No backup for the DB", "medium / high", "Which payment provider?", "(unconfirmed)", "1 assumptions in 2.2 are not confirmed"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("arc42 is missing %q", want)
+		}
+	}
+	for _, gone := range []string{"Old assumption", "Orders are under 1 TB", "ADR-001:"} {
+		if strings.Contains(out, gone) {
+			t.Errorf("with a Register, arc42 shouldn't show %q (superseded, or the Rationale's copy)", gone)
+		}
 	}
 }

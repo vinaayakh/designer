@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"github.com/vinaayakh/designer/internal/register"
 	"slices"
 	"strings"
 
@@ -247,6 +248,9 @@ func (b *builder) goals() *Section {
 	} else {
 		q.add(Ptext("The Design Brief sets no measurable quality targets."))
 	}
+	if t := b.requirementsTable(); t != nil {
+		s.sub("1.3", "Requirements").add(Ptext("From the Register (the Requirements spec cites the same entries)."), *t)
+	}
 	return s
 }
 
@@ -263,11 +267,16 @@ func (b *builder) constraints() *Section {
 			t.Rows = append(t.Rows, [][]Run{ctext(r.Label), ctext(r.Value)})
 		}
 	}
+	for _, e := range b.live(register.CON, notBrief) {
+		t.Rows = append(t.Rows, [][]Run{ctext(e.ID), cell(T(e.Statement), statusRun(e))})
+	}
 	c.add(t)
 
 	a := s.sub("2.2", "Assumptions")
 	var items [][]Run
-	if b.in.Rationale != nil {
+	if b.hasRegister() {
+		items = b.entryList(b.live(register.ASM, nil)).Items
+	} else if b.in.Rationale != nil {
 		for _, x := range b.in.Rationale.Assumptions {
 			items = append(items, []Run{T(x)})
 		}
@@ -285,6 +294,9 @@ func (b *builder) constraints() *Section {
 	}
 	if len(unknown) > 0 {
 		a.add(Callout{Tone: "warn", Runs: []Run{B("Unknown in the Design Brief: "), T(strings.Join(unknown, ", ") + ". Confirm these with the stakeholders.")}})
+	}
+	if ng := b.live(register.NG, nil); len(ng) > 0 {
+		s.sub("2.3", "Non-goals and out of scope").add(b.entryList(ng))
 	}
 	return s
 }
@@ -334,7 +346,14 @@ func (b *builder) strategy() *Section {
 	if r.Summary != "" {
 		s.add(Ptext(r.Summary))
 	}
-	if len(r.Tradeoffs) > 0 {
+	if decs := b.decisionEntries(); b.hasRegister() && len(decs) > 0 {
+		s.add(P(T("The key decisions (each is an ADR in section 9):")))
+		t := Table{Head: []string{"Decision", "Chosen", "Over", "ADR"}, Widths: []int{34, 26, 26, 14}}
+		for _, e := range decs {
+			t.Rows = append(t.Rows, [][]Run{cell(T(e.Statement), statusRun(e)), cell(B(e.Fields["chose"])), ctext(e.Fields["over"]), ctext(ADRID(e.ID))})
+		}
+		s.add(t)
+	} else if len(r.Tradeoffs) > 0 && !b.hasRegister() {
 		s.add(P(T("The key trade-offs (each is recorded as a decision in section 9):")))
 		t := Table{Head: []string{"Decision", "Chosen", "Over", "ADR"}, Widths: []int{34, 26, 26, 14}}
 		for i, x := range r.Tradeoffs {
@@ -724,7 +743,20 @@ func (b *builder) concepts() *Section {
 func (b *builder) decisions() *Section {
 	s := &Section{Num: "9", Title: "Architecture Decisions"}
 	r := b.in.Rationale
-	if r != nil {
+	if b.hasRegister() {
+		for i, e := range b.decisionEntries() {
+			d := s.sub(fmt.Sprintf("9.%d", i+1), fmt.Sprintf("%s: %s", ADRID(e.ID), e.Statement))
+			rows := [][][]Run{{ctext("Status"), ctext(decisionStatus(e))}, {ctext("Decision"), cell(B(orStatement(e.Fields["chose"], e)))}}
+			if o := e.Fields["over"]; o != "" {
+				rows = append(rows, [][]Run{ctext("Alternatives"), ctext(o)})
+			}
+			if w := e.Fields["because"]; w != "" {
+				rows = append(rows, [][]Run{ctext("Rationale"), ctext(w)})
+			}
+			rows = append(rows, [][]Run{ctext("Register"), ctext(e.ID)})
+			d.add(Table{Head: []string{"", ""}, Widths: []int{22, 78}, Rows: rows})
+		}
+	} else if r != nil {
 		for i, x := range r.Tradeoffs {
 			d := s.sub(fmt.Sprintf("9.%d", i+1), fmt.Sprintf("%s: %s", b.adr[i], x.Decision))
 			d.add(Table{Head: []string{"", ""}, Widths: []int{22, 78}, Rows: [][][]Run{
@@ -817,7 +849,22 @@ func (b *builder) risks() *Section {
 			s.sub(fmt.Sprintf("11.%d", len(s.Sub)+1), "Evidence needed outside the diagram").add(Ptext(fmt.Sprintf("%d controls can't be shown on a diagram (configuration, policies, procedures). Appendix A lists them with space for evidence and an owner.", outside)))
 		}
 	}
-	if b.in.Rationale != nil && len(b.in.Rationale.Assumptions) > 0 {
+	if risks := b.live(register.RISK, nil); len(risks) > 0 {
+		t := Table{Head: []string{"ID", "Risk", "Likelihood / impact", "Mitigation"}, Widths: []int{10, 42, 18, 30}}
+		for _, e := range risks {
+			t.Rows = append(t.Rows, [][]Run{ctext(e.ID), cell(T(e.Statement), statusRun(e)), ctext(strings.Trim(e.Fields["likelihood"]+" / "+e.Fields["impact"], " /")), ctext(e.Fields["mitigation"])})
+		}
+		s.sub(fmt.Sprintf("11.%d", len(s.Sub)+1), "Design risks").add(t)
+	}
+	if qs := b.live(register.Q, nil); len(qs) > 0 {
+		s.sub(fmt.Sprintf("11.%d", len(s.Sub)+1), "Open questions").add(b.entryList(qs))
+	}
+	if b.hasRegister() {
+		open := len(b.live(register.ASM, func(e register.Entry) bool { return e.Status == register.Open }))
+		if open > 0 {
+			s.sub(fmt.Sprintf("11.%d", len(s.Sub)+1), "Assumptions to validate").add(Ptext(fmt.Sprintf("%d assumptions in 2.2 are not confirmed yet. Each one that proves wrong is a risk to the decisions built on it.", open)))
+		}
+	} else if b.in.Rationale != nil && len(b.in.Rationale.Assumptions) > 0 {
 		s.sub(fmt.Sprintf("11.%d", len(s.Sub)+1), "Assumptions to validate").add(Ptext(fmt.Sprintf("The design rests on %d assumptions (2.2). Each one that proves wrong is a risk to the decisions built on it.", len(b.in.Rationale.Assumptions))))
 	}
 	return s
@@ -931,6 +978,7 @@ func (b *builder) checklist() *Section {
 
 func (b *builder) sources() *Section {
 	s := &Section{Num: "B", Title: "Appendix: Sources"}
+	s.add(P(T("Structure: the arc42 architecture documentation template ("), L("arc42.org", "https://arc42.org"), T(") by Dr. Peter Hruschka, Dr. Gernot Starke and contributors, licensed "), L("CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/"), T(". Its section headings are used; the text is generated by Designer from this project.")))
 	s.add(Ptext(fmt.Sprintf("Knowledge Base records referred to in this document (Knowledge Base version %s).", orStr(b.in.KBVersion, "unknown"))))
 	t := Table{Head: []string{"Record", "Title", "Sources"}, Widths: []int{30, 30, 40}, Compact: true}
 	for _, id := range sortedKeys(b.mentioned) {

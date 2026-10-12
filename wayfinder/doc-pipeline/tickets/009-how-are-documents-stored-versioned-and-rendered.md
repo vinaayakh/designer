@@ -43,3 +43,10 @@ Decided 2026-10-12, taking the recommended option throughout (vinu: "find the re
 - an index listing each document's version, what it was built from, and whether it's stale.
 
 That pack is the audit hand-off.
+
+## Implementation notes (2026-10-12)
+
+Built as decided, with two deviations, both taking the lower-risk option:
+
+- **arc42 keeps its text per Production version** (`documents/vNNN-arc42.json`, not moved to `documents/arc42/`). Its text describes one diagram version, so it stays keyed to it. It is a Step in the Documents tab (status: written for vN / out of date, Export Word / PDF), and its requirements, constraints, assumptions, non-goals, decisions (ADR-NNNN = DEC-NNN), risks and open questions now come from the Register; the Design Rationale is only the fallback for a Project without one. Its writing task also sees the confirmed requirements. The arc42 credit line (CC BY-SA 4.0) is in Appendix B. The open question from research 008 (whether reusing arc42's whole heading list needs a legal opinion before selling) still stands.
+- **`internal/report` has no general Markdown renderer.** Pipeline documents already have a Markdown copy (`vNNN.md`). The document pack holds those, plus ADRs, `register.md`, `register/log.jsonl` and a README index. arc42 stays Word / PDF, since it needs the diagram image from the browser.

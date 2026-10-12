@@ -1085,6 +1085,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
           )}
           {tab === "documents" && (
             <Documents view={pipelineView} onError={fail} onChanged={refreshPipeline}
+              onArc42={(format) => { setView("production"); setViewing(null); setDocExport(format); }}
               onHighlight={(ids) => {
                 const a = apiRef.current;
                 if (!a || !ids.length) return;

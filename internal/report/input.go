@@ -5,6 +5,7 @@ import (
 
 	"github.com/vinaayakh/designer/internal/kb"
 	"github.com/vinaayakh/designer/internal/proposal"
+	"github.com/vinaayakh/designer/internal/register"
 	"github.com/vinaayakh/designer/internal/scene"
 )
 
@@ -26,6 +27,7 @@ type Input struct {
 	Services   map[string]Service
 
 	Rationale *proposal.Rationale
+	Entries   []register.Entry      // the Register; when present it is the source of requirements, assumptions, decisions and risks
 	Gap       *Gap                  // the newest Gap Report of this version or an earlier one
 	Applies   map[string][]string   // element id → Knowledge Base Records (controls and practices) that apply
 	Records   map[string]*kb.Record // every Record the document mentions

@@ -43,11 +43,20 @@ type EntryView struct {
 	CitedBy []string `json:"citedBy,omitempty"` // "Requirements spec v2"
 }
 
+// Arc42View is the arc42 document's state: it reads the same Register, and its text is written
+// per Production version.
+type Arc42View struct {
+	Version int  `json:"version"`
+	Written bool `json:"written"`
+	Stale   bool `json:"stale"`
+}
+
 // PipelineView is everything the Documents tab needs.
 type PipelineView struct {
 	Steps     []StepView       `json:"steps"`
 	Entries   []EntryView      `json:"entries"`
 	Proposed  []*ProposedEntry `json:"proposed,omitempty"` // from chat, waiting for review
+	Arc42     *Arc42View       `json:"arc42,omitempty"`    // the arc42 export of the latest Production version
 	Integrity string           `json:"integrity,omitempty"`
 }
 
@@ -113,6 +122,10 @@ func (a *App) Pipeline() (PipelineView, error) {
 	}
 	for _, e := range a.Reg.Entries() {
 		view.Entries = append(view.Entries, EntryView{Entry: e, CitedBy: citedBy[e.ID]})
+	}
+	if now.Production > 0 {
+		written, stale, _ := a.DocumentStatus(now.Production)
+		view.Arc42 = &Arc42View{Version: now.Production, Written: written, Stale: stale}
 	}
 	return view, nil
 }

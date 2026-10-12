@@ -87,7 +87,7 @@ export function ExportDoc({ version, format, signal, images, onClose, onDone }: 
                 crosscutting concepts and quality scenarios. It takes about a minute and is saved with this version.
               </p>
             )}
-            <p className="muted small">Everything else comes from the Design Brief, the diagram, the Design Rationale and the latest Gap Report.</p>
+            <p className="muted small">Everything else comes from the Design Brief, the diagram, the Design Rationale, the Register (requirements, assumptions, decisions, risks) and the latest Gap Report.</p>
             <div className="row">
               <button onClick={onClose}>Cancel</button>
               <span className="spacer" />

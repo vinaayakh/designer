@@ -87,6 +87,9 @@ func (a *App) documentMessageLocked(n int) (string, error) {
 
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "TASK: Write the arc42 document text for Production Diagram v%d.\n\n%s\n\nProduction Diagram v%d:\n%s\n", n, b.Compact(), n, strings.TrimRight(g.Compact(al), "\n"))
+	if d := a.requirementsDigest(); d != "" {
+		sb.WriteString("\n" + d)
+	}
 	if rat.Summary != "" || len(rat.Nodes) > 0 {
 		sb.WriteString("\nDesign Rationale (already in the document; don't repeat it, build on it):\n")
 		if rat.Summary != "" {
@@ -379,6 +382,9 @@ func (a *App) DocumentInput(n int) (*report.Input, error) {
 
 	if nar, err := a.narrative(n); err == nil && nar != nil {
 		in.Narrative = nar
+	}
+	if a.Reg != nil {
+		in.Entries = a.Reg.Entries()
 	}
 	tidyInput(in)
 	return in, nil

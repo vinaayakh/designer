@@ -80,7 +80,8 @@ An internal, curated database of records that the AI consults **first**:
 - ✅ Records are produced via deep research as part of the app development process.
 - 🔬 Deep research needed to author these records from authoritative sources.
 - ✅ v1: the Knowledge Base is **shipped with the app, curated, and read-only**. Users can't add their own records in v1.
-- ✅ **Licensing** ([ADR 0002](docs/adr/0002-knowledge-base-is-written-clean-not-share-alike.md)): the Knowledge Base is written in-house during development and carries the app's own licence, with no share-alike. How a Record may use each source tier:
+- ✅ **App licence:** Apache-2.0 (decided 2026-10-12): [LICENSE](LICENSE), with credits in [NOTICE](NOTICE) and bundled software in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- ✅ **Licensing** ([ADR 0002](docs/adr/0002-knowledge-base-is-written-clean-not-share-alike.md)): the Knowledge Base is written in-house during development and carries the app's own licence (Apache-2.0), with no share-alike. How a Record may use each source tier:
   - **Public domain** (HIPAA rule, NIST): verbatim, with credit.
   - **CC BY** (Azure Architecture Center): adapted, with attribution.
   - **CC BY-SA** (OWASP, AWS docs) and **restricted** sources (SOC 2, Azure Well-Architected, AWS compliance pages): facts and IDs only, in our own words, plus a link.

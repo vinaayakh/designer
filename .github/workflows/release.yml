@@ -62,9 +62,9 @@ jobs:
 
       - name: Release notes from CHANGELOG.md
         run: |
-          awk -v v="${{ steps.version.outputs.version }}" '
-            $0 ~ "^## \\[" v "\\]" { on = 1; next }
-            on && /^## \[/ { exit }
+          awk -v h="## [${{ steps.version.outputs.version }}]" '
+            index($0, h) == 1 { on = 1; next }
+            on && index($0, "## [") == 1 { exit }
             on { print }
           ' CHANGELOG.md > dist/notes.md
           if [ ! -s dist/notes.md ]; then

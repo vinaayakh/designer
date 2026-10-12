@@ -1,0 +1,33 @@
+name: Outside pull requests
+
+# Designer doesn't accept outside pull requests (see CONTRIBUTING.md). This closes PRs from
+# people without write access, with a pointer to opening an issue instead. It never checks
+# out or runs the PR's code, so pull_request_target is safe here.
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  close:
+    if: ${{ !contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) && github.event.pull_request.user.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number,
+              body: [
+                `Thanks for taking the time, @${pr.user.login}.`,
+                "",
+                "Designer is built with AI coding agents and doesn't accept outside pull requests, so this one is being closed. " +
+                "The change you're after is still very welcome as an issue: describe the problem or idea (link this PR if it helps explain it) " +
+                "and it will be triaged. See [CONTRIBUTING.md](https://github.com/" + context.repo.owner + "/" + context.repo.repo + "/blob/main/CONTRIBUTING.md).",
+              ].join("\n"),
+            });
+            await github.rest.pulls.update({ owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, state: "closed" });

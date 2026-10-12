@@ -1,88 +1,105 @@
 # Designer
 
-A local, AI-assisted architecture diagramming tool. Sketch a system as a hand-drawn **Rough Draft**, then convert it into a cloud-specific **Production Diagram** with a Design Rationale and a SOC 2 / HIPAA **Gap Report**. AI work runs in your local Claude Code; the app never handles API keys.
+Designer is a local, AI-assisted architecture tool. Sketch a system as a hand-drawn **Rough Draft**, answer a short **Design Brief**, and Designer turns it into a cloud-specific **Production Diagram** with a Design Rationale, a SOC 2 / HIPAA **Gap Report**, and the documents a senior engineer is expected to write: a requirements spec, a design doc with ADRs, a STRIDE threat model, a reliability and disaster-recovery plan, and an arc42 architecture document. Every requirement, assumption, decision and risk lands in an append-only, hash-chained **Register**, so you can always show where a document's claims came from.
 
-The spec is in [REQUIREMENTS.md](REQUIREMENTS.md), the vocabulary in [CONTEXT.md](CONTEXT.md), and the decisions behind it on the [planning map](wayfinder/map.md).
+AI work runs in **your own [Claude Code](https://claude.com/claude-code)**: Designer never sees or stores an API key, and Claude Code only gets Designer's own tools plus web search on a short list of trusted sources.
 
-## Run it
+- Single binary, no runtime dependencies besides Claude Code. The UI opens in your browser.
+- Projects are plain files (YAML, JSON, `.excalidraw`, Markdown) that diff well in git.
+- Nothing changes your diagram until you approve it: every AI change is a Proposal you review change by change.
+- Built on [Excalidraw](https://excalidraw.com) for the hand-drawn canvas and [ELK](https://eclipse.dev/elk/) for layout.
 
-Requirements: Go 1.26+, Node 22+, and [Claude Code](https://claude.com/claude-code) 2.1.295 or later, logged in.
+> **Status:** early (0.x). The workflow is complete end to end; the Knowledge Base has a handful of pilot Records, and official AWS/Azure icons are not bundled yet (generic icons are used). Expect file formats to change before 1.0.
+
+## Features
+
+- **Rough Draft:** a fast, freeform Excalidraw canvas. Shapes become Nodes, arrows become Edges, and shapes drawn around others become Groups.
+- **Design Brief:** a short wizard for the target cloud (AWS, Azure or generic), scale, latency, availability, RPO/RTO, data residency and compliance. `Unknown` is always an answer; it becomes a recorded assumption.
+- **Conversion:** the Assistant turns the sketch into a typed, laid-out Production Diagram, with a rationale for every component, citing the Knowledge Base. You accept, reply to or reject it as a whole.
+- **Gap Check:** checks the design against SOC 2 and HIPAA controls and security practices, with findings tied to diagram elements and a one-click **Fix** that drafts a Proposal.
+- **Proposals:** ask for changes in chat; review each change on the canvas before it's applied. Every accepted Proposal or edit is a new version.
+- **Documents:** a step-by-step pipeline that writes a Requirements spec, a Design doc + ADRs, a Threat model (STRIDE) and a Reliability & DR plan, each building on the last. Each asks its questions first, cites the Register, and goes stale when anything it relied on changes.
+- **Register:** the audit trail. Requirements, constraints, assumptions, non-goals, decisions, risks and open questions, each with its source and full history. Only you confirm or reject what the Assistant adds.
+- **Export:** PNG and SVG; the arc42 document as Word or PDF; a **document pack** (zip) with every document, an ADR per decision (MADR 4.0), the Register and an index for reviewers or auditors.
+
+See the [feature guides](docs/features/README.md) for walkthroughs.
+
+## Installation
+
+You need [Claude Code](https://claude.com/claude-code), installed and logged in.
+
+macOS and Linux:
 
 ```sh
-./scripts/build.sh          # frontend + tests + bin/designer
-bin/designer ~/my-system    # opens (or creates) a Project folder and the browser
+curl -fsSL https://raw.githubusercontent.com/vinaayakh/designer/main/scripts/install.sh | sh
 ```
 
-Flags: `--port` (default 4717, falls back to a free port), `--no-open`, `--claude <path>`.
+Windows (PowerShell):
 
-### Logs and performance
+```powershell
+irm https://raw.githubusercontent.com/vinaayakh/designer/main/scripts/install.ps1 | iex
+```
 
-Designer writes JSON-lines logs to `<project>/.designer/logs/designer.log` (rotated at 20 MB, 5 kept) and readable lines to stderr.
+Both installers verify the download against the release's `checksums.txt`. You can also download an archive from [Releases](https://github.com/vinaayakh/designer/releases) and check its build provenance with `gh attestation verify <file> --repo vinaayakh/designer`.
 
-- `--verbose` (or `--log-level debug`): every request, MCP tool call, timer, browser timing and resource sample. The default `info` logs startups, Assistant turns and every warning or error.
-- `--slow-ms 500`: requests, tool calls and tasks slower than this are logged as `slow request` / `slow tool call` / `slow task` warnings. Assistant turns are slow after 3 minutes.
-- `--sample 15s`: how often CPU (% of one core) and memory (RSS) of Designer and Claude Code are sampled; sustained CPU over 90% or memory over 1 GB (Designer) / 2 GB (Claude Code) is a warning. `0` turns sampling off.
-- `--log-dir <dir>`: write the log somewhere else.
+Build from source (Go 1.26+, Node 22+):
 
-Each Assistant turn logs `assistant turn` with its kind, model, wall time, time to first token, tokens in/out/thinking, cache reads/writes and cost. The browser sends its own timings to the same log (`"source":"web"`): API round trips, ELK layout, routing, rendering, review build/swap, export images, long tasks (> 200 ms is a warning), dropped frames while panning, JS heap, and uncaught errors. `GET /api/metrics` returns this run's totals: per-route and per-task counts with p50/p95/max, token totals per turn kind, and the latest and peak CPU/RAM samples.
+```sh
+git clone https://github.com/vinaayakh/designer.git
+cd designer
+make build            # or scripts/build.sh on Windows (Git Bash)
+bin/designer --version
+```
 
-To find problems: `grep '"level":"WARN"\|"level":"ERROR"' designer.log`, or filter by `"msg":"slow request"`, `"msg":"assistant turn"`, `"msg":"dropped frames"`, `"msg":"resources"`.
+## Usage
 
-`npm run bench:pan -- [url] [--throttle 4] [--dpr 2] [--rough] [--hz 120] [--no-snapshot]` (in `web/`, needs Microsoft Edge) measures frame times, dropped frames, long tasks and script time while panning with the wheel, pinch-zooming, dragging with the hand tool and panning at 1x zoom. Saving is blocked, so it is safe on a real project. Build with `npx vite build --minify false` for readable profiles.
+```sh
+designer ~/my-system             # open (or create) a Project folder and the browser
+designer --port 5000 ~/my-system # preferred port (falls back to a free one)
+designer --no-open ~/my-system   # don't open the browser
+designer --verbose ~/my-system   # debug logs: requests, tool calls, timings
+designer --claude /path/to/claude ~/my-system  # a Claude Code binary not on PATH
+designer --version
+```
 
-While you pan or zoom (wheel, trackpad, hand tool, Space + drag, middle button), the canvas moves a snapshot of the last frame instead of letting Excalidraw redraw every element, and hands the final position to Excalidraw when the gesture ends (`web/src/snapshotPan.ts`). To compare with Excalidraw's own handling, run `localStorage.setItem("designer.snapshotPan", "off")` in the browser console and reload.
+The server listens on 127.0.0.1 only. Logs go to `<project>/.designer/logs/designer.log`; see [Logging and performance](docs/internals/logging-and-performance.md) for every flag.
 
-For frontend work, run `bin/designer --no-open .` and `npm run dev` in `web/` (Vite proxies `/api` to port 4717).
-
-## How it fits together
-
-| | |
-|---|---|
-| `cmd/designer` | the binary: opens the Project, serves the UI on 127.0.0.1 |
-| `internal/brief` | Design Brief schema (`schema.yaml`), validation, `brief.yaml`, the compact line the AI reads |
-| `internal/catalog` | 48 Component Kinds, group kinds, Data Classifications, AWS and Azure Cloud Catalogs (`data/*.yaml`) |
-| `internal/kb` + `kb/records` | the Knowledge Base: Record format, lint, copy check, BM25 search, `applies_to` lookup |
-| `internal/scene` | `.excalidraw` scene → graph (Nodes, Edges, Groups, Notes), Aliases, compact format, change lists, pre-check |
-| `internal/proposal` | validates `submit_proposal`, resolves Aliases, dependencies between changes, simulation |
-| `internal/project` | the Project folder (below) |
-| `internal/agent` | the long-running `claude -p` process (stream-json) |
-| `internal/app` | Assistant Session lifecycle, the 6 MCP tools, trusted-domain hook, Conversion, Gap Check, Fix |
-| `internal/server` | JSON API, event stream, `/mcp`, `/hook`, embedded frontend |
-| `web/` | React + Excalidraw UI: wizard, canvas, Proposal review, Conversion Preview, Rationale, Gap Report, Inspector, versions |
-
-A Project folder holds plain files you can commit:
+A Project folder is plain files you can commit:
 
 ```
-project.yaml                 name, created, when the Rough Draft was frozen
-brief.yaml                   the Design Brief, every field written out
+project.yaml                    name, created, when the Rough Draft was frozen
+brief.yaml                      the Design Brief
 rough-draft.excalidraw
-production/vNNN.excalidraw   one per Production version
-production/vNNN.json         version meta + Design Rationale snapshot
-gap-reports/vNNN-<time>.json never edited after they are written
-.designer/                   runtime state (Assistant Session, waiting Proposal); git-ignored
+production/vNNN.excalidraw      one per Production version, plus vNNN.json (rationale)
+gap-reports/vNNN-<time>.json    never edited after they are written
+register/log.jsonl              the Register: append-only, hash-chained
+documents/<step>/vNNN.json      each document version, with a Markdown copy (vNNN.md)
+.designer/                      runtime state and logs (git-ignored)
 ```
 
-## Tests
+## Documentation
 
-`go test ./...` covers the Brief, catalogs (Kind coverage, ≤1.2k-token exports), the Knowledge Base CI checks (lint, copy check, 32-query search eval), scene parsing and change lists, Proposal validation and dependencies, versions, and the trusted-source rules. `npm run check-icons` checks every Kind's Tabler icon. `npm run build` type-checks the frontend.
+- [Docs hub](docs/README.md): feature guides, internals and decision records
+- [Requirements](REQUIREMENTS.md) and [vocabulary](CONTEXT.md)
+- [Planning maps](wayfinder/map.md): every design decision and why
+- [Changelog](CHANGELOG.md)
 
-## Defaults taken where the map is still open
+## Development
 
-These items are still under "Not yet specified" on the map; the build picks a simple default for each:
+```sh
+make build                    # frontend + binary
+make test                     # go vet + go test (the frontend must be built first)
+make check                    # everything CI runs
+bin/designer --no-open .      # then, for live frontend work:
+cd web && npm run dev         # Vite on :5173, proxying /api to :4717
+```
 
-- **Project folder layout:** as above, plus `documents/` for the arc42 document text.
-- **Hand-edit versions:** edits within 10 minutes of each other are saved into one version, unless a Gap Report checked it.
-- **Chat history:** not saved; the Assistant Session's memory is Claude Code's own (`--resume`).
-- **Documents (Document Pipeline):** the Documents tab writes a Requirements spec, a Design doc with ADRs, a Threat model (STRIDE) and a Reliability & DR plan, each built on the ones before it. Each Step asks its questions first (answers are recorded; `unknown` becomes an assumption), then the Assistant writes it, citing the **Register**: the project's append-only, hash-chained audit trail of requirements, assumptions, constraints, non-goals, decisions, risks and open questions (`register/log.jsonl`). You confirm or reject what the Assistant adds; a document goes stale when anything it relied on changes. Versions are kept as `documents/<step>/vNNN.json` with a Markdown copy beside each. When you state a requirement or constraint in chat, the Assistant proposes it as an entry for you to accept. Conversion designs against your confirmed requirements, and accepting a "Draft a fix" Proposal closes the risk it fixes. The arc42 export reads the same Register. **Download document pack** zips the documents, an ADR per decision (MADR 4.0), the Register with its history and raw log, and an index of what each document was built from. Spec: [wayfinder/doc-pipeline](wayfinder/doc-pipeline/map.md).
-- **Export:** PNG and SVG of the current view, and the **arc42 document** of a Production version as Word (.docx) or PDF (the browser's Save as PDF). The document is built from the Brief, diagram, Design Rationale and newest Gap Report; the Assistant writes the responsibilities, runtime scenarios, crosscutting concepts and quality scenarios once per version (`documents/vNNN-arc42.json`), or you can export without them.
-- **Comparing versions:** you can view any older version read-only and restore it; there is no side-by-side diff yet.
-- **Editing the Brief later:** allowed from Settings, except the target cloud after Conversion. The Assistant gets the change with the next message.
-- **Usage and cost:** the session cost Claude Code reports is shown in the Assistant header.
+Working with an AI coding agent? Start with [AGENT.md](AGENT.md).
 
-## Not done yet
+## Contributing
 
-- **Official AWS/Azure icons:** the download-on-first-use flow, the terms prompt and the icon-sync script are not built. Every card uses the generic Tabler icon, which is the spec's offline fallback, and catalog `icon` keys are empty.
-- **Catalog facts to verify:** the `hipaa` flags in `aws.yaml` and `azure.yaml` were written from memory; `hipaa_as_of` stays null until they are checked against the vendors' lists.
-- **Install and update:** no `curl | sh` installer or `designer --update` yet.
-- **Knowledge Base:** only the 5 pilot Records.
-- **App licence:** not chosen.
+Designer is built with AI coding agents, and outside pull requests are not accepted. Bug reports and feature ideas are very welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). To report a security issue, see [SECURITY.md](SECURITY.md).
+
+## License
+
+[Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for credits and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for bundled software.

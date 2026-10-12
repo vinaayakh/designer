@@ -44,13 +44,13 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 
 - **Comparing versions:** how two Production Diagram versions are compared side by side (visual diff vs change list), and how far back history goes.
 - **Export:** PNG/SVG for sure. Whether the Design Rationale and Gap Report export as markdown/PDF.
-- **Install and update:** the `curl | sh` script, self-update (`designer --update`), supported operating systems, checking that Claude Code is installed.
+- **Update:** self-update (`designer --update`). Installing is settled (2026-10-12): release archives for Linux, macOS and Windows on amd64 and arm64, `scripts/install.sh` and `scripts/install.ps1` with checksum verification and a Claude Code check ([PUBLISHING.md](../PUBLISHING.md)).
 - **Project folder layout:** the file layout inside a project folder (brief, frozen draft, diagram versions, rationale, reports, chat history?).
 - **Keeping the Knowledge Base current:** how Records get refreshed after v1 ships, and how a Record's version shows up in a Gap Report. The same question covers refreshing the Cloud Catalogs' HIPAA-eligible flags (`hipaa_as_of`).
 - **Editing the Design Brief later:** answering or changing brief questions from Project settings after sketching or Conversion has started. Does a change mark the current Production Diagram as stale, or suggest a Proposal?
 - **More than one Proposal at once:** can the Assistant have several Proposals waiting, or only one at a time given the canvas lock? Less urgent now that Gap Report fixes are drafted on demand, one Proposal at a time ([How does Conversion work?](tickets/011-how-does-conversion-work.md)).
 - **Showing usage and cost:** whether to show the user the per-session token cost Claude Code reports (`total_cost_usd`), and where.
-- **App licence:** Designer is open source, but its own licence (MIT, Apache-2.0, …) isn't chosen yet. The Knowledge Base carries the same licence (ADR 0002).
+
 - **Chat history:** whether Assistant conversations are saved per Project, and how they relate to diagram versions.
 
 ## Out of scope

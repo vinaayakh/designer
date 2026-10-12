@@ -10,11 +10,15 @@ The Assistant never edits the diagram directly. A change comes back as a **Propo
 
 The Review tab steps through the changes one at a time, showing each in place on the canvas. Accept a change, or reject it with a reason and the Assistant reworks the rest. You can also reply to the whole Proposal, or answer a question the Assistant asks. Changes that depend on each other stay together.
 
+![Reviewing a Proposal: the new replica and its connections are drawn in place, with each change's reason in the sidebar](../images/proposal-review.png)
+
 Accepting saves a new Production version. Nothing is applied until you accept.
 
 ## Editing by hand
 
 You can also edit the Production Diagram directly; the Inspector sets an element's kind, service, data classification and connections. Edits made within 10 minutes of each other are saved as one version. **Tidy up** re-runs the automatic layout.
+
+![The Inspector with a database selected: kind, data classification and attributes](../images/inspector.png)
 
 ## Versions
 

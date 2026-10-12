@@ -19,6 +19,8 @@ Keep the Project in git if you like: every file except `.designer/` (runtime sta
 
 ## The screen
 
+![Designer with a Production Diagram open and the Rationale tab in the sidebar](../images/production-diagram.png)
+
 - **Canvas** (left): the Rough Draft, or the Production Diagram once it exists. The header switches between them and shows the version you're on.
 - **Sidebar** (right), in tabs:
   - **Assistant**: chat, the Assistant's progress, and review cards for entries it proposes.

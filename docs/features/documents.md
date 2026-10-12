@@ -12,16 +12,22 @@ The Documents tab writes the documents a senior engineer is expected to produce,
 
 ## Writing a document
 
+![The Documents tab: each Step's status, and why the Requirements spec is stale](../images/documents-pipeline.png)
+
 1. Open a Step. It shows its status: waiting for an earlier document, questions to answer, ready, current, or stale (with the reasons).
 2. Answer its questions, one per screen. Answers are recorded in the Register as confirmed entries. **Unknown** is allowed for all but a few required questions; the Assistant then states what it assumes.
 3. **Write it**. The Assistant writes the sections, cites Register entries by ID for its claims, and adds new entries (assumptions, decisions, risks, open questions) as **open** for you to review. Some sections are computed without AI: the data flow diagram and STRIDE table, error budgets, a failure-mode skeleton.
 4. **Read** the result. Every version is kept; older ones are under **Older…**.
+
+![Reading a document: its build record, the Register entries it cites, and the computed data flow diagram](../images/document-reader.png)
 
 A document goes **stale** when the Brief, the diagram, an earlier document or an answer changes, or when an entry it cites is rejected or superseded. It is never rewritten automatically: you choose when to **Rewrite it**.
 
 ## The Register
 
 The Register tab is the audit trail: every requirement, constraint, assumption, non-goal, decision, risk and open question, with where it came from (the Brief, a wizard answer, chat, the Assistant, the Design Rationale), which documents cite it, and its full history.
+
+![The Register tab, with an entry proposed from chat waiting for review above the requirements](../images/register.png)
 
 - **Confirm** or **Reject…** what the Assistant added. Rejecting can replace the entry with your own wording. Only you can confirm or reject.
 - **Draft a fix** on a risk or open question asks the Assistant for a Proposal that resolves it. Accepting that Proposal closes the entry with a decision that names the Proposal.

@@ -9,11 +9,15 @@ Sketch freely with Excalidraw's tools. Designer reads meaning from the drawing:
 - a shape drawn around others is a **Group** (a VPC, a subnet, a trust zone); Groups can nest;
 - free text is a **Note** the Assistant reads as context.
 
+![A Rough Draft: labelled shapes and arrows](../images/rough-draft.png)
+
 Labels matter more than looks. "DB" is fine; "Postgres (orders, PII)" is better.
 
 ## The Design Brief
 
 Before Conversion, a short wizard asks for the target (AWS, Azure or generic), expected users and throughput, latency, availability, RPO and RTO, data volume, regions and residency, compliance (SOC 2, HIPAA), budget sensitivity and your team's operations maturity. Every question accepts **Unknown**: the Assistant then picks a sensible value and records it as an open assumption in the Register for you to confirm later.
+
+![The Design Brief wizard, with the compact brief the AI reads on the right](../images/brief-wizard.png)
 
 You can edit the Brief later from Settings (except the target cloud once the Production Diagram exists).
 

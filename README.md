@@ -2,6 +2,8 @@
 
 Designer is a local, AI-assisted architecture tool. Sketch a system as a hand-drawn **Rough Draft**, answer a short **Design Brief**, and Designer turns it into a cloud-specific **Production Diagram** with a Design Rationale, a SOC 2 / HIPAA **Gap Report**, and the documents a senior engineer is expected to write: a requirements spec, a design doc with ADRs, a STRIDE threat model, a reliability and disaster-recovery plan, and an arc42 architecture document. Every requirement, assumption, decision and risk lands in an append-only, hash-chained **Register**, so you can always show where a document's claims came from.
 
+![A Production Diagram in Designer, with its Design Rationale](docs/images/production-diagram.png)
+
 AI work runs in **your own [Claude Code](https://claude.com/claude-code)**: Designer never sees or stores an API key, and Claude Code only gets Designer's own tools plus web search on a short list of trusted sources.
 
 - Single binary, no runtime dependencies besides Claude Code. The UI opens in your browser.
@@ -21,6 +23,12 @@ AI work runs in **your own [Claude Code](https://claude.com/claude-code)**: Desi
 - **Documents:** a step-by-step pipeline that writes a Requirements spec, a Design doc + ADRs, a Threat model (STRIDE) and a Reliability & DR plan, each building on the last. Each asks its questions first, cites the Register, and goes stale when anything it relied on changes.
 - **Register:** the audit trail. Requirements, constraints, assumptions, non-goals, decisions, risks and open questions, each with its source and full history. Only you confirm or reject what the Assistant adds.
 - **Export:** PNG and SVG; the arc42 document as Word or PDF; a **document pack** (zip) with every document, an ADR per decision (MADR 4.0), the Register and an index for reviewers or auditors.
+
+| Sketch | Review every change |
+|---|---|
+| ![The Rough Draft canvas](docs/images/rough-draft.png) | ![A Proposal under review](docs/images/proposal-review.png) |
+| **Documents built on each other** | **An audit trail behind every claim** |
+| ![The Document Pipeline](docs/images/documents-pipeline.png) | ![The Register](docs/images/register.png) |
 
 See the [feature guides](docs/features/README.md) for walkthroughs.
 

@@ -1,12 +1,12 @@
 // A small Markdown renderer for Knowledge Base Records and Assistant replies:
 // headings, paragraphs, bullet and numbered lists, blockquotes, fenced code,
-// tables, **bold**, *italic*, `code` and links. Everything renders as React
+// tables, **bold**, *italic* and _italic_, `code` and links. Everything renders as React
 // text, so nothing in the input is treated as HTML.
 import { Fragment, type ReactNode } from "react";
 
 function inline(s: string, key: string): ReactNode[] {
   const out: ReactNode[] = [];
-  const re = /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/g;
+  const re = /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|(?<!\w)_[^_\s][^_]*_(?!\w)|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let i = 0;

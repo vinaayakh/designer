@@ -29,6 +29,15 @@ git push origin main vx.y.z
 
 `make release` refuses to run with uncommitted changes or without a changelog section for the version.
 
+Without `make` (e.g. Git Bash on Windows):
+
+```sh
+echo x.y.z > VERSION
+git commit -am "Release vx.y.z"
+git tag -a vx.y.z -m "Release vx.y.z"
+git push origin main vx.y.z
+```
+
 ## 3. What the workflow does
 
 1. Checks the tag matches `VERSION` (and stops if not).

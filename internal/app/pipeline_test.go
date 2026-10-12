@@ -38,7 +38,7 @@ func TestAnswersBecomeEntries(t *testing.T) {
 		t.Fatalf("two roles → two entries, got %v", ids)
 	}
 	e, _ := a.Reg.Get(ids[0])
-	if e.Type != register.CON || e.Status != register.Confirmed || e.Source.Ref != "requirements·roles" || e.Statement != "Users and roles: Customer" {
+	if e.Type != register.CON || e.Status != register.Confirmed || e.Source.Ref != "requirements·roles" || e.Statement != "Customer" {
 		t.Errorf("entry %+v", e)
 	}
 	// Changing the answer: Customer stays, Admin is replaced by Support agent.

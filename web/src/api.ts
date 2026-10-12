@@ -1,4 +1,4 @@
-import type { Brief, Graph, KBRecord, Pending, ReportRef, Settings, State, Version, GapReport, Issue } from "./types";
+import type { Brief, Graph, KBRecord, Pending, ReportRef, Settings, State, Version, GapReport, Issue, PipelineView, DocVersionInfo } from "./types";
 import { perf } from "./perf";
 
 /** Identifies this tab, so it can ignore its own save notifications. */
@@ -67,6 +67,13 @@ export const api = {
 
   documentStatus: (n: number) => call<{ written: boolean; stale: boolean }>("GET", `/api/document/${n}`),
   writeDocument: (version: number) => call("POST", "/api/document", { version }),
+
+  pipeline: () => call<PipelineView>("GET", "/api/pipeline"),
+  answer: (step: string, question: string, values: string[], unknown = false) => call("POST", `/api/pipeline/${step}/answer`, { question, values, unknown }),
+  runStep: (step: string) => call("POST", `/api/pipeline/${step}/run`, {}),
+  docVersion: (step: string, n: number) => call<{ version: DocVersionInfo; markdown: string }>("GET", `/api/pipeline/${step}/v/${n}`),
+  entryStatus: (id: string, status: "confirmed" | "rejected", reason = "", replacement = "") => call("POST", `/api/register/${id}/status`, { status, reason, replacement }),
+  fixEntry: (id: string) => call("POST", `/api/register/${id}/fix`, {}),
 
   settings: () => call<Settings>("GET", "/api/settings"),
   saveSettings: (s: Settings) => call<Settings>("PUT", "/api/settings", s),

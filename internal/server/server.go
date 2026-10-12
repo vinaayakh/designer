@@ -21,6 +21,7 @@ import (
 	"github.com/vinaayakh/designer/internal/brief"
 	"github.com/vinaayakh/designer/internal/obs"
 	"github.com/vinaayakh/designer/internal/project"
+	"github.com/vinaayakh/designer/internal/register"
 	"github.com/vinaayakh/designer/internal/report"
 	"github.com/vinaayakh/designer/internal/scene"
 )
@@ -353,6 +354,53 @@ func (s *Server) Handler() http.Handler {
 			fail(w, 400, errors.New("format must be docx or html"))
 		}
 	})
+
+	// Document Pipeline (wayfinder/doc-pipeline): Steps, answers, documents and the Register.
+	api.HandleFunc("GET /api/pipeline", func(w http.ResponseWriter, r *http.Request) {
+		v, err := a.Pipeline()
+		if err != nil {
+			fail(w, 500, err)
+			return
+		}
+		writeJSON(w, v)
+	})
+	api.HandleFunc("POST /api/pipeline/{step}/answer", s.action(func(r *http.Request) error {
+		var in struct {
+			Question string   `json:"question"`
+			Values   []string `json:"values"`
+			Unknown  bool     `json:"unknown"`
+		}
+		if err := read(r, &in); err != nil {
+			return err
+		}
+		return a.Answer(r.PathValue("step"), in.Question, in.Values, in.Unknown)
+	}))
+	api.HandleFunc("POST /api/pipeline/{step}/run", s.action(func(r *http.Request) error { return a.RunStep(r.PathValue("step")) }))
+	api.HandleFunc("GET /api/pipeline/{step}/v/{n}", func(w http.ResponseWriter, r *http.Request) {
+		n, err := strconv.Atoi(r.PathValue("n"))
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		v, md, err := a.DocumentVersion(r.PathValue("step"), n)
+		if err != nil {
+			fail(w, 404, err)
+			return
+		}
+		writeJSON(w, map[string]any{"version": v, "markdown": md})
+	})
+	api.HandleFunc("POST /api/register/{id}/status", s.action(func(r *http.Request) error {
+		var in struct {
+			Status      register.Status `json:"status"`
+			Reason      string          `json:"reason"`
+			Replacement string          `json:"replacement"`
+		}
+		if err := read(r, &in); err != nil {
+			return err
+		}
+		return a.SetEntryStatus(r.PathValue("id"), in.Status, in.Reason, in.Replacement)
+	}))
+	api.HandleFunc("POST /api/register/{id}/fix", s.action(func(r *http.Request) error { return a.FixEntry(r.PathValue("id")) }))
 
 	// Observability: this run's metrics, and timings and errors from the browser.
 	api.HandleFunc("GET /api/metrics", func(w http.ResponseWriter, r *http.Request) {

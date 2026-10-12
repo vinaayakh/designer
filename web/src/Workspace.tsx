@@ -8,6 +8,7 @@ import { perf } from "./perf";
 import { Canvas } from "./Canvas";
 import { Chat, toolText, type ChatItem } from "./panels/Chat";
 import { Review, changeStatus, reviewStart, reviewSteps, type ReviewState } from "./panels/Review";
+import { Documents } from "./panels/Documents";
 import { ConversionPanel, RationaleView } from "./panels/Rationale";
 import { GapPanel } from "./panels/Gap";
 import { Inspector, type NodePatch } from "./panels/Inspector";
@@ -19,9 +20,9 @@ import { drawnParent, graphFromScene, hasOrphans } from "./production/graph";
 import { elkLayout, growGroups, placeChanges, warmLayout } from "./production/layout";
 import { arrowSegments } from "./production/geometry";
 import { applyRough } from "./rough/apply";
-import type { AssistantStatus, Change, GEdge, GGroup, Graph, Pending, ReportRef, State, Version, View } from "./types";
+import type { AssistantStatus, Change, GEdge, GGroup, Graph, Pending, ReportRef, State, Version, View, PipelineView } from "./types";
 
-type Tab = "assistant" | "review" | "rationale" | "gap" | "inspect" | "versions";
+type Tab = "assistant" | "documents" | "review" | "rationale" | "gap" | "inspect" | "versions";
 type Scene = { elements: ExcalidrawElement[]; files: BinaryFiles };
 
 // Properties that don't change how an element looks.
@@ -723,8 +724,16 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
 
   // ---------- events from the runtime
 
+  // Document Pipeline: reloaded on its own events and on anything that changes a Step's status.
+  const [pipelineView, setPipelineView] = useState<PipelineView | null>(null);
+  const refreshPipeline = useCallback(() => { api.pipeline().then(setPipelineView, () => {}); }, []);
+  useEffect(refreshPipeline, [refreshPipeline]);
+  const PIPELINE_EVENTS = ["pipeline", "assistant.started", "assistant.done", "proposal.closed", "brief.saved", "scene.saved", "register"];
+
   const handlers = useRef<(e: ServerEvent) => void>(() => {});
   handlers.current = (e: ServerEvent) => {
+    if (PIPELINE_EVENTS.includes(e.type)) refreshPipeline();
+    if (e.type === "pipeline" && e.data?.step) toastIt(`${pipelineView?.steps.find((x) => x.id === e.data.step)?.title ?? e.data.step} v${e.data.version} written.`);
     const push = (it: Omit<ChatItem, "id">) => setItems((xs) => [...xs, { ...it, id: Date.now() + Math.random() }]);
     switch (e.type) {
       case "hello":
@@ -979,6 +988,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
 
   const tabs: [Tab, string][] = [
     ["assistant", "Assistant"],
+    ["documents", "Documents"],
     ...(pending ? ([["review", previewing ? "Conversion" : "Review"]] as [Tab, string][]) : []),
     ...(latest ? ([["rationale", "Rationale"], ["gap", "Gap Report"]] as [Tab, string][]) : []),
     ["inspect", "Inspect"],
@@ -1069,6 +1079,14 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
             <GapPanel reports={reports} latest={latest} label={label} onSelectNode={(id) => { setView("production"); selectNode(id); }} onOpenRecord={setRecord}
               fixed={fixed} busy={status.busy} pendingProposal={!!pending}
               onCheck={() => api.gapCheck(latest).then(() => setItems((xs) => [...xs, { id: Date.now(), kind: "notice", text: `Gap Check of v${latest} started.` }])).catch(fail)} />
+          )}
+          {tab === "documents" && (
+            <Documents view={pipelineView} onError={fail} onChanged={refreshPipeline}
+              onHighlight={(ids) => {
+                const a = apiRef.current;
+                if (!a || !ids.length) return;
+                a.updateScene({ appState: { selectedElementIds: Object.fromEntries(ids.map((id) => [id, true])) } as any });
+              }} />
           )}
           {tab === "inspect" && (
             <Inspector g={view === "production" ? graph : roughInspectGraph(apiRef.current, labels)} cat={cat} cloud={cloud} selected={selection[0] ?? null} view={view}

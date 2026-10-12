@@ -153,7 +153,14 @@ func (a *App) Answer(stepID, qid string, values []string, unknown bool) error {
 				keep[e.Statement] = id
 			}
 		}
-		statement := func(v string) string { return q.Label + ": " + v }
+		// A list or multi-choice answer is one entry per value, worded as the value itself (the
+		// entry's source names the question); a single answer reads "Label: value".
+		statement := func(v string) string {
+			if q.Kind == "list" || q.Kind == "multi" {
+				return v
+			}
+			return q.Label + ": " + v
+		}
 		var fresh []string
 		for _, v := range clean {
 			if id, ok := keep[statement(v)]; ok {

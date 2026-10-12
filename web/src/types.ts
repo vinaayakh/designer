@@ -60,6 +60,28 @@ export interface KBRecord {
 export interface AssistantStatus { running: boolean; busy: boolean; task?: string; costUsd: number; claudeVersion?: string; warning?: string; canRetry: boolean }
 export interface Settings { model: string; conversionModel: string }
 
+// ---- Document Pipeline (internal/pipeline, internal/register)
+
+export type EntryType = "REQ" | "ASM" | "CON" | "NG" | "DEC" | "RISK" | "Q";
+export type EntryStatus = "open" | "confirmed" | "rejected" | "superseded";
+export interface RegisterEntry {
+  id: string; type: EntryType; statement: string; fields?: Record<string, string>;
+  source: { kind: string; ref?: string; text?: string }; links?: string[]; status: EntryStatus;
+  step?: string; doc?: string; created: string; createdBy: string; supersedes?: string; supersededBy?: string;
+  history: { at: string; actor: string; status: EntryStatus; reason?: string }[];
+  citedBy?: string[];
+}
+export interface StepQuestion { id: string; label: string; question: string; kind: "text" | "choice" | "multi" | "list"; values?: string[]; blocking?: boolean; creates?: EntryType }
+export interface StepAnswer { values?: string[]; unknown?: boolean; at: string; entries?: string[] }
+export interface StepStatus { kind: "waiting" | "needs" | "ready" | "writing" | "current" | "stale"; text: string; reasons?: string[]; unanswered: number; blocking?: string[] }
+export interface DocVersionInfo { step: string; n: number; created: string; model?: string; inputs: { production?: number; upstream?: Record<string, number> }; cites: Record<string, EntryStatus>; newEntries?: string[] }
+export interface PipelineStep {
+  id: string; title: string; version: number; template: string; credit?: string; diagram: "rough" | "production";
+  requires?: string[]; uses?: string[]; questions: StepQuestion[];
+  status: StepStatus; answers?: Record<string, StepAnswer>; versions: number[] | null; latest?: DocVersionInfo;
+}
+export interface PipelineView { steps: PipelineStep[]; entries: RegisterEntry[] | null; integrity?: string }
+
 export interface State {
   project: { name: string; dir: string; created: string; frozenAt?: string | null };
   brief: Brief; briefDone: boolean; briefSchema: BriefSchema; catalog: Catalog; kbVersion: string;

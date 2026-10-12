@@ -1,0 +1,51 @@
+Designer
+Copyright 2026 vinaayakh and the Designer contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party software
+--------------------
+The Designer binary bundles third-party software, each under its own licence.
+THIRD_PARTY_NOTICES.md lists every package with its licence text. In particular:
+
+- Excalidraw (MIT) provides the canvas. It bundles these fonts, under their
+  own licences as published upstream (https://github.com/excalidraw/excalidraw):
+  Virgil, Excalifont, Cascadia, Comic Shanns, Liberation, Lilita One, Nunito,
+  Xiaolai and Assistant.
+- Inter and JetBrains Mono (SIL Open Font License 1.1) are the UI fonts.
+- Tabler Icons (MIT, https://tabler.io/icons) supply the component icons.
+- elkjs (used under EPL-2.0, https://github.com/kieler/elkjs) lays out the
+  Production Diagram. It is shipped unmodified; its source is available at
+  that address.
+
+Document structures
+-------------------
+Documents Designer generates follow published structures, credited in each
+document, in Designer's own wording:
+
+- arc42 architecture documentation template, by Dr. Peter Hruschka,
+  Dr. Gernot Starke and contributors (https://arc42.org), CC BY-SA 4.0.
+  Generated arc42 documents use its section headings.
+- Threat Modeling Manifesto (https://www.threatmodelingmanifesto.org),
+  CC BY 4.0: the four questions structure the Threat model.
+- MADR 4.0, Markdown Architectural Decision Records (https://adr.github.io/madr/):
+  the layout of exported ADRs.
+- ISO/IEC/IEEE 29148 (requirements specification outline), NIST SP 800-34
+  (contingency planning) and the STRIDE threat categories are followed for
+  structure only; no text is reproduced.
+
+Knowledge Base
+--------------
+The Knowledge Base (kb/records) is written by the Designer authors and is
+covered by this product's licence (see docs/adr/0002). Records cite their
+sources; text is copied verbatim only from public-domain sources (the HIPAA
+Security Rule, 45 CFR Part 164). SOC 2 Trust Services Criteria are
+(c) AICPA and are referenced by identifier only; no AICPA text is reproduced.
+
+The reference copies in kb/sources are not built into the binary and keep
+their own licences, listed in kb/sources/README.md (OWASP Cheat Sheet Series,
+CC BY-SA 4.0; AWS documentation, CC BY-SA 4.0; Azure Architecture Center,
+CC BY 4.0; 45 CFR 164.312, public domain).
+
+Cloud provider names (AWS, Azure) are trademarks of their owners and are used
+only to identify the services a diagram targets.

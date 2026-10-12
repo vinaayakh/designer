@@ -4,7 +4,7 @@ All notable changes to Designer are recorded here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
-## [0.1.0] - not yet released
+## [0.1.0] - 2026-10-12
 
 The first public release.
 

@@ -6,6 +6,6 @@ cd "$(dirname "$0")/.."
 go vet ./...
 go test ./...
 mkdir -p bin
-go build -trimpath -ldflags "-s -w -X main.version=${VERSION:-$(tr -d " 
-" < VERSION)-dev}" -o bin/designer$(go env GOEXE) ./cmd/designer
-echo "built bin/designer$(go env GOEXE)"
+VERSION="${VERSION:-$(tr -d ' \r\n' < VERSION)-dev}"
+go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o bin/designer$(go env GOEXE) ./cmd/designer
+echo "built bin/designer$(go env GOEXE) $VERSION"

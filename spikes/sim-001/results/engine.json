@@ -1,0 +1,150 @@
+{
+ "rows": [
+  {
+   "nodes": 50,
+   "edges": 59,
+   "probesPerSimSec": 0,
+   "visitsPerProbe": 0,
+   "tickMeanMs": 0.02,
+   "tickP99Ms": 0.41,
+   "msPerSimSecond": 0.48,
+   "maxSpeedX": 2084,
+   "engineMB": 0.81
+  },
+  {
+   "nodes": 50,
+   "edges": 59,
+   "probesPerSimSec": 1000,
+   "visitsPerProbe": 6.17,
+   "tickMeanMs": 0.07,
+   "tickP99Ms": 0.3,
+   "msPerSimSecond": 1.43,
+   "maxSpeedX": 701,
+   "engineMB": 0.81
+  },
+  {
+   "nodes": 50,
+   "edges": 59,
+   "probesPerSimSec": 5000,
+   "visitsPerProbe": 6.17,
+   "tickMeanMs": 0.32,
+   "tickP99Ms": 0.64,
+   "msPerSimSecond": 6.37,
+   "maxSpeedX": 157,
+   "engineMB": 0.81
+  },
+  {
+   "nodes": 50,
+   "edges": 59,
+   "probesPerSimSec": 20000,
+   "visitsPerProbe": 6.17,
+   "tickMeanMs": 1.25,
+   "tickP99Ms": 2.02,
+   "msPerSimSecond": 25.01,
+   "maxSpeedX": 40,
+   "engineMB": 0.81
+  },
+  {
+   "nodes": 200,
+   "edges": 239,
+   "probesPerSimSec": 0,
+   "visitsPerProbe": 0,
+   "tickMeanMs": 0.05,
+   "tickP99Ms": 0.81,
+   "msPerSimSecond": 1.05,
+   "maxSpeedX": 953,
+   "engineMB": 3.2
+  },
+  {
+   "nodes": 200,
+   "edges": 239,
+   "probesPerSimSec": 1000,
+   "visitsPerProbe": 6.24,
+   "tickMeanMs": 0.16,
+   "tickP99Ms": 1.31,
+   "msPerSimSecond": 3.3,
+   "maxSpeedX": 303,
+   "engineMB": 3.2
+  },
+  {
+   "nodes": 200,
+   "edges": 239,
+   "probesPerSimSec": 5000,
+   "visitsPerProbe": 6.24,
+   "tickMeanMs": 0.57,
+   "tickP99Ms": 2,
+   "msPerSimSecond": 11.39,
+   "maxSpeedX": 88,
+   "engineMB": 3.2
+  },
+  {
+   "nodes": 200,
+   "edges": 239,
+   "probesPerSimSec": 20000,
+   "visitsPerProbe": 6.24,
+   "tickMeanMs": 1.8,
+   "tickP99Ms": 3.52,
+   "msPerSimSecond": 36.08,
+   "maxSpeedX": 28,
+   "engineMB": 3.2
+  },
+  {
+   "nodes": 500,
+   "edges": 599,
+   "probesPerSimSec": 0,
+   "visitsPerProbe": 0,
+   "tickMeanMs": 0.14,
+   "tickP99Ms": 2.06,
+   "msPerSimSecond": 2.88,
+   "maxSpeedX": 348,
+   "engineMB": 7.99
+  },
+  {
+   "nodes": 500,
+   "edges": 599,
+   "probesPerSimSec": 1000,
+   "visitsPerProbe": 6.25,
+   "tickMeanMs": 0.28,
+   "tickP99Ms": 3.1,
+   "msPerSimSecond": 5.69,
+   "maxSpeedX": 176,
+   "engineMB": 7.99
+  },
+  {
+   "nodes": 500,
+   "edges": 599,
+   "probesPerSimSec": 5000,
+   "visitsPerProbe": 6.26,
+   "tickMeanMs": 0.93,
+   "tickP99Ms": 4.73,
+   "msPerSimSecond": 18.61,
+   "maxSpeedX": 54,
+   "engineMB": 7.99
+  },
+  {
+   "nodes": 500,
+   "edges": 599,
+   "probesPerSimSec": 20000,
+   "visitsPerProbe": 6.25,
+   "tickMeanMs": 1.93,
+   "tickP99Ms": 4.89,
+   "msPerSimSecond": 38.68,
+   "maxSpeedX": 26,
+   "engineMB": 7.99
+  }
+ ],
+ "sanity": {
+  "saturationOrder": [
+   {
+    "node": "d0-svcA",
+    "atRps": 900
+   }
+  ],
+  "firstSloBreak": {
+   "rps": 1000,
+   "p50": 1204.36,
+   "p99": 4030.58,
+   "err": 1
+  }
+ }
+}

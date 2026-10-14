@@ -1,0 +1,37 @@
+kind: compute.container
+as_of: 2026-10-15
+unit: request                       # one call into the service
+capacity:
+  model: cpu                        # requests/s per instance = vcpu × 1000 / cpu_ms × max_util
+  # CPU time one request costs, not counting time spent waiting on downstream calls. A JSON CRUD
+  # handler in a mainstream framework spends roughly 1–15 ms of CPU per request. Estimate: framework
+  # benchmarks run 10–100× faster than real handlers with auth, validation, an ORM and logging.
+  cpu_ms: { low: 1, typical: 4, high: 15 }
+  max_util: 0.9                     # past this, GC pauses and contention make latency climb
+  confidence: estimate
+latency:
+  service_ms: { low: 2, typical: 8, high: 30 }   # median own processing time
+  spread: 0.5                                     # log-normal sigma: p99 ≈ 3.2 × median
+memory:
+  base_mb: { low: 150, typical: 300, high: 800 }  # runtime and app at idle
+  per_inflight_mb: { low: 0.5, typical: 2, high: 10 }
+  on_exceed: restart                # out of memory: the instance is killed and replaced
+scaling:
+  mode: instances
+  warmup_s: { low: 15, typical: 45, high: 120 }   # schedule, pull image, start, pass health check
+  confidence: estimate
+failure:
+  replace_s: { low: 30, typical: 60, high: 180 }
+defaults: { count: 2, size: 1vcpu-2gb, scale: { min: 2, max: 10, target: 0.6 } }
+sizes:                              # Generic target
+  - { id: 0.5vcpu-1gb, vcpu: 0.5, ram_gb: 1 }
+  - { id: 1vcpu-2gb, vcpu: 1, ram_gb: 2 }
+  - { id: 2vcpu-4gb, vcpu: 2, ram_gb: 4 }
+  - { id: 4vcpu-8gb, vcpu: 4, ram_gb: 8 }
+services:
+  aws.ecs-fargate:
+    price: { vcpu_hour: 0.04048, gb_hour: 0.004445, region: us-east-1, as_of: 2026-10, verify: true }
+  azure.container-apps:
+    price: null                     # not sourced yet
+sources:
+  - { id: fargate-pricing, url: "https://aws.amazon.com/fargate/pricing/", copy: facts-only, used_for: [price] }

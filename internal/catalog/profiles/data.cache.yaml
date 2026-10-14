@@ -1,0 +1,35 @@
+kind: data.cache
+as_of: 2026-10-15
+unit: operation
+capacity:
+  model: rate                       # operations/s per node (shard); commands run on one thread
+  # Benchmarks without pipelining, with many clients, land around 70k–100k ops/s per node; pipelining
+  # reaches well over 500k. Most apps don't pipeline.
+  ops_per_node: { low: 40000, typical: 80000, high: 200000 }
+  confidence: measured
+latency:
+  service_ms: { low: 0.2, typical: 0.5, high: 1.5 }
+  spread: 0.4
+memory:
+  # The hit ratio is set on the Edge into the cache (ticket 005). When the working set doesn't fit,
+  # evictions lower it: hit ≈ Edge hit × min(1, RAM / working set).
+  on_exceed: evict
+failure:
+  failover_s: { low: 10, typical: 30, high: 90 }    # estimate: replica promotion
+defaults: { count: 1, size: 2vcpu-13gb }
+sizes:
+  - { id: 2vcpu-3gb, vcpu: 2, ram_gb: 3 }
+  - { id: 2vcpu-13gb, vcpu: 2, ram_gb: 13 }
+  - { id: 4vcpu-26gb, vcpu: 4, ram_gb: 26 }
+services:
+  aws.elasticache-redis:
+    sizes:
+      - { id: cache.t4g.medium, vcpu: 2, ram_gb: 3.09, price_hour: 0.065 }
+      - { id: cache.r6g.large, vcpu: 2, ram_gb: 13.07, price_hour: 0.206 }
+      - { id: cache.r6g.xlarge, vcpu: 4, ram_gb: 26.32, price_hour: 0.411 }
+    price: { region: us-east-1, as_of: 2026-10, verify: true }
+  aws.elasticache-valkey: { inherit: aws.elasticache-redis }
+  azure.managed-redis: { price: null }
+sources:
+  - { id: redis-benchmark, url: "https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/benchmarks/", copy: facts-only, used_for: [ops_per_node] }
+  - { id: redis-pipelining, url: "https://redis.io/docs/latest/develop/using-commands/pipelining/", copy: facts-only, used_for: [ops_per_node] }

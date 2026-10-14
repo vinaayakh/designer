@@ -1,0 +1,19 @@
+kind: network.transit
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: hop
+  bandwidth_gbps: { low: 50, typical: 50, high: 100 }   # per VPC attachment (Transit Gateway); estimate
+  confidence: estimate
+latency:
+  service_ms: { low: 0.2, typical: 0.5, high: 2 }       # one extra routed hop between networks
+  spread: 0.3
+services:
+  aws.transit-gateway:
+    price: { per_attachment_hour: 0.05, per_gb: 0.02, region: us-east-1, as_of: 2026-10, verify: true }
+  aws.vpc-peering:
+    latency: { service_ms: { low: 0, typical: 0.1, high: 0.5 }, spread: 0.2 }   # a direct route, no extra hop
+    price: null
+  azure.virtual-wan: { price: null }
+  azure.vnet-peering: { price: null }
+sources: []

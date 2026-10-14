@@ -1,0 +1,21 @@
+kind: messaging.event-bus
+as_of: 2026-10-15
+unit: event                         # one event put; each matching rule delivers to its target (an async Edge)
+capacity:
+  model: quota
+  # PutEvents per account and region: 10,000/s in us-east-1, us-west-2 and eu-west-1; 2,400 in
+  # us-east-2; lower in smaller regions. Over the limit: throttled. Can be raised.
+  rate_per_s: { low: 1200, typical: 10000, high: 10000 }
+  confidence: vendor
+latency:
+  service_ms: { low: 10, typical: 25, high: 80 }   # the put call
+  spread: 0.5
+delivery:
+  delay_ms: { low: 100, typical: 400, high: 1500 } # put to target invocation; estimate
+  retries: { low: 185, typical: 185, high: 185 }   # retried for up to 24 h with backoff by default; estimate
+services:
+  aws.eventbridge:
+    price: { per_million_events: 1.00, region: us-east-1, as_of: 2026-10, verify: true }
+  azure.event-grid: { price: null }
+sources:
+  - { id: eventbridge-quotas, url: "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-quota.html", copy: facts-only, used_for: [rate_per_s] }

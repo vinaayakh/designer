@@ -1,0 +1,15 @@
+kind: network.cdn
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: unbounded                  # edge capacity is never the bottleneck at the scales we model
+  confidence: estimate
+latency:
+  # A hit is answered at the edge; a miss goes on to the origin. The hit ratio is on the Edge to the
+  # origin (ticket 005).
+  service_ms: { low: 3, typical: 10, high: 30 }
+  spread: 0.4
+services:
+  aws.cloudfront:
+    price: { per_10k_https: 0.01, per_gb_out: 0.085, region: north-america, as_of: 2026-10, verify: true }
+sources: []

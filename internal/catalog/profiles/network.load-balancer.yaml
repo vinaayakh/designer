@@ -1,0 +1,20 @@
+kind: network.load-balancer
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: managed
+  # Scales by itself. A sudden jump to several times the recent peak can see errors for a few minutes
+  # while it scales.
+  ramp_factor_per_5min: { low: 1.5, typical: 2, high: 4 }
+  confidence: estimate
+latency:
+  service_ms: { low: 0.5, typical: 1.5, high: 5 }
+  spread: 0.3
+services:
+  aws.alb:
+    # Billed per hour plus capacity units. One unit covers 25 new connections/s, 3,000 active
+    # connections/min, 1 GB/h processed, or 1,000 rule evaluations/s, whichever dimension is highest.
+    lcu: { new_conn_per_s: 25, active_conn_per_min: 3000, gb_per_hour: 1, rule_evals_per_s: 1000 }
+    price: { per_hour: 0.0225, per_lcu_hour: 0.008, as_of: 2026-10, verify: true }
+sources:
+  - { id: elb-pricing, url: "https://aws.amazon.com/elasticloadbalancing/pricing/", copy: facts-only, used_for: [lcu, price] }

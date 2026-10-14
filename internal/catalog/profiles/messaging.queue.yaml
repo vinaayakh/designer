@@ -1,0 +1,20 @@
+kind: messaging.queue
+as_of: 2026-10-15
+unit: message
+capacity:
+  model: unbounded                  # standard queues: effectively unlimited
+  # FIFO queues (Sizing `fifo: true`): 300 API calls/s per action (3,000 messages/s in batches of 10).
+  # High-throughput FIFO raises that, depending on the region.
+  fifo: { model: quota, rate_per_s: { low: 300, typical: 3000, high: 70000 } }
+  confidence: vendor
+latency:
+  service_ms: { low: 5, typical: 15, high: 50 }   # send, then receive once the consumer polls
+  spread: 0.5
+buffer:
+  # A queue holds messages instead of failing callers; the backlog's age is the signal to watch.
+  retention_s: { low: 345600, typical: 345600, high: 1209600 }   # 4 days by default, 14 at most
+services:
+  aws.sqs:
+    price: { per_million_requests: 0.40, fifo_per_million_requests: 0.50, region: us-east-1, as_of: 2026-10, verify: true }
+sources:
+  - { id: sqs-quotas, url: "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html", copy: facts-only, used_for: [fifo] }

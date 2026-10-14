@@ -1,0 +1,17 @@
+kind: external.service
+as_of: 2026-10-15
+unit: request                       # one call to a third-party API (payments, email, maps, an LLM API…)
+capacity:
+  model: hop                        # not ours to scale: its latency and its rate limit are what matter
+  # Third-party APIs publish per-account rate limits; over them, calls get 429. Set the real limit in
+  # Sizing when known: these are placeholders for "a typical SaaS API".
+  rate_per_s: { low: 25, typical: 100, high: 1000 }
+  confidence: estimate
+latency:
+  # Over the internet to another provider: tens to hundreds of ms, with a long tail.
+  service_ms: { low: 40, typical: 120, high: 400 }
+  spread: 0.7
+failure:
+  # Outside our control: Scenarios can slow it down or take it down (sim ticket 002 events).
+  availability: { low: 0.995, typical: 0.999, high: 0.9999 }
+sources: []

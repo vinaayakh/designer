@@ -1,0 +1,29 @@
+kind: data.file
+as_of: 2026-10-15
+unit: operation                     # one file read or write (metadata plus a small block)
+capacity:
+  model: quota
+  # Elastic EFS, by default: up to 250,000 read IOPS for frequently read data and 50,000 write IOPS per
+  # file system. One client tops out at 1,500 MiB/s. Bigger files are I/O-bound: use Edge weight.
+  per_unit: { reads: 250000, writes: 50000 }
+  units: { low: 1, typical: 1, high: 1 }
+  units_name: file systems
+  per_client_mib_s: 1500
+  on_exceed: throttle
+  confidence: vendor
+latency:
+  # Reads from about 0.25 ms best case to about 1 ms; writes about 2.7 ms (NFS commits).
+  service_ms_by_op:
+    read: { low: 0.25, typical: 1, high: 5 }
+    write: { low: 2.7, typical: 4, high: 15 }
+  spread: 0.6
+services:
+  aws.efs:
+    price: null                     # storage and transfer per GB; not in the request-cost model yet
+  aws.fsx:
+    capacity: { model: quota, per_unit: { reads: 100000, writes: 50000 }, units: { low: 1, typical: 1, high: 1 }, confidence: estimate }
+    price: null
+  azure.files: { price: null }
+  azure.netapp-files: { price: null }
+sources:
+  - { id: efs-performance, url: "https://docs.aws.amazon.com/efs/latest/ug/performance.html", copy: facts-only, used_for: [per_unit, service_ms_by_op, per_client_mib_s] }

@@ -1,0 +1,17 @@
+kind: messaging.workflow
+as_of: 2026-10-15
+unit: execution                     # one workflow run; each step calls its target (an Edge)
+capacity:
+  model: hop                        # orchestrates; the work happens in the steps it calls
+  rate_per_s: { low: 300, typical: 2000, high: 10000 }   # estimate: execution starts per account; express workflows go higher
+  confidence: estimate
+latency:
+  # Overhead per state transition, added on top of the steps' own latency.
+  service_ms: { low: 5, typical: 25, high: 100 }
+  spread: 0.5
+services:
+  aws.step-functions:
+    price: { per_thousand_transitions: 0.025, mode: standard, region: us-east-1, as_of: 2026-10, verify: true }
+  azure.logic-apps: { price: null }
+  azure.durable-functions: { price: null }
+sources: []

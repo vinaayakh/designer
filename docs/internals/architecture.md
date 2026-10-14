@@ -14,15 +14,16 @@ browser (React + Excalidraw)  <-- JSON API + event stream -->  designer (Go)  <-
 |---|---|
 | `cmd/designer` | the binary: opens the Project, serves the UI on 127.0.0.1 |
 | `internal/brief` | Design Brief schema (`schema.yaml`), validation, `brief.yaml`, the compact line the AI reads |
-| `internal/catalog` | 48 Component Kinds, group kinds, Data Classifications, AWS and Azure Cloud Catalogs (`data/*.yaml`) |
+| `internal/catalog` | 48 Component Kinds, group kinds, Data Classifications, AWS and Azure Cloud Catalogs (`data/*.yaml`), Behaviour Profiles for Simulation (`profiles/*.yaml`) |
 | `internal/kb` + `kb/records` | the Knowledge Base: Record format, lint, copy check, BM25 search, `applies_to` lookup |
-| `internal/scene` | `.excalidraw` scene → graph (Nodes, Edges, Groups, Notes), Aliases, compact format, change lists, pre-check |
+| `internal/scene` | `.excalidraw` scene → graph (Nodes, Edges, Groups, Notes), Aliases, compact format, change lists, pre-check, structural issues (including detached parts, `Detached()`) |
 | `internal/proposal` | validates `submit_proposal`, resolves Aliases, dependencies between changes, simulation |
 | `internal/project` | the Project folder (below) |
 | `internal/agent` | the long-running `claude -p` process (stream-json) |
 | `internal/app` | Assistant Session lifecycle, the 6 MCP tools, trusted-domain hook, Conversion, Gap Check, Fix |
 | `internal/server` | JSON API, event stream, `/mcp`, `/hook`, embedded frontend |
 | `web/` | React + Excalidraw UI: wizard, canvas, Proposal review, Conversion Preview, Rationale, Gap Report, Inspector, versions |
+| `web/src/sim` | Sim Mode: the simulation engine (a Web Worker), the diagram import (`resolve.ts`), baseline and test runs, the overlay, and Scenario → Proposal (`apply.ts`). The runtime only serves Profiles, stores Scenarios and turns applied changes into a user-authored Proposal (`SubmitUserProposal`) |
 | `internal/register` | the Register: append-only, SHA-256 hash-chained event log of REQ, CON, ASM, NG, DEC, RISK and Q entries |
 | `internal/pipeline` | the Document Pipeline: Step definitions (`steps/*.yaml`), answers, derivers (data flow diagram, STRIDE, error budget, failure modes), versions, staleness, Markdown, the document pack |
 | `internal/report` | the arc42 document: Word (.docx) and print-ready HTML |
@@ -38,7 +39,7 @@ browser (React + Excalidraw)  <-- JSON API + event stream -->  designer (Go)  <-
 
 ## Tests
 
-`go test ./...` covers the Brief, catalogs (Kind coverage, ≤1.2k-token exports), the Knowledge Base CI checks (lint, copy check, 32-query search eval), scene parsing and change lists, Proposal validation and dependencies, versions, and the trusted-source rules. `npm run check-icons` checks every Kind's Tabler icon. `npm run build` type-checks the frontend.
+`go test ./...` covers the Brief, catalogs (Kind coverage, ≤1.2k-token exports), the Knowledge Base CI checks (lint, copy check, 32-query search eval), scene parsing and change lists, Proposal validation and dependencies, versions, and the trusted-source rules. `npm test` in `web/` runs the simulation's behaviour tests (Node's test runner, no extra dependencies). `npm run check-icons` checks every Kind's Tabler icon. `npm run build` type-checks the frontend.
 
 ## Decisions
 

@@ -62,7 +62,9 @@ function groupStyle(g: GGroup) {
   return base;
 }
 
-const EDGE_STYLE: Record<string, "solid" | "dashed" | "dotted"> = { sync: "solid", async: "dashed", stream: "dotted" };
+const EDGE_STYLE: Record<string, "solid" | "dashed" | "dotted"> = { sync: "solid", async: "dashed", stream: "dotted", observe: "dotted" };
+// A watcher (observe) isn't part of the request flow: drawn in a muted violet so it reads as oversight.
+const EDGE_COLOR: Record<string, string> = { observe: "#7950f2" };
 
 function ellipsis(s: string, max: number) {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
@@ -267,7 +269,7 @@ function arrowSkeleton(e: GEdge, r: Route, o: OverlayStatus | undefined, dim: nu
   return {
     type: "arrow", id: e.id, ...routeGeometry(r),
     elbowed: true, roughness: 0, endArrowhead: "arrow", startArrowhead: null,
-    strokeColor: o ? OVERLAY_COLOR[o] : "#495057", strokeWidth: o ? 2 : 1.5,
+    strokeColor: o ? OVERLAY_COLOR[o] : EDGE_COLOR[e.style ?? ""] ?? "#495057", strokeWidth: o ? 2 : 1.5,
     strokeStyle: EDGE_STYLE[e.style ?? "sync"] ?? "solid", opacity: o === "remove" ? 45 : dim ?? 100,
     ...(text ? { label: { text, fontSize: 11, fontFamily: FONT_FAMILY.Nunito } } : {}),
   };

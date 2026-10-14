@@ -498,6 +498,8 @@ func styleWord(style string) string {
 		return "asynchronous"
 	case "stream":
 		return "stream"
+	case "observe":
+		return "observes"
 	case "sync":
 		return "request / response"
 	}

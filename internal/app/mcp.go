@@ -44,7 +44,7 @@ func (a *App) tools() []tool {
 			"service": str("Cloud Catalog service id"), "service_name": str("off-catalog service name"),
 			"classes": arr("Data Classification", map[string]any{"type": "string"}), "tier": str("subnet tier"),
 			"parent": map[string]any{"type": []string{"string", "null"}, "description": "Group alias or +ref; null = top level"},
-			"from":   str(""), "to": str(""), "style": str("sync | async | stream"), "protocol": str(""),
+			"from":   str(""), "to": str(""), "style": str("sync | async | stream | observe"), "protocol": str(""),
 			"set": map[string]any{"type": "object", "description": "fields to change"},
 			"why": str("one-line reason"), "practices": arr("Knowledge Base practice ids applied", map[string]any{"type": "string"}),
 		}, "required": []string{"op"}}

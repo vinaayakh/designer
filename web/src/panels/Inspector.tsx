@@ -154,6 +154,7 @@ export function Inspector({ g, cat, cloud, selected, view, locked, onNode, onGro
               <option value="sync">sync (solid)</option>
               <option value="async">async (dashed)</option>
               <option value="stream">stream (dotted)</option>
+              <option value="observe">observe (watches, dotted violet)</option>
             </select>
           </div>
           <div className="field"><label>Protocol</label><input type="text" value={edge.protocol ?? ""} placeholder="e.g. HTTPS" onChange={(e) => onEdge(edge.id, { protocol: e.target.value || undefined })} /></div>

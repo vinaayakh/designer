@@ -1,0 +1,19 @@
+kind: network.nat
+as_of: 2026-10-15
+unit: request                       # one outbound connection's request
+capacity:
+  model: hop
+  # Each NAT gateway handles up to 55,000 simultaneous connections to each unique destination
+  # (IP, port, protocol), and its bandwidth scales from 5 to 100 Gbps. Many calls to one external API
+  # through one gateway can run out of ports: use Edge weight for long-lived connections.
+  connections_per_destination: 55000
+  bandwidth_gbps: { low: 5, typical: 45, high: 100 }
+  confidence: vendor
+latency:
+  service_ms: { low: 0.1, typical: 0.3, high: 1 }
+  spread: 0.3
+services:
+  aws.nat-gateway:
+    price: { per_hour: 0.045, per_gb: 0.045, region: us-east-1, as_of: 2026-10, verify: true }
+  azure.nat-gateway: { price: null }
+sources: []

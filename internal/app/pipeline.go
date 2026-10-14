@@ -53,11 +53,13 @@ type Arc42View struct {
 
 // PipelineView is everything the Documents tab needs.
 type PipelineView struct {
-	Steps     []StepView       `json:"steps"`
-	Entries   []EntryView      `json:"entries"`
-	Proposed  []*ProposedEntry `json:"proposed,omitempty"` // from chat, waiting for review
-	Arc42     *Arc42View       `json:"arc42,omitempty"`    // the arc42 export of the latest Production version
-	Integrity string           `json:"integrity,omitempty"`
+	Steps      []StepView       `json:"steps"`
+	Entries    []EntryView      `json:"entries"`
+	Proposed   []*ProposedEntry `json:"proposed,omitempty"` // from chat, waiting for review
+	Arc42      *Arc42View       `json:"arc42,omitempty"`    // the arc42 export of the latest Production version
+	Integrity  string           `json:"integrity,omitempty"`
+	Queue      []string         `json:"queue,omitempty"` // documents waiting to be written, in order
+	Production int              `json:"production"`      // latest Production version (0: none yet)
 }
 
 func (a *App) briefHash() string {
@@ -104,13 +106,23 @@ func (a *App) Pipeline() (PipelineView, error) {
 		writing = a.step.Step.ID
 	}
 	proposed := a.proposedLocked().Entries
+	queue := slices.Clone(a.docQueue)
 	a.mu.Unlock()
-	view := PipelineView{Integrity: a.Reg.Integrity(), Proposed: proposed}
+	view := PipelineView{Integrity: a.Reg.Integrity(), Proposed: proposed, Queue: queue, Production: now.Production}
 	citedBy := map[string][]string{}
 	for _, s := range pipeline.Steps() {
 		sv := StepView{Step: s, Status: pipeline.StatusOf(s, now), Answers: now.Answers[s.ID], Latest: now.Latest[s.ID]}
 		if writing == s.ID {
 			sv.Status = pipeline.Status{Kind: "writing", Text: "The Assistant is writing it…"}
+		} else if i := slices.Index(queue, s.ID); i >= 0 {
+			after := writing
+			if i > 0 {
+				after = queue[i-1]
+			}
+			sv.Status = pipeline.Status{Kind: "queued", Text: "Queued"}
+			if p := pipeline.Get(after); p != nil {
+				sv.Status.Text = "Queued after the " + p.Title
+			}
 		}
 		sv.Versions, _ = a.pipeStore().Versions(s.ID)
 		if v := sv.Latest; v != nil {
@@ -134,6 +146,9 @@ func (a *App) Pipeline() (PipelineView, error) {
 // (one per line or value); changing the answer replaces the entries it made before. unknown is
 // remembered, and the Assistant states what it assumes when it writes the document.
 func (a *App) Answer(stepID, qid string, values []string, unknown bool) error {
+	// One at a time: each answer reads, changes and writes answers.json and the Register.
+	a.answerMu.Lock()
+	defer a.answerMu.Unlock()
 	s := pipeline.Get(stepID)
 	if s == nil {
 		return fmt.Errorf("no Step %q", stepID)

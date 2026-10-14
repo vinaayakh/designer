@@ -1,0 +1,36 @@
+kind: compute.kubernetes
+as_of: 2026-10-15
+unit: request
+# A Kubernetes cluster drawn as one Node (as Conversion may draw it): simulated as one aggregated
+# workload on the cluster's nodes. Drawn as a cluster Group with workloads inside, the workloads use
+# compute.container and the Group's capacity pool (sim ticket 014).
+capacity:
+  model: cpu
+  cpu_ms: { low: 1, typical: 4, high: 15 }
+  max_util: 0.8                     # DaemonSets, kubelet and system pods reserve part of each node
+  daemonset_vcpu_per_node: { low: 0.1, typical: 0.25, high: 0.5 }
+  confidence: estimate
+latency:
+  service_ms: { low: 2, typical: 8, high: 30 }
+  spread: 0.5
+memory:
+  base_mb: { low: 150, typical: 300, high: 800 }
+  per_inflight_mb: { low: 0.5, typical: 2, high: 10 }
+  on_exceed: restart
+scaling:
+  mode: instances                   # pods scale fast; nodes (the pool) take an EC2 boot
+  warmup_s: { low: 10, typical: 30, high: 90 }      # pod start on a node that has room
+  node_warmup_s: { low: 60, typical: 150, high: 300 }
+  confidence: estimate
+failure:
+  replace_s: { low: 20, typical: 45, high: 120 }
+defaults: { count: 3, size: 1vcpu-2gb, scale: { min: 3, max: 20, target: 0.6, metric: requests } }
+sizes:
+  - { id: 0.5vcpu-1gb, vcpu: 0.5, ram_gb: 1 }
+  - { id: 1vcpu-2gb, vcpu: 1, ram_gb: 2 }
+  - { id: 2vcpu-4gb, vcpu: 2, ram_gb: 4 }
+services:
+  aws.eks:
+    price: { control_plane_hour: 0.10, region: us-east-1, as_of: 2026-10, verify: true }   # plus the nodes (compute.vm sizes)
+  azure.aks: { price: null }
+sources: []

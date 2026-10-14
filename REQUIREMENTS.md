@@ -1,7 +1,7 @@
 # Requirements: AI-Assisted Architecture Design Tool
 
 > Living record of what we're building toward. Status markers: ✅ confirmed · ❓ open question · 🔬 needs research.
-> Last updated: 2026-10-10
+> Last updated: 2026-10-14
 
 ## Vision
 
@@ -138,7 +138,31 @@ _(Being specified on its own planning map: [wayfinder/doc-pipeline/map.md](wayfi
 - ✅ **Gaps:** a token-free pre-check, then a per-Step wizard (answers are confirmed entries, `unknown` becomes an open assumption), open questions recorded as `Q` entries instead of live questions, chat entries only through an accepted review card, diagram gaps as `RISK` entries with Draft a fix.
 - ✅ **Documents** are written once as `documents/<step>/vNNN.json` plus a rendered Markdown copy; ADRs are rendered `DEC` entries (MADR 4.0); a document pack zip is the audit hand-off.
 - ✅ **Contents** of the Requirements spec (ISO 29148 outline), Design doc and ADRs, Threat model (STRIDE-per-element, Threat Modeling Manifesto) and Reliability & DR (SLOs, failure modes, NIST 800-34 plan): see tickets 004–007 on the map.
-- ✅ **UI** ([ticket 010](wayfinder/doc-pipeline/tickets/010-what-do-the-documents-panel-and-step-wizard-look-like.md)): a Documents tab in the sidebar with a Step stepper, a one-question-per-screen wizard and a Register tab (Confirm / Reject / Draft a fix).
+- ✅ **UI** (replaces the stepper of [ticket 010](wayfinder/doc-pipeline/tickets/010-what-do-the-documents-panel-and-step-wizard-look-like.md), 2026-10-15):
+  - **The list:** a Documents tab listing every document with **Create** (any order), status, Read and Edit answers, beside a Register tab (Confirm / Reject / Draft a fix).
+  - **The wizard:** Create opens a modal wizard when the document still needs answers, then shows a review. Finish records every answer in the Register at once and writes the document.
+  - **Dependencies:** a document whose required documents (or Production Diagram) don't exist yet is greyed out, with a message naming what's missing and a button to create it.
+- ✅ **One source of truth:** answers are Register entries, cited by every document and sent to the Assistant with the diagram (first in full, then only changes) when it proposes diagram changes.
+
+### R12 — Simulation
+_(Being specified on its own planning map: [wayfinder/sim/map.md](wayfinder/sim/map.md).)_
+- ✅ A **Sim Mode** runs traffic through a Production Diagram in the browser so the user can see roughly how the infrastructure behaves and where it breaks. Results are approximate by design: the goal is the right shape and the order of breaking points, not a precise prediction.
+- ✅ It plays like a simulation game: the user watches traffic flow through each Node and Edge and changes the infrastructure while it runs (instance count, CPU and RAM, instance type or Service, scaling rules, adding a cache, queue, read replica or load balancer), with traffic shapes, time controls and failure events.
+- ✅ A **monitoring dashboard** shows traffic, error rate, response times (p50, p95, p99) and cost per route and per Node, against the Brief's targets, with markers for events and the user's own edits.
+- ✅ Play happens in a **Scenario**, a working copy of a Production version. The diagram changes only when the user applies the Scenario's changes through the Proposal review.
+- ✅ Runs entirely in the browser with no tokens: a TypeScript engine in a Web Worker, a canvas overlay on Excalidraw and a lazy-loaded chart library. No game engine.
+- ✅ **Fast enough** ([spike 001](wayfinder/sim/tickets/001-can-the-sim-run-smoothly-in-the-browser-spike.md)): 500 Nodes with 30 live charts at 100× speed hold 60 fps; Canvas 2D (no WebGL) and uPlot (23 KB gzipped, lazy).
+- ✅ **Engine** (ticket 002): a fixed-tick fluid model with six capacity models, Erlang C queueing, shedding and retries, autoscaling, cold starts, failures and circuit breakers. Probe requests give p50/p95/p99. Seeded and replayable. One TypeScript implementation.
+- ✅ **Sizing** on Production Nodes (`customData.sizing`, ticket 003) and **Edge behaviour** (`customData.flow`, ticket 005) are part of the diagram. They are shown and editable outside Sim Mode and inferred by default.
+- ✅ **Behaviour Profiles** (ticket 004): one YAML file per Kind with Service and size layers, every number a sourced range with a confidence and dated prices. There are 31 Kinds in `internal/catalog/profiles/`, covering every Kind on an AWS request path (ticket 011). ❓ 21 prices marked `verify` are unchecked; 53 Services have no price.
+- ✅ **Scenarios** (ticket 006) are `sim/scenarios/<slug>.yaml` change lists in the Proposal op vocabulary, with Routes, traffic, events and seed. Runs go in `.designer/sim/`.
+- ✅ **Dashboard** (ticket 007): RED and USE metrics, backlog age, error-budget burn and cost from ±1% histograms, with SLO hysteresis, edit markers and comparison against a baseline run.
+- ✅ **AWS Components** ([tickets 012–016](wayfinder/sim/map.md)):
+  - A searchable **Component Library** of 83 AWS Components in 13 groups (Load balancing, Compute, ECS, EKS, Databases, Caching, Messaging…), each badged Simulated, Pass-through or Diagram only. It's used for Production editing and Sim Mode.
+  - Official AWS icons come from the pinned package, downloaded on first use after consent, per R3.
+  - ECS and EKS clusters are Groups with EC2 capacity pools and two-level scaling.
+- ✅ **Cloud-neutral:** the engine knows only capacity models. A cloud is four data files (catalog, library, Profile overrides, icon manifest), so Azure needs no code. A draft Azure library exists. ❓ Azure Profiles, prices and icon manifest.
+- ✅ **Sim Mode screen** (ticket 008), **Apply** through the Proposal review with offered `DEC` entries (ticket 009), and a compact run summary the Assistant reads only on request (ticket 010).
 
 ## Product shape (decided)
 - ✅ **Solo-first.** One user per install. Avoid choices that would block adding teams later.

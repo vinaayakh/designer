@@ -1,0 +1,62 @@
+{
+ "fargate": {
+  "secondsOverSlo": 261,
+  "recoveredAfterS": 261,
+  "worstP99Ms": 2015,
+  "worstErrPct": 64.1,
+  "tasksAtEnd": 23,
+  "maxUnplacedTasks": 0,
+  "hosts": null,
+  "costPerHour": "1.22 → 2.06"
+ },
+ "ec2": {
+  "secondsOverSlo": 319,
+  "recoveredAfterS": 319,
+  "worstP99Ms": 2015,
+  "worstErrPct": 64.4,
+  "tasksAtEnd": 25,
+  "maxUnplacedTasks": 11,
+  "hosts": "2 → 8",
+  "costPerHour": "1.25 → 2.23"
+ },
+ "ec2-headroom": {
+  "secondsOverSlo": 172,
+  "recoveredAfterS": 172,
+  "worstP99Ms": 2015,
+  "worstErrPct": 64.4,
+  "tasksAtEnd": 23,
+  "maxUnplacedTasks": 8,
+  "hosts": "5 → 8",
+  "costPerHour": "1.74 → 2.23"
+ },
+ "fargate+requests": {
+  "secondsOverSlo": 141,
+  "recoveredAfterS": 141,
+  "worstP99Ms": 2015,
+  "worstErrPct": 64.2,
+  "tasksAtEnd": 23,
+  "maxUnplacedTasks": 0,
+  "hosts": null,
+  "costPerHour": "1.17 → 2.06"
+ },
+ "ec2+requests": {
+  "secondsOverSlo": 252,
+  "recoveredAfterS": 252,
+  "worstP99Ms": 2015,
+  "worstErrPct": 64.2,
+  "tasksAtEnd": 23,
+  "maxUnplacedTasks": 15,
+  "hosts": "2 → 6",
+  "costPerHour": "1.25 → 1.90"
+ },
+ "ec2-headroom+requests": {
+  "secondsOverSlo": 100,
+  "recoveredAfterS": 100,
+  "worstP99Ms": 2015,
+  "worstErrPct": 64.2,
+  "tasksAtEnd": 23,
+  "maxUnplacedTasks": 3,
+  "hosts": "5 → 6",
+  "costPerHour": "1.74 → 1.90"
+ }
+}

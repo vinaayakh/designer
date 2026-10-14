@@ -1,0 +1,13 @@
+kind: network.internet-gateway
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: hop                        # on the path, no capacity of its own: horizontally scaled and redundant
+  confidence: vendor
+latency:
+  service_ms: { low: 0, typical: 0.1, high: 0.5 }
+  spread: 0.2
+services:
+  aws.internet-gateway: { price: null }   # no hourly charge; data transfer is billed by the instance side
+  azure.public-ip: { price: null }
+sources: []

@@ -8,6 +8,7 @@ How to use Designer, in the order you'll meet each part.
 4. [Gap Check](gap-check.md): check the design against SOC 2, HIPAA and security practices, and fix what's missing.
 5. [Documents and the Register](documents.md): write the requirements spec, design doc, threat model and reliability plan; review the audit trail.
 6. [Export](export.md): images, the arc42 document, and the document pack.
+7. [Simulation](simulation.md): run traffic through the Production Diagram, find where it breaks, and apply what you changed.
 
 ## Limitations in this version
 

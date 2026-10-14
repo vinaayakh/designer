@@ -1,0 +1,23 @@
+import { chromium } from "playwright-core";
+import { mkdtempSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { serve } from "./serve.mjs";
+const root = fileURLToPath(new URL("..", import.meta.url));
+const server = await serve(`${root}dist`, 5192);
+const ctx = await chromium.launchPersistentContext(mkdtempSync(`${root}bench/out/p-`), { executablePath: "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", headless: false, viewport: { width: 1600, height: 900 } });
+const page = ctx.pages()[0];
+const errs = [];
+page.on("console", (m) => m.type() === "error" && errs.push(m.text()));
+page.on("pageerror", (e) => errs.push(String(e)));
+await page.goto(`http://127.0.0.1:5192/?${process.argv[2] || "domains=2&charts=6"}`);
+await page.waitForFunction(() => window.__ready === true, null, { timeout: 60000 });
+await page.waitForTimeout(8000);
+// select a node by clicking its centre
+const pos = await page.evaluate(() => { const v = window.__bench.view(); return { x: (240 + 85 + v.scrollX) * v.zoom, y: (32 + v.scrollY) * v.zoom }; });
+const box = await page.locator(".stage").boundingBox();
+await page.mouse.click(box.x + pos.x, box.y + pos.y);
+await page.waitForTimeout(1500);
+await page.screenshot({ path: `${root}results/smoke.png` });
+console.log(JSON.stringify(await page.evaluate(() => window.__bench.measure(3000))));
+console.log("errors:", errs.slice(0, 5));
+await ctx.close(); server.close();

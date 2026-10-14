@@ -1,0 +1,47 @@
+kind: data.relational
+as_of: 2026-10-15
+unit: query
+capacity:
+  model: cpu
+  # CPU per query with the data in memory. Read-only pgbench (primary-key lookups) reaches about 15k TPS
+  # per vCPU on a 2-vCPU managed Postgres; a TPC-B-like write transaction about 1k per vCPU. Real app
+  # queries (joins, several rows) sit in between.
+  cpu_ms: { low: 0.07, typical: 0.4, high: 2 }
+  max_util: 0.8
+  confidence: measured
+latency:
+  service_ms: { low: 0.5, typical: 2, high: 10 }
+  spread: 0.7
+memory:
+  # A working set larger than the buffer cache sends reads to storage.
+  on_exceed: { cpu_factor: 2, latency_factor: 5 }   # estimate
+connections:
+  # Each connection holds server memory. Postgres on RDS defaults to about one per 9.5 MB of RAM, at most 5,000.
+  max_per_gb_ram: 105
+  confidence: vendor
+scaling:
+  mode: fixed                       # resizing means a restart or failover, not autoscaling
+  read_replicas: true
+failure:
+  failover_s: { low: 30, typical: 90, high: 180 }   # standby promotion in another zone
+  confidence: estimate
+defaults: { count: 1, size: 2vcpu-16gb }
+sizes:
+  - { id: 2vcpu-4gb, vcpu: 2, ram_gb: 4 }
+  - { id: 2vcpu-16gb, vcpu: 2, ram_gb: 16 }
+  - { id: 4vcpu-32gb, vcpu: 4, ram_gb: 32 }
+  - { id: 8vcpu-64gb, vcpu: 8, ram_gb: 64 }
+services:
+  aws.rds-postgres:
+    sizes:
+      - { id: db.t4g.medium, vcpu: 2, ram_gb: 4, price_hour: 0.065, burstable: true }
+      - { id: db.r6g.large, vcpu: 2, ram_gb: 16, price_hour: 0.225 }
+      - { id: db.r6g.xlarge, vcpu: 4, ram_gb: 32, price_hour: 0.45 }
+      - { id: db.r6g.2xlarge, vcpu: 8, ram_gb: 64, price_hour: 0.899 }
+    price: { region: us-east-1, deployment: single-az, as_of: 2026-10, verify: true }
+  azure.postgres-flexible:
+    price: null                     # not sourced yet
+sources:
+  - { id: postgresbench, url: "https://clickhouse.com/blog/postgresbench", copy: facts-only, used_for: [cpu_ms] }
+  - { id: selfhost-bench, url: "https://selfhost.dev/benchmarks/", copy: facts-only, used_for: [cpu_ms] }
+  - { id: rds-max-connections, url: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Limits.html", copy: facts-only, used_for: [connections] }

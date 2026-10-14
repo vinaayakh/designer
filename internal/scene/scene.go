@@ -21,7 +21,7 @@ type Meta struct {
 	Attrs       map[string]string `json:"attrs,omitempty"`       // free facts, e.g. encrypted=true
 	Parent      string            `json:"parent,omitempty"`      // explicit Group link (production)
 	Tier        string            `json:"tier,omitempty"`        // subnet tier
-	Style       string            `json:"style,omitempty"`       // edge: sync | async | stream
+	Style       string            `json:"style,omitempty"`       // edge: sync | async | stream | observe
 	Protocol    string            `json:"protocol,omitempty"`    // edge protocol
 	Node        string            `json:"node,omitempty"`        // icon: the Node it belongs to
 	Label       string            `json:"label,omitempty"`       // edge/group label when not drawn as bound text
@@ -108,7 +108,7 @@ type Note struct {
 // Issue is a structural problem: the Conversion pre-check, or a Production
 // parent link that disagrees with the drawing.
 type Issue struct {
-	Code    string   `json:"code"` // overlap | unlabeled | loose-arrow | dangling-edge | parent-mismatch
+	Code    string   `json:"code"` // overlap | unlabeled | loose-arrow | dangling-edge | parent-mismatch | detached
 	IDs     []string `json:"ids"`
 	Message string   `json:"message"`
 }
@@ -335,6 +335,7 @@ func build(els []*Element, production bool) *Graph {
 			g.Notes = append(g.Notes, &Note{ID: e.ID, Text: t, Near: g.nearest(rect(e))})
 		}
 	}
+	g.detachedIssues()
 	return g
 }
 
@@ -372,10 +373,12 @@ func (g *Graph) nearest(r Rect) string {
 }
 
 // PreCheck returns the structural problems Conversion asks the user to fix.
+// Detached parts don't block Conversion: a sketch is often unfinished, and
+// some services are drawn on their own on purpose.
 func (g *Graph) PreCheck() []Issue {
 	var out []Issue
 	for _, i := range g.Issues {
-		if i.Code != "parent-mismatch" {
+		if i.Code != "parent-mismatch" && i.Code != "detached" {
 			out = append(out, i)
 		}
 	}

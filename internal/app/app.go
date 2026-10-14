@@ -45,8 +45,10 @@ type sessionState struct {
 	Sent      map[string]scene.Snapshot `json:"sent"` // view -> what the AI last saw
 	SentBrief string                    `json:"sentBrief"`
 	SentVer   int                       `json:"sentVersion"`
-	Feedback  []string                  `json:"feedback"` // queued for the next message
-	CostUSD   float64                   `json:"costUsd"`
+	// The Register as last sent with a chat message (nil: not yet this session).
+	SentRegister scene.Snapshot `json:"sentRegister,omitempty"`
+	Feedback     []string       `json:"feedback"` // queued for the next message
+	CostUSD      float64        `json:"costUsd"`
 }
 
 func newSessionState() *sessionState {
@@ -54,13 +56,15 @@ func newSessionState() *sessionState {
 }
 
 type App struct {
-	P     *project.Project
-	Cat   *catalog.Catalog
-	Reg   *register.Register // the audit trail (wayfinder/doc-pipeline)
-	KB    *kb.KB
-	Bin   string // Claude Code binary
-	Token string // bearer token for /mcp and /hook
-	Base  string // http://127.0.0.1:port, set once the server listens
+	answerMu sync.Mutex // serialises Answer
+	docQueue []string   // documents waiting to be written after the current one (CreateDocument)
+	P        *project.Project
+	Cat      *catalog.Catalog
+	Reg      *register.Register // the audit trail (wayfinder/doc-pipeline)
+	KB       *kb.KB
+	Bin      string // Claude Code binary
+	Token    string // bearer token for /mcp and /hook
+	Base     string // http://127.0.0.1:port, set once the server listens
 
 	settingsPath string
 	systemPrompt string

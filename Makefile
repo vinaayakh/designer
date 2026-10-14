@@ -26,6 +26,7 @@ build: web
 test:
 	go vet ./...
 	go test ./...
+	cd web && npm test
 
 notices:
 	node scripts/third-party-notices.mjs

@@ -1,0 +1,27 @@
+kind: compute.function
+as_of: 2026-10-15
+unit: invocation
+capacity:
+  model: concurrency                # each execution environment runs one request at a time
+  # requests/s = concurrency / duration, limited by the account quota and the scaling rate below.
+  account_concurrency: { low: 1000, typical: 1000, high: 1000 }   # default quota, can be raised
+  confidence: vendor
+latency:
+  service_ms: { low: 5, typical: 30, high: 200 }  # median handler time, not counting downstream calls
+  spread: 0.5
+  # Light runtimes start in roughly 100–400 ms; JVM runtimes in a second or more.
+  cold_start_ms: { low: 100, typical: 300, high: 1500 }
+  cold_start_confidence: measured
+scaling:
+  mode: serverless
+  # Up to 1,000 new execution environments per function every 10 s; requests beyond that get 429.
+  scale_rate_per_10s: 1000
+  idle_reap_s: { low: 300, typical: 600, high: 1800 }   # estimate: warm environments are kept for minutes
+  confidence: vendor
+defaults: { memory_mb: 512 }
+services:
+  aws.lambda:
+    price: { gb_second: 0.0000166667, per_million_requests: 0.20, region: us-east-1, as_of: 2026-10, verify: true }
+sources:
+  - { id: lambda-scaling, url: "https://docs.aws.amazon.com/lambda/latest/dg/scaling-behavior.html", copy: facts-only, used_for: [scale_rate_per_10s, account_concurrency] }
+  - { id: lambda-cold-start, url: "https://aws.amazon.com/blogs/compute/understanding-and-remediating-cold-starts-an-aws-lambda-perspective/", copy: facts-only, used_for: [cold_start_ms] }

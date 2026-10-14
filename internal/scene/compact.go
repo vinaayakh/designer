@@ -171,17 +171,7 @@ func (g *Graph) Compact(a *Aliases) string {
 		b.WriteString(g.noteLine(n, a) + "\n")
 	}
 	for _, i := range g.Issues {
-		var als []string
-		for _, id := range i.IDs {
-			if g.nodeByID[id] != nil || g.groupByID[id] != nil {
-				als = append(als, g.aliasOf(id, a))
-			}
-		}
-		b.WriteString("! " + i.Code)
-		if len(als) > 0 {
-			b.WriteString(" " + strings.Join(als, " "))
-		}
-		b.WriteString(": " + i.Message + "\n")
+		b.WriteString(g.issueLine(i, a) + "\n")
 	}
 	if b.Len() == 0 {
 		return "(empty diagram)\n"
@@ -213,6 +203,21 @@ func (g *Graph) Compactless(a *Aliases) {
 	walk("")
 }
 
+// issueLine renders a structural Issue: `! detached n7 n8: …`.
+func (g *Graph) issueLine(i Issue, a *Aliases) string {
+	var als []string
+	for _, id := range i.IDs {
+		if g.nodeByID[id] != nil || g.groupByID[id] != nil {
+			als = append(als, g.aliasOf(id, a))
+		}
+	}
+	line := "! " + i.Code
+	if len(als) > 0 {
+		line += " " + strings.Join(als, " ")
+	}
+	return line + ": " + i.Message
+}
+
 // Snapshot is one line per entity, keyed by identity, used to build change lists.
 type Snapshot map[string]string
 
@@ -237,6 +242,10 @@ func (g *Graph) Snapshot(a *Aliases) Snapshot {
 	for _, n := range g.Notes {
 		s["t:"+n.ID] = g.noteLine(n, a)
 	}
+	// Issues too, so one that appears or clears mid-session reaches the AI.
+	for _, i := range g.Issues {
+		s["i:"+i.Code+":"+strings.Join(i.IDs, ",")] = g.issueLine(i, a)
+	}
 	return s
 }
 
@@ -255,7 +264,7 @@ func Diff(prev, cur Snapshot, a *Aliases) string {
 	}
 	for k, v := range prev {
 		if _, ok := cur[k]; !ok {
-			if strings.HasPrefix(k, "e:") || strings.HasPrefix(k, "t:") {
+			if strings.HasPrefix(k, "e:") || strings.HasPrefix(k, "t:") || strings.HasPrefix(k, "i:") {
 				del = append(del, "- "+v)
 			} else {
 				del = append(del, "- "+strings.Fields(v)[0])

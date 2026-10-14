@@ -1,0 +1,30 @@
+kind: data.graph
+as_of: 2026-10-15
+unit: query                         # one traversal
+capacity:
+  model: cpu
+  # Traversals vary more than any other query: one hop from a known vertex is cheap, a multi-hop
+  # search with filters can touch thousands of vertices. Estimate.
+  cpu_ms: { low: 0.5, typical: 3, high: 20 }
+  max_util: 0.8
+  confidence: estimate
+latency:
+  service_ms: { low: 2, typical: 10, high: 50 }
+  spread: 0.9                       # wide: traversal depth varies a lot between requests
+memory:
+  on_exceed: { cpu_factor: 2, latency_factor: 5 }
+scaling:
+  mode: fixed
+  read_replicas: true
+failure:
+  failover_s: { low: 30, typical: 60, high: 120 }
+  confidence: estimate
+defaults: { count: 1, size: 2vcpu-16gb }
+sizes:
+  - { id: 2vcpu-16gb, vcpu: 2, ram_gb: 16 }
+  - { id: 4vcpu-32gb, vcpu: 4, ram_gb: 32 }
+  - { id: 8vcpu-64gb, vcpu: 8, ram_gb: 64 }
+services:
+  aws.neptune: { price: null }
+  azure.cosmos-gremlin: { price: null }
+sources: []

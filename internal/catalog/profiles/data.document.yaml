@@ -1,0 +1,42 @@
+kind: data.document
+as_of: 2026-10-15
+unit: request                       # one document read or write
+capacity:
+  model: cpu                        # instance-based stores (DocumentDB, self-managed MongoDB)
+  # Fetching a document by key is cheap; queries that scan or aggregate cost far more. Estimate, set
+  # beside the relational numbers: a key lookup is lighter than a join, a scan is heavier.
+  cpu_ms: { low: 0.1, typical: 0.5, high: 3 }
+  max_util: 0.8
+  confidence: estimate
+latency:
+  service_ms: { low: 1, typical: 3, high: 15 }
+  spread: 0.7
+memory:
+  on_exceed: { cpu_factor: 2, latency_factor: 5 }   # working set beyond RAM: reads go to storage
+scaling:
+  mode: fixed
+  read_replicas: true
+failure:
+  failover_s: { low: 30, typical: 60, high: 120 }   # replica promotion
+  confidence: estimate
+defaults: { count: 1, size: 2vcpu-16gb }
+sizes:
+  - { id: 2vcpu-16gb, vcpu: 2, ram_gb: 16 }
+  - { id: 4vcpu-32gb, vcpu: 4, ram_gb: 32 }
+  - { id: 8vcpu-64gb, vcpu: 8, ram_gb: 64 }
+services:
+  aws.documentdb:
+    price: null                     # instance prices not sourced yet
+  azure.cosmos-nosql:
+    # Request-unit store: capacity is provisioned RU/s, and excess requests get 429 at once.
+    # A point read of a 1 KB item costs 1 RU; a 1 KB write about 5 RU (more with many indexed properties).
+    capacity:
+      model: quota
+      per_unit: { reads: 1, writes: 0.2 }     # requests per RU/s: 1 read or 0.2 writes per RU
+      units: { low: 400, typical: 1000, high: 10000 }
+      units_name: RU/s provisioned
+      confidence: vendor
+    latency: { service_ms: { low: 2, typical: 5, high: 10 }, spread: 0.5 }
+    price: null
+  azure.cosmos-mongodb: { inherit: azure.cosmos-nosql }
+sources: []

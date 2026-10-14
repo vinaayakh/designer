@@ -52,6 +52,7 @@ An **implementation-ready v1 spec** for a local, AI-assisted architecture diagra
 - **Showing usage and cost:** whether to show the user the per-session token cost Claude Code reports (`total_cost_usd`), and where.
 
 - **Chat history:** whether Assistant conversations are saved per Project, and how they relate to diagram versions.
+- **Simulation:** running traffic through a Production Diagram in a game-like Sim Mode with a monitoring dashboard. Specified on its own map (all tickets closed 2026-10-15, pending review): [wayfinder/sim/map.md](sim/map.md).
 
 ## Out of scope
 

@@ -1,0 +1,19 @@
+kind: data.object
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: quota
+  # Per partitioned key prefix: at least 3,500 writes/s and 5,500 reads/s. More prefixes scale it.
+  per_unit: { reads: 5500, writes: 3500 }
+  units_name: prefixes
+  units: { low: 1, typical: 1, high: 10 }
+  on_exceed: throttle               # 503 Slow Down while the store repartitions
+  confidence: vendor
+latency:
+  service_ms: { low: 15, typical: 40, high: 200 }   # time to first byte, small objects
+  spread: 0.6
+services:
+  aws.s3:
+    price: { per_thousand_reads: 0.0004, per_thousand_writes: 0.005, region: us-east-1, as_of: 2026-10, verify: true }
+sources:
+  - { id: s3-performance, url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html", copy: facts-only, used_for: [per_unit, service_ms] }

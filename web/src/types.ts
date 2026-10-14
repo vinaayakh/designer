@@ -43,6 +43,8 @@ export interface Pending {
   id: string; revision: number; kind: "proposal" | "conversion"; view: View; baseVersion: number;
   payload: Payload; created: string; awaitingRevision?: boolean; reply?: string;
   accepted?: string[]; rejections?: { change: Change; reason?: string }[]; question?: string; answers?: string[];
+  /** "user" for changes applied from Sim Mode; absent for the Assistant's. */
+  author?: "user"; source?: string;
 }
 
 export interface Version { n: number; created: string; source: string; summary?: string; proposal?: string; rationale?: Rationale }
@@ -73,15 +75,15 @@ export interface RegisterEntry {
 }
 export interface StepQuestion { id: string; label: string; question: string; kind: "text" | "choice" | "multi" | "list"; values?: string[]; blocking?: boolean; creates?: EntryType }
 export interface StepAnswer { values?: string[]; unknown?: boolean; at: string; entries?: string[] }
-export interface StepStatus { kind: "waiting" | "needs" | "ready" | "writing" | "current" | "stale"; text: string; reasons?: string[]; unanswered: number; blocking?: string[] }
+export interface StepStatus { kind: "waiting" | "needs" | "ready" | "writing" | "queued" | "current" | "stale"; text: string; reasons?: string[]; unanswered: number; blocking?: string[] }
 export interface DocVersionInfo { step: string; n: number; created: string; model?: string; inputs: { production?: number; upstream?: Record<string, number> }; cites: Record<string, EntryStatus>; newEntries?: string[] }
 export interface PipelineStep {
-  id: string; title: string; version: number; template: string; credit?: string; diagram: "rough" | "production";
+  id: string; title: string; summary?: string; version: number; template: string; credit?: string; diagram: "rough" | "production";
   requires?: string[]; uses?: string[]; questions: StepQuestion[];
   status: StepStatus; answers?: Record<string, StepAnswer>; versions: number[] | null; latest?: DocVersionInfo;
 }
 export interface ProposedEntry { id: string; created: string; replaces?: string; entry: { type: EntryType; statement: string; fields?: Record<string, string>; links?: string[]; source: { kind: string; text?: string } } }
-export interface PipelineView { steps: PipelineStep[]; entries: RegisterEntry[] | null; proposed?: ProposedEntry[]; arc42?: { version: number; written: boolean; stale: boolean }; integrity?: string }
+export interface PipelineView { steps: PipelineStep[]; entries: RegisterEntry[] | null; proposed?: ProposedEntry[]; queue?: string[]; production: number; arc42?: { version: number; written: boolean; stale: boolean }; integrity?: string }
 
 export interface State {
   project: { name: string; dir: string; created: string; frozenAt?: string | null };

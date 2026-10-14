@@ -1,0 +1,22 @@
+kind: network.hybrid-link
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: hop
+  bandwidth_gbps: { low: 1, typical: 10, high: 100 }    # Direct Connect port speeds
+  confidence: vendor
+latency:
+  # A private line to on-premises: a few ms within a metro, more across a country.
+  service_ms: { low: 1, typical: 5, high: 30 }
+  spread: 0.3
+services:
+  aws.site-to-site-vpn:
+    # Over the internet: latency and jitter follow the internet path. About 1.25 Gbps per tunnel.
+    capacity: { model: hop, bandwidth_gbps: { low: 1.25, typical: 1.25, high: 2.5 }, confidence: vendor }
+    latency: { service_ms: { low: 5, typical: 20, high: 80 }, spread: 0.6 }
+    price: null
+  aws.direct-connect: { price: null }
+  azure.vpn-gateway: { price: null }
+  azure.expressroute: { price: null }
+  azure.bastion: { price: null }
+sources: []

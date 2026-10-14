@@ -1,0 +1,24 @@
+kind: messaging.topic
+as_of: 2026-10-15
+unit: message                       # one publish; each subscriber gets its own delivery (an Edge per subscription)
+capacity:
+  model: quota
+  # Publishes per account and region: 30,000 messages/s in us-east-1, 9,000 in us-west-2 and
+  # eu-west-1, lower elsewhere. Over the limit: throttled. Can be raised.
+  rate_per_s: { low: 9000, typical: 30000, high: 30000 }
+  confidence: vendor
+latency:
+  service_ms: { low: 10, typical: 20, high: 60 }   # the publish call; delivery is async (Edges out are async)
+  spread: 0.5
+delivery:
+  # Time from publish to a subscriber receiving it. Estimate.
+  delay_ms: { low: 20, typical: 100, high: 500 }
+  retries: { low: 3, typical: 3, high: 100 }       # failed HTTP deliveries are retried with backoff
+services:
+  aws.sns:
+    price: { per_million_publishes: 0.50, region: us-east-1, as_of: 2026-10, verify: true }
+  azure.service-bus-topic: { price: null }
+  azure.web-pubsub: { price: null }
+  azure.signalr: { price: null }
+sources:
+  - { id: sns-quotas, url: "https://docs.aws.amazon.com/general/latest/gr/sns.html", copy: facts-only, used_for: [rate_per_s] }

@@ -8,17 +8,21 @@
 
 **Node**: A shape on a diagram (rectangle, ellipse, diamond, image) that stands for one component of the system. On the Rough Draft it may have no type, and its label carries the meaning. On a Production Diagram it always has a Component Kind and, for AWS/Azure targets, a Service. Nodes that store data carry a Data Classification. It can be added to the Assistant's message context.
 
-**Edge**: An arrow connecting two Nodes. On the Rough Draft it has direction and an optional label. On a Production Diagram it also has an interaction style (sync / async / stream) and an optional protocol.
+**Edge**: An arrow connecting two Nodes. On the Rough Draft it has direction and an optional label. On a Production Diagram it also has an interaction style (sync / async / stream / observe) and an optional protocol. **observe** means "watches", not a request: an account-wide service such as CloudTrail is drawn once, inside the boundary it covers, with one observe Edge from that Group (the AWS account) rather than an arrow to every service.
 
 **Note**: Free text, or an arrow not connected at both ends, on a diagram. It is passed to the AI as an annotation (e.g. "~10k rps peak"). It is not a component.
 
-**Group**: A shape that contains other Nodes. Groups can nest. Each has a provider-neutral **group kind**: region, zone, network (shown as VPC on AWS, VNet on Azure), subnet (public, private or isolated), account (an AWS account or Azure subscription), or boundary (a trust zone such as on-prem or a third party). On the Rough Draft, membership is worked out from what is drawn inside what. On a Production Diagram, membership is an explicit parent link.
+**Group**: A shape that contains other Nodes. Groups can nest. Each has a provider-neutral **group kind**: region, zone, network (shown as VPC on AWS, VNet on Azure), subnet (public, private or isolated), account (an AWS account or Azure subscription), boundary (a trust zone such as on-prem or a third party), or cluster (a container cluster such as an ECS or EKS cluster, which may carry a **capacity pool**: the hosts its tasks or pods must fit on). On the Rough Draft, membership is worked out from what is drawn inside what. On a Production Diagram, membership is an explicit parent link.
 
 **Alias**: A short handle (`n1`, `g2`) the AI uses for a Node or Group. It stays the same for a whole Assistant Session.
 
 **Component Kind**: A provider-neutral category of component from a fixed vocabulary (e.g. relational database, queue, CDN). Every Kind belongs to one **category**: compute, data, network, security, messaging, observability or external. Knowledge Base Records can attach to Kinds or to a whole category.
 
 **Service**: A provider-specific offering in a Cloud Catalog (e.g. Amazon RDS for PostgreSQL) that maps to exactly one Component Kind. A product that offers several engines or APIs (e.g. Cosmos DB) is several Services. A component with no catalog entry, such as a third-party SaaS, is an **off-catalog service**: a Kind plus the service's name, shown with the generic icon.
+
+**Component**: A ready-to-place preset in a Component Library: a Service (or, for traffic sources and Groups, a Kind) with its official icon, a short label, search keywords, how much of it is simulated, and the Sizing it arrives with. Several Components can share one Service (EC2 instance, EC2 Auto Scaling group).
+
+**Component Library**: The searchable panel of Components for the target cloud, grouped the way people think about that cloud (on AWS: Load balancing, Compute, ECS, EKS, Databases…). Each cloud's library is a data file, so a new cloud needs no code.
 
 **Cloud Catalog**: The list of Services for one target cloud (AWS, Azure). The Generic target uses Component Kinds only.
 
@@ -43,6 +47,16 @@
 **CLI Agent**: A coding-agent command-line tool already on the user's machine (e.g. Claude Code) that does the AI work. It brings its own login, model and web search.
 
 **Proposal**: A set of changes to the active diagram (Rough Draft or Production Diagram) suggested by the Assistant. The user accepts or skips each change, accepts everything at once, rejects it, or replies with changes, which produces a new **revision** of the same Proposal. Everything accepted is saved as one new diagram version. Nothing is applied without the user's approval, and the diagram can't be edited by hand while a Proposal is waiting for review.
+
+**Sim Mode**: The view where the user runs simulated traffic through a Production Diagram, watches it flow, changes the infrastructure while it runs and sees where it breaks, with a monitoring dashboard alongside. Results are approximate by design. It runs in the browser and uses no tokens.
+
+**Scenario**: A named working copy of one Production Diagram version used in Sim Mode: the changes the user made to it, its traffic, scripted events and random seed. Editing a Scenario never changes the diagram; its changes reach the diagram only when the user applies them through the Proposal review.
+
+**Route**: A named kind of request in a Scenario (e.g. `GET /product`), with an entry Node, a share of the traffic and a latency target. The dashboard shows each Route's response times against its target.
+
+**Sizing**: How much of a Node there is: instance count, size (CPU and RAM or a catalog instance type), scaling rule and Kind-specific settings. Optional; unset means the Behaviour Profile's default.
+
+**Behaviour Profile**: The built-in numbers the simulation uses for a Component Kind, overridden per Service and size: capacity, latency, memory and connection limits, scaling behaviour and price. Every number is a range with a source and date.
 
 **Knowledge Base**: The curated set of Records the AI consults before anything else.
 

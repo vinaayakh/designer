@@ -37,7 +37,8 @@ export function reviewSteps(changes: Change[]): Step[] {
   return steps;
 }
 
-const stepDone = (s: Step, d: ReviewState["decisions"]) => s.changes.every((c) => d[c.id] === "accepted");
+// A step is done once each of its changes is accepted, or skipped (Sim Mode Proposals: nobody revises them).
+const stepDone = (s: Step, d: ReviewState["decisions"]) => s.changes.every((c) => d[c.id] === "accepted" || d[c.id] === "skipped");
 
 /** Where review starts for a (new revision of a) Proposal: accepted changes carried over, first open step next. */
 export function reviewStart(p: Pending): ReviewState {
@@ -126,12 +127,14 @@ export function Review({ pending, state, setState, label, onFocus, onAccept, onR
   const cur = step?.changes[0];
   const doneSteps = steps.filter((s) => stepDone(s, decisions)).length;
   const rejections = pending.rejections ?? [];
+  const fromSim = pending.author === "user";
 
   const header = (
     <>
-      <div className="eyebrow">Proposal {pending.id}{pending.revision > 1 ? ` · revision ${pending.revision}` : ""} · {pending.view === "rough" ? "Rough Draft" : `Production v${pending.baseVersion}`}</div>
+      <div className="eyebrow">{fromSim ? (pending.source?.startsWith("Scenario") ? "Your changes from Sim Mode · " : "Your changes · ") : ""}Proposal {pending.id}{pending.revision > 1 ? ` · revision ${pending.revision}` : ""} · {pending.view === "rough" ? "Rough Draft" : `Production v${pending.baseVersion}`}</div>
       <h3 style={{ marginTop: 8 }}>{pending.payload.title}</h3>
       {pending.payload.summary && <p className="lede">{pending.payload.summary}</p>}
+      {fromSim && pending.source && <p className="small muted">From {pending.source}. Skip a change to leave it out{pending.source.startsWith("Scenario") ? "; it stays in the Scenario" : ""}.</p>}
       {pending.payload.addresses?.length ? <p className="small muted">Fixes <span className="mono">{pending.payload.addresses.map((a) => a.replace(/^gap:/, "")).join(", ")}</span></p> : null}
     </>
   );
@@ -148,7 +151,7 @@ export function Review({ pending, state, setState, label, onFocus, onAccept, onR
   );
   const footer = (
     <div className="row" style={{ marginTop: 16 }}>
-      <button onClick={() => setReplying((r) => !r)} disabled={busy}>Reply…</button>
+      {!fromSim && <button onClick={() => setReplying((r) => !r)} disabled={busy}>Reply…</button>}
       <span className="spacer" />
       <button className="danger" onClick={onReject} disabled={busy}>Reject Proposal</button>
     </div>
@@ -209,7 +212,17 @@ export function Review({ pending, state, setState, label, onFocus, onAccept, onR
           {!rejecting ? (
             <div className="row" style={{ marginTop: 10 }}>
               <span className="spacer" />
-              <button onClick={() => setRejecting(true)} disabled={busy}>Reject</button>
+              {fromSim ? (
+                <button disabled={busy} onClick={() => {
+                  const nd = { ...decisions };
+                  for (const c of step!.changes) nd[c.id] = "skipped";
+                  const next = steps.findIndex((s) => !stepDone(s, nd));
+                  setState({ ...state, decisions: nd, index: next === -1 ? steps.length : next });
+                  if (next !== -1) onFocus(steps[next].changes[0]);
+                }}>Skip</button>
+              ) : (
+                <button onClick={() => setRejecting(true)} disabled={busy}>Reject</button>
+              )}
               <button className="primary" disabled={busy} onClick={() => {
                 const nd = { ...decisions };
                 for (const c of step!.changes) nd[c.id] = "accepted";

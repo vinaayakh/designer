@@ -1,6 +1,7 @@
 # Requirements spec (wayfinder/doc-pipeline ticket 004). Structure follows the ISO/IEC/IEEE 29148
 # software requirements outline (structure only, in our own words).
 id: requirements
+summary: "What the system must do and how well: the problem, users, journeys, quality targets and what is out of scope."
 title: Requirements spec
 version: 1
 template: "ISO/IEC/IEEE 29148 software requirements outline (structure only, our wording)"

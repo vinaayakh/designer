@@ -1,0 +1,16 @@
+kind: network.private-endpoint
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: hop                        # a route to a service without the internet; adds almost nothing
+  confidence: estimate
+latency:
+  service_ms: { low: 0, typical: 0.2, high: 1 }
+  spread: 0.3
+services:
+  aws.vpc-gateway-endpoint: { price: null }     # S3 and DynamoDB gateway endpoints have no charge
+  aws.privatelink:
+    price: { per_hour_per_zone: 0.01, per_gb: 0.01, region: us-east-1, as_of: 2026-10, verify: true }
+  azure.private-endpoint: { price: null }
+  azure.service-endpoint: { price: null }
+sources: []

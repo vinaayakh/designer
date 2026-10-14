@@ -1,0 +1,101 @@
+{
+ "ecs": {
+  "ms": 1.400000000372529,
+  "first": [
+   "ECS cluster (Fargate)",
+   "ECS cluster (EC2 capacity)",
+   "ECS service on Fargate",
+   "ECS service on EC2"
+  ],
+  "groups": [
+   "ECS"
+  ]
+ },
+ "redis": {
+  "ms": 0.7000000001862645,
+  "first": [
+   "Amazon ElastiCache (Redis OSS)",
+   "Amazon ElastiCache (Valkey)",
+   "Amazon MemoryDB"
+  ],
+  "groups": [
+   "Caching"
+  ]
+ },
+ "load balancer": {
+  "ms": 1.2000000001862645,
+  "first": [
+   "Application Load Balancer",
+   "Network Load Balancer",
+   "Gateway Load Balancer"
+  ],
+  "groups": [
+   "Load balancing"
+  ]
+ },
+ "postgres": {
+  "ms": 1,
+  "first": [
+   "Amazon RDS for PostgreSQL",
+   "Amazon Aurora PostgreSQL-Compatible Edition"
+  ],
+  "groups": [
+   "Databases"
+  ]
+ },
+ "queue": {
+  "ms": 1,
+  "first": [
+   "Amazon SQS",
+   "Amazon MQ"
+  ],
+  "groups": [
+   "Messaging and streaming"
+  ]
+ },
+ "k8s": {
+  "ms": 1,
+  "first": [
+   "EKS cluster (managed node group)",
+   "EKS cluster (Fargate profile)",
+   "EKS workload (Deployment)"
+  ],
+  "groups": [
+   "EKS"
+  ]
+ },
+ "kafka": {
+  "ms": 0.7999999998137355,
+  "first": [
+   "Amazon MSK"
+  ],
+  "groups": [
+   "Messaging and streaming"
+  ]
+ },
+ "nat": {
+  "ms": 0.7000000001862645,
+  "first": [
+   "NAT gateway"
+  ],
+  "groups": [
+   "Network"
+  ]
+ },
+ "fargate service": {
+  "ms": 0.7000000001862645,
+  "first": [
+   "ECS service on Fargate",
+   "ECS cluster (Fargate)",
+   "ECS task (standalone)"
+  ],
+  "groups": [
+   "ECS"
+  ]
+ },
+ "xyzzy": {
+  "ms": 0.7999999998137355,
+  "first": [],
+  "groups": []
+ }
+}

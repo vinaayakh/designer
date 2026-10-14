@@ -25,6 +25,10 @@ type Pending struct {
 	Created     time.Time         `json:"created"`
 	Awaiting    bool              `json:"awaitingRevision,omitempty"` // the user replied; a new revision is coming
 	Reply       string            `json:"reply,omitempty"`
+	// Author is "user" for a Proposal the user made in Sim Mode (sim ticket 009),
+	// empty for the Assistant's. Source names where it came from ("Scenario Baseline").
+	Author string `json:"author,omitempty"`
+	Source string `json:"source,omitempty"`
 
 	// Step-by-step review: changes already accepted (carried into the next
 	// revision when the AI keeps them unchanged), the changes the user
@@ -172,6 +176,57 @@ func (a *App) submitProposalLocked(raw json.RawMessage) (string, error) {
 	return fmt.Sprintf("Proposal %s (revision %d, %d changes) is waiting for the user's review.", pend.ID, pend.Revision, len(p.Changes)), nil
 }
 
+// SubmitUserProposal turns changes the user made (in Sim Mode, or another tool) into a Proposal
+// on the Production Diagram, reviewed in the same overlay as the Assistant's.
+// The browser refers to Nodes and Groups by element ID; they are translated to
+// the session's Aliases so the payload goes through the same validation.
+func (a *App) SubmitUserProposal(p *proposal.Payload, source string) (*Pending, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if cur := a.pendingLocked(); cur != nil {
+		return nil, fmt.Errorf("Proposal %s is waiting for review; finish it first", cur.ID)
+	}
+	latest, _ := a.P.Latest()
+	if latest == 0 {
+		return nil, errors.New("there is no Production Diagram yet")
+	}
+	if p.BaseVersion != 0 && p.BaseVersion != latest {
+		return nil, fmt.Errorf("the Scenario was built on v%d but the diagram is now v%d: rebase it first", p.BaseVersion, latest)
+	}
+	p.Kind, p.View = "", ViewProduction
+	ctx, ver, err := a.proposalContext(ViewProduction)
+	if err != nil {
+		return nil, err
+	}
+	alias := func(ref string) string {
+		if ref == "" || strings.HasPrefix(ref, "+") {
+			return ref
+		}
+		if s := a.sess.Aliases.Peek(ref); s != "" {
+			return s
+		}
+		return ref
+	}
+	for _, ch := range p.Changes {
+		ch.Ref, ch.From, ch.To = alias(ch.Ref), alias(ch.From), alias(ch.To)
+		if ch.Parent != nil {
+			s := alias(*ch.Parent)
+			ch.Parent = &s
+		}
+	}
+	if err := proposal.Prepare(p, ctx); err != nil {
+		return nil, err
+	}
+	p.BaseVersion = ver
+	pend := &Pending{ID: a.nextProposalID(), Revision: 1, Kind: "proposal", View: ViewProduction, BaseVersion: ver,
+		Payload: p, Created: time.Now().UTC(), Author: "user", Source: source}
+	if err := a.P.WriteState(pendingFile, pend); err != nil {
+		return nil, err
+	}
+	a.emit("proposal", pend)
+	return pend, nil
+}
+
 // Decision is what the browser sends after review.
 type Decision struct {
 	ID       string          `json:"id"`
@@ -197,10 +252,17 @@ func (a *App) Decide(d Decision) (DecisionResult, error) {
 		return res, errors.New("that Proposal is no longer waiting for review")
 	}
 	tag := fmt.Sprintf(`"proposal":%q,"revision":%d`, p.ID, p.Revision)
+	// The Assistant didn't write a Sim Mode Proposal: nothing to tell it, and no one to revise it.
+	user := p.Author == "user"
+	if user && (d.Action == "reply" || d.Action == "reject_change" || d.Action == "clarify") {
+		return res, errors.New("this Proposal is your own: change it where you made it and submit it again")
+	}
 	switch d.Action {
 	case "reject":
 		_ = a.P.RemoveState(pendingFile)
-		a.queueFeedbackLocked(fmt.Sprintf(`{%s,"status":"rejected"}`, tag))
+		if !user {
+			a.queueFeedbackLocked(fmt.Sprintf(`{%s,"status":"rejected"}`, tag))
+		}
 		a.emit("proposal.closed", map[string]any{"id": p.ID, "status": "rejected"})
 		return res, nil
 
@@ -354,7 +416,9 @@ func (a *App) Decide(d Decision) (DecisionResult, error) {
 		if res.Version > 0 {
 			extra += fmt.Sprintf(`,"new_version":%d`, res.Version)
 		}
-		a.queueFeedbackLocked(fmt.Sprintf(`{%s,"status":%q,%s}`, tag, status, extra))
+		if !user {
+			a.queueFeedbackLocked(fmt.Sprintf(`{%s,"status":%q,%s}`, tag, status, extra))
+		}
 		a.emit("proposal.closed", map[string]any{"id": p.ID, "status": status, "version": res.Version, "addresses": p.Payload.Addresses})
 		return res, nil
 	}

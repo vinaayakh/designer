@@ -332,3 +332,61 @@ p.bad { color: var(--bad); }
 .docs-pack { display: flex; justify-content: flex-end; margin: -2px 0 6px; }
 .docs-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .docs-proposed textarea { width: 100%; box-sizing: border-box; }
+
+/* ---- Sim Mode (sim tickets 006–009) */
+.sim-shell { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; background: var(--surface); }
+.sim-loading, .sim-error { margin: auto; color: var(--ink-3); display: flex; gap: 12px; align-items: center; }
+.sim-bar { display: flex; gap: 8px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.sim-traffic { display: flex; gap: 8px; align-items: center; font-size: var(--t-sm); color: var(--ink-2); }
+.sim-traffic input { width: 160px; }
+.sim-main { flex: 1; display: flex; min-height: 0; }
+.sim-stage { position: relative; flex: 1; min-width: 0; }
+.sim-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+.sim-side { width: 320px; border-left: 1px solid var(--line); padding: 14px; overflow: auto; }
+.sim-side h3 { margin: 4px 0 6px; }
+.sim-side h4 { margin: 16px 0 6px; font-size: var(--t-sm); }
+.sim-list { padding-left: 16px; margin: 0; display: grid; gap: 4px; }
+.sim-dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: var(--t-sm); margin: 10px 0; }
+.sim-dl dt { color: var(--ink-3); }
+.sim-dl dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.sim-field { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: var(--t-sm); margin: 6px 0; }
+.sim-field input[type="number"] { width: 72px; }
+.sim-field select { max-width: 190px; }
+.sim-check { display: flex; gap: 8px; align-items: center; font-size: var(--t-sm); margin: 8px 0; }
+.sim-results { border-top: 1px solid var(--line); display: flex; gap: 18px; padding: 10px 14px; max-height: 260px; overflow: auto; }
+.sim-tiles { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 8px; align-content: start; }
+.sim-tile { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 6px 10px; }
+.sim-tile span { display: block; font-size: var(--t-xs); color: var(--ink-3); }
+.sim-tile b { font-size: var(--t-lg); font-variant-numeric: tabular-nums; }
+.sim-tile.bad { border-color: var(--bad); }
+.sim-tile.bad b { color: var(--bad); }
+.sim-compare { flex: 1; min-width: 0; }
+.sim-compare .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.sim-table { width: 100%; border-collapse: collapse; }
+.sim-table th, .sim-table td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.sim-table thead th { color: var(--ink-3); font-weight: 600; }
+.sim-table tbody th { color: var(--ink-3); font-weight: 500; white-space: nowrap; }
+.sim-components { list-style: none; padding-left: 0; }
+.sim-components .bad { color: var(--bad); font-weight: 600; }
+
+/* ---- Documents as a list, with the Create wizard */
+.docs-list { display: grid; gap: 10px; }
+.docs-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: grid; gap: 8px; background: var(--surface); }
+.docs-card p { margin: 0; }
+.docs-card.stale { border-color: var(--bad-soft); }
+.docs-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.docs-create { max-width: 620px; display: grid; gap: 14px; }
+.docs-create-head { display: flex; justify-content: space-between; align-items: center; }
+.docs-create-q textarea { min-height: 96px; }
+.docs-dot.review { border-radius: 2px; }
+.docs-review { display: grid; gap: 6px; }
+.docs-review section { display: grid; gap: 4px; }
+.docs-review h4 { margin: 8px 0 2px; }
+.docs-review-row { display: grid; grid-template-columns: minmax(140px, 38%) 1fr; gap: 12px; align-items: start; text-align: left; height: auto; padding: 6px 8px; border: 1px solid var(--line); background: var(--surface); white-space: normal; }
+.docs-review-q { font-weight: 600; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.docs-create-foot { margin-top: 4px; }
+
+/* A document that can't be created yet: greyed, with why and what to do */
+.docs-card.blocked { background: var(--surface-2); border-style: dashed; }
+.docs-card.blocked .docs-step-title, .docs-card.blocked .docs-card-summary { color: var(--ink-3); }
+.docs-blocked-msg { font-size: var(--t-sm); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--ink-4); border-radius: var(--radius-sm); padding: 8px 10px; display: grid; gap: 6px; }

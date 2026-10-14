@@ -1,0 +1,152 @@
+[
+ {
+  "memo": "0",
+  "charts": "0",
+  "normal": {
+   "fps": 59.9,
+   "frameP95": 16.9,
+   "frameP99": 17.1,
+   "over33": 0,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 580,
+   "achievedX": 1
+  },
+  "fit": {
+   "fps": 59.4,
+   "frameP95": 16.8,
+   "frameP99": 17.1,
+   "over33": 1,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 3195,
+   "achievedX": 1
+  },
+  "fit100": {
+   "fps": 59.9,
+   "frameP95": 16.8,
+   "frameP99": 17,
+   "over33": 0,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 3195,
+   "achievedX": 99.9
+  }
+ },
+ {
+  "memo": "0",
+  "charts": "30",
+  "normal": {
+   "fps": 59.9,
+   "frameP95": 16.8,
+   "frameP99": 16.8,
+   "over33": 0,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 348,
+   "achievedX": 1
+  },
+  "fit": {
+   "fps": 54.2,
+   "frameP95": 16.9,
+   "frameP99": 33.4,
+   "over33": 3,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 3195,
+   "achievedX": 1
+  },
+  "fit100": {
+   "fps": 58.6,
+   "frameP95": 16.9,
+   "frameP99": 33.3,
+   "over33": 1,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 3195,
+   "achievedX": 99.9
+  }
+ },
+ {
+  "memo": "1",
+  "charts": "0",
+  "normal": {
+   "fps": 59.9,
+   "frameP95": 16.8,
+   "frameP99": 16.8,
+   "over33": 0,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 580,
+   "achievedX": 1
+  },
+  "fit": {
+   "fps": 59.3,
+   "frameP95": 16.8,
+   "frameP99": 16.8,
+   "over33": 1,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 3195,
+   "achievedX": 1
+  },
+  "fit100": {
+   "fps": 59.9,
+   "frameP95": 16.8,
+   "frameP99": 16.9,
+   "over33": 0,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 3195,
+   "achievedX": 99.1
+  }
+ },
+ {
+  "memo": "1",
+  "charts": "30",
+  "normal": {
+   "fps": 59.9,
+   "frameP95": 16.8,
+   "frameP99": 16.9,
+   "over33": 0,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 348,
+   "achievedX": 1
+  },
+  "fit": {
+   "fps": 59,
+   "frameP95": 16.8,
+   "frameP99": 17,
+   "over33": 1,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 3195,
+   "achievedX": 1
+  },
+  "fit100": {
+   "fps": 59.1,
+   "frameP95": 16.8,
+   "frameP99": 33.3,
+   "over33": 0,
+   "longTasks": 0,
+   "longTaskMax": 0,
+   "dots": 3195,
+   "achievedX": 100
+  }
+ },
+ {
+  "memo": "1",
+  "dpr": 2,
+  "pan": true,
+  "worstAlignPx": 0,
+  "fps": 59.1,
+  "frameP95": 16.8,
+  "frameP99": 33.2,
+  "over33": 2,
+  "longTasks": 1,
+  "longTaskMax": 61,
+  "dots": 820,
+  "achievedX": 1
+ }
+]

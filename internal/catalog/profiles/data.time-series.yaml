@@ -1,0 +1,19 @@
+kind: data.time-series
+as_of: 2026-10-15
+unit: request                       # one write batch, or one query
+capacity:
+  model: managed                    # serverless time-series stores scale ingest themselves
+  ramp_factor_per_5min: { low: 1.5, typical: 2, high: 4 }
+  confidence: estimate
+latency:
+  # Writes are quick; queries scan time ranges and are slow next to OLTP reads. Estimate.
+  service_ms_by_op:
+    write: { low: 5, typical: 15, high: 50 }
+    read: { low: 50, typical: 300, high: 2000 }
+  spread: 0.8
+services:
+  aws.timestream: { price: null }
+  azure.data-explorer:
+    capacity: { model: cpu, cpu_ms_by_op: { read: { low: 10, typical: 100, high: 1000 }, write: { low: 0.2, typical: 1, high: 5 } }, max_util: 0.8, confidence: estimate }
+    price: null
+sources: []

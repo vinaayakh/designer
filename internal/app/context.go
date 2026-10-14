@@ -44,6 +44,10 @@ func (a *App) contextLocked(view string, selection []string) (string, error) {
 	}
 	a.sess.SentBrief = bc
 
+	if r := a.registerContextLocked(); r != "" {
+		parts = append(parts, r)
+	}
+
 	label := "Rough Draft"
 	if view == ViewProduction {
 		label = fmt.Sprintf("Production Diagram v%d", ver)

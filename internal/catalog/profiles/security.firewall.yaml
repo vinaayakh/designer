@@ -1,0 +1,14 @@
+kind: security.firewall
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: hop                        # stateful inspection between subnets or at the network edge
+  bandwidth_gbps: { low: 10, typical: 100, high: 100 }  # per firewall endpoint; estimate
+  confidence: estimate
+latency:
+  service_ms: { low: 0.3, typical: 1, high: 5 }
+  spread: 0.4
+services:
+  aws.network-firewall: { price: null }
+  azure.firewall: { price: null }
+sources: []

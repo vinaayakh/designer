@@ -1,0 +1,45 @@
+kind: compute.web-app
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: cpu
+  cpu_ms: { low: 1, typical: 4, high: 15 }
+  max_util: 0.85
+  # Managed web platforms cap concurrent requests per instance and scale on that, not on CPU.
+  max_concurrency: { low: 50, typical: 100, high: 200 }   # App Runner's default is 100
+  confidence: estimate
+latency:
+  service_ms: { low: 2, typical: 8, high: 30 }
+  spread: 0.5
+memory:
+  base_mb: { low: 150, typical: 300, high: 800 }
+  per_inflight_mb: { low: 0.5, typical: 2, high: 10 }
+  on_exceed: restart
+scaling:
+  mode: instances                   # scales on concurrent requests per instance (metric: requests)
+  warmup_s: { low: 20, typical: 45, high: 120 }
+  confidence: estimate
+failure:
+  replace_s: { low: 30, typical: 60, high: 180 }
+defaults: { count: 1, size: 1vcpu-2gb, scale: { min: 1, max: 25, target: 0.7, metric: requests } }
+sizes:
+  - { id: 0.5vcpu-1gb, vcpu: 0.5, ram_gb: 1 }
+  - { id: 1vcpu-2gb, vcpu: 1, ram_gb: 2 }
+  - { id: 2vcpu-4gb, vcpu: 2, ram_gb: 4 }
+  - { id: 4vcpu-12gb, vcpu: 4, ram_gb: 12 }
+services:
+  aws.app-runner:
+    # Active instances pay for vCPU and memory; idle provisioned instances pay for memory only.
+    price: { vcpu_hour: 0.064, gb_hour: 0.007, idle_gb_hour: 0.007, region: us-east-1, as_of: 2026-10, verify: true }
+  aws.elastic-beanstalk:
+    # Beanstalk runs EC2 instances in an Auto Scaling group: EC2 timings and prices apply.
+    scaling: { mode: instances, warmup_s: { low: 60, typical: 150, high: 300 } }
+    sizes:
+      - { id: m7g.large, vcpu: 2, ram_gb: 8, price_hour: 0.0816 }
+      - { id: m7g.xlarge, vcpu: 4, ram_gb: 16, price_hour: 0.1632 }
+    price: { region: us-east-1, as_of: 2026-10, verify: true }
+  aws.amplify-hosting: { price: null }
+  azure.app-service: { price: null }
+  azure.static-web-apps: { price: null }
+sources:
+  - { id: apprunner-pricing, url: "https://aws.amazon.com/apprunner/pricing/", copy: facts-only, used_for: [price] }

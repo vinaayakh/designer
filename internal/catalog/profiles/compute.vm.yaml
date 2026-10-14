@@ -1,0 +1,45 @@
+kind: compute.vm
+as_of: 2026-10-15
+unit: request
+capacity:
+  model: cpu                        # same request cost as a container: the app is the same, only the host differs
+  cpu_ms: { low: 1, typical: 4, high: 15 }
+  max_util: 0.85                    # the OS, agents and sidecars take a slice that containers on Fargate don't see
+  confidence: estimate
+latency:
+  service_ms: { low: 2, typical: 8, high: 30 }
+  spread: 0.5
+memory:
+  base_mb: { low: 400, typical: 800, high: 2000 }   # OS plus runtime plus app
+  per_inflight_mb: { low: 0.5, typical: 2, high: 10 }
+  on_exceed: restart
+scaling:
+  mode: instances                   # an Auto Scaling group; a lone instance is count 1 with no scale rule
+  # Launch, boot, run user data and pass the load balancer's health check. Faster with a prebuilt image.
+  warmup_s: { low: 60, typical: 150, high: 300 }
+  confidence: estimate
+failure:
+  replace_s: { low: 90, typical: 180, high: 420 }   # health check fails, the group launches a replacement
+defaults: { count: 2, size: 2vcpu-8gb, scale: { min: 2, max: 10, target: 0.6, metric: requests } }
+sizes:
+  - { id: 2vcpu-4gb, vcpu: 2, ram_gb: 4 }
+  - { id: 2vcpu-8gb, vcpu: 2, ram_gb: 8 }
+  - { id: 4vcpu-16gb, vcpu: 4, ram_gb: 16 }
+  - { id: 8vcpu-32gb, vcpu: 8, ram_gb: 32 }
+services:
+  aws.ec2:
+    # Graviton general purpose (m7g) and compute optimised (c7g); t4g is burstable (CPU credits).
+    # These sizes are also the host sizes for ECS and EKS capacity pools (sim ticket 014).
+    sizes:
+      - { id: t4g.medium, vcpu: 2, ram_gb: 4, price_hour: 0.0336, burstable: true }
+      - { id: c7g.large, vcpu: 2, ram_gb: 4, price_hour: 0.0725 }
+      - { id: m7g.large, vcpu: 2, ram_gb: 8, price_hour: 0.0816 }
+      - { id: m7g.xlarge, vcpu: 4, ram_gb: 16, price_hour: 0.1632 }
+      - { id: m7g.2xlarge, vcpu: 8, ram_gb: 32, price_hour: 0.3264 }
+    price: { region: us-east-1, os: linux, as_of: 2026-10, verify: true }
+  aws.lightsail:
+    price: null                     # bundle pricing; not sourced yet
+  azure.vm: { price: null }
+  azure.vmss: { price: null }
+sources:
+  - { id: ec2-pricing-aggregators, url: "https://calculator.holori.com/aws/ec2/m7g.large/us-east-1", copy: facts-only, used_for: [price] }

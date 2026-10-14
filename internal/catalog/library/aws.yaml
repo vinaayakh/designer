@@ -1,0 +1,152 @@
+# AWS Component Library (sim ticket 013). Not embedded yet.
+#
+# What the library panel shows for the AWS target: groups in display order, and the components in each.
+# A component is a ready-to-place preset: a catalog Service (identity, Kind, HIPAA flag), an official
+# icon, search keywords, and the defaults it is placed with. Everything the simulation needs comes
+# from the Kind's Behaviour Profile plus the Service override; nothing here is AWS-specific code.
+#
+# icon: a key in the pinned AWS icon package (icons/aws.yaml). Arch_* = service icon,
+#   Res_* = resource icon (a part of a service, e.g. an ALB), group icons are named as in the package.
+#   Never bundled: downloaded on first use after the user agrees to AWS's terms (v1 ticket 014).
+# sim: full (simulated from a Behaviour Profile) | hop (on the request path: adds latency and its
+#   quota, no capacity of its own) | off-path (drawn, not in the request flow; dimmed in Sim Mode).
+# place: node (default) | group (draws a Group) | source (a traffic source that starts Routes).
+provider: aws
+icons: aws                         # → icons/aws.yaml
+groups:
+  - { id: quick, title: Quick inserts, role: quick }
+  - { id: sources, title: Traffic sources, role: sources, icon: Res_Users_48_Light }
+  - { id: lb, title: Load balancing, role: load-balancing, icon: Arch_Elastic-Load-Balancing_64 }
+  - { id: edge, title: Edge and APIs, role: edge, icon: Arch-Category_Networking-Content-Delivery_64 }
+  - { id: compute, title: Compute, role: compute, icon: Arch-Category_Compute_64 }
+  - { id: ecs, title: ECS, role: containers, icon: Arch_Amazon-Elastic-Container-Service_64 }
+  - { id: eks, title: EKS, role: kubernetes, icon: Arch_Amazon-Elastic-Kubernetes-Service_64 }
+  - { id: databases, title: Databases, role: databases, icon: Arch-Category_Databases_64 }
+  - { id: caching, title: Caching, role: caching, icon: Arch_Amazon-ElastiCache_64 }
+  - { id: messaging, title: Messaging and streaming, role: messaging, icon: Arch-Category_Application-Integration_64 }
+  - { id: storage, title: Storage, role: storage, icon: Arch-Category_Storage_64 }
+  - { id: network, title: Network, role: network, icon: Arch_Amazon-Virtual-Private-Cloud_64 }
+  - { id: security, title: Security and identity, role: security, icon: Arch-Category_Security-Identity_64 }
+  - { id: observability, title: Monitoring, role: observability, icon: Arch-Category_Management-Tools_64 }
+
+# Quick inserts: one-drop changes with wiring rules (sim ticket 008, now part of the library).
+quick:
+  - { id: add-cache, title: Cache in front, component: aws.elasticache-valkey, onto: edge, into_kinds: [data.relational, data.document, data.key-value], rule: cache-aside }
+  - { id: add-queue, title: Queue between, component: aws.sqs, onto: edge, rule: make-async }
+  - { id: add-replica, title: Read replica, component: same, onto: node, kinds: [data.relational], rule: read-replica }
+  - { id: add-lb, title: Load balancer in front, component: aws.alb, onto: node, rule: front }
+  - { id: add-cdn, title: CDN in front, component: aws.cloudfront, onto: node, rule: front }
+  - { id: add-breaker, title: Circuit breaker, onto: edge, rule: breaker }
+
+components:
+  # Traffic sources: where Routes start. Not catalog Services; they're `external` Kinds.
+  - { id: src.users, group: sources, kind: external.user, label: Users, icon: Res_Users_48_Light, place: source, keywords: [web, browser, people, customers] }
+  - { id: src.mobile, group: sources, kind: external.client, label: Mobile app, icon: Res_Mobile-client_48_Light, place: source, keywords: [ios, android, phone] }
+  - { id: src.client, group: sources, kind: external.client, label: API client, icon: Res_Client_48_Light, place: source, keywords: [partner, integration, machine] }
+  - { id: src.internet, group: sources, kind: external.client, label: Internet, icon: Res_Internet_48_Light, place: source, keywords: [public, www] }
+
+  # Load balancing
+  - { id: aws.alb, group: lb, service: aws.alb, icon: Res_Elastic-Load-Balancing_Application-Load-Balancer_48, sim: full, keywords: [alb, http, https, layer 7, l7, elb] }
+  - { id: aws.nlb, group: lb, service: aws.nlb, icon: Res_Elastic-Load-Balancing_Network-Load-Balancer_48, sim: full, keywords: [nlb, tcp, udp, layer 4, l4, elb] }
+  - { id: aws.gwlb, group: lb, service: aws.gwlb, icon: Res_Elastic-Load-Balancing_Gateway-Load-Balancer_48, sim: hop, keywords: [gwlb, appliance, firewall, inspection] }
+  - { id: aws.global-accelerator, group: lb, service: aws.global-accelerator, icon: Arch_AWS-Global-Accelerator_64, sim: hop, keywords: [anycast, multi-region, failover] }
+
+  # Edge and APIs
+  - { id: aws.cloudfront, group: edge, service: aws.cloudfront, icon: Arch_Amazon-CloudFront_64, sim: full, keywords: [cdn, edge, cache, static] }
+  - { id: aws.api-gateway, group: edge, service: aws.api-gateway, icon: Arch_Amazon-API-Gateway_64, sim: full, keywords: [api, rest, http api, websocket, apigw] }
+  - { id: aws.appsync, group: edge, service: aws.appsync, icon: Arch_AWS-AppSync_64, sim: hop, keywords: [graphql, api] }
+  - { id: aws.route53, group: edge, service: aws.route53, icon: Arch_Amazon-Route-53_64, sim: off-path, keywords: [dns, domain, routing policy] }
+
+  # Compute
+  - { id: aws.ec2-asg, group: compute, service: aws.ec2, label: EC2 Auto Scaling group, icon: Arch_Amazon-EC2-Auto-Scaling_64, sim: full, keywords: [ec2, vm, instances, asg, servers], defaults: { sizing: { count: 2, size: m7g.large, scale: { min: 2, max: 10, target: 0.6 } } } }
+  - { id: aws.ec2, group: compute, service: aws.ec2, label: EC2 instance, icon: Arch_Amazon-EC2_64, sim: full, keywords: [vm, server, instance], defaults: { sizing: { count: 1 } } }
+  - { id: aws.lambda, group: compute, service: aws.lambda, icon: Arch_AWS-Lambda_64, sim: full, keywords: [function, serverless, faas] }
+  - { id: aws.app-runner, group: compute, service: aws.app-runner, icon: Arch_AWS-App-Runner_64, sim: full, keywords: [container, paas, web service] }
+  - { id: aws.elastic-beanstalk, group: compute, service: aws.elastic-beanstalk, icon: Arch_AWS-Elastic-Beanstalk_64, sim: full, keywords: [paas, web app] }
+  - { id: aws.lightsail, group: compute, service: aws.lightsail, icon: Arch_Amazon-Lightsail_64, sim: full, keywords: [vps, simple server] }
+  - { id: aws.batch, group: compute, service: aws.batch, icon: Arch_AWS-Batch_64, sim: off-path, keywords: [jobs, batch processing] }
+
+  # ECS: a cluster is a Group; services run inside it (sim ticket 014).
+  - { id: aws.ecs-cluster-fargate, group: ecs, place: group, group_kind: cluster, service: aws.ecs-fargate, label: ECS cluster (Fargate), icon: Arch_Amazon-Elastic-Container-Service_64, keywords: [ecs, cluster, fargate, serverless containers] }
+  - { id: aws.ecs-cluster-ec2, group: ecs, place: group, group_kind: cluster, service: aws.ecs-ec2, label: ECS cluster (EC2 capacity), icon: Arch_Amazon-Elastic-Container-Service_64, keywords: [ecs, cluster, ec2, capacity provider], defaults: { pool: { size: m7g.xlarge, count: 3, scale: { min: 2, max: 10, target: 0.8 } } } }
+  - { id: aws.ecs-service-fargate, group: ecs, service: aws.ecs-fargate, label: ECS service on Fargate, icon: Res_Amazon-Elastic-Container-Service_Service_48, sim: full, keywords: [ecs, service, tasks, fargate, container, docker], defaults: { sizing: { count: 2, size: 1vcpu-2gb, scale: { min: 2, max: 10, target: 0.6 } } } }
+  - { id: aws.ecs-service-ec2, group: ecs, service: aws.ecs-ec2, label: ECS service on EC2, icon: Res_Amazon-Elastic-Container-Service_Service_48, sim: full, keywords: [ecs, service, tasks, ec2, container, docker], defaults: { sizing: { count: 2, size: 1vcpu-2gb, scale: { min: 2, max: 10, target: 0.6 } } } }
+  - { id: aws.ecs-task, group: ecs, service: aws.ecs-fargate, label: ECS task (standalone), icon: Res_Amazon-Elastic-Container-Service_Task_48, sim: full, keywords: [ecs, task, job, container], defaults: { sizing: { count: 1 } } }
+
+  # EKS: a cluster is a Group with a node pool; workloads run inside it (sim ticket 014).
+  - { id: aws.eks-cluster, group: eks, place: group, group_kind: cluster, service: aws.eks, label: EKS cluster (managed node group), icon: Arch_Amazon-Elastic-Kubernetes-Service_64, keywords: [eks, kubernetes, k8s, cluster, node group, karpenter], defaults: { pool: { size: m7g.xlarge, count: 3, scale: { min: 3, max: 12, target: 0.8 } } } }
+  - { id: aws.eks-cluster-fargate, group: eks, place: group, group_kind: cluster, service: aws.eks, label: EKS cluster (Fargate profile), icon: Arch_Amazon-Elastic-Kubernetes-Service_64, keywords: [eks, kubernetes, k8s, fargate, serverless] }
+  - { id: aws.eks-workload, group: eks, service: aws.eks-workload, label: EKS workload (Deployment), icon: Arch_Amazon-Elastic-Kubernetes-Service_64, sim: full, keywords: [eks, kubernetes, k8s, deployment, pods, hpa, service], defaults: { sizing: { count: 3, size: 1vcpu-2gb, scale: { min: 3, max: 20, target: 0.6 } } } }
+
+  # Databases
+  - { id: aws.rds-postgres, group: databases, service: aws.rds-postgres, icon: Res_Amazon-Aurora_Amazon-RDS-Instance_48, sim: full, keywords: [rds, postgres, postgresql, sql, relational] }
+  - { id: aws.rds-mysql, group: databases, service: aws.rds-mysql, icon: Res_Amazon-Aurora_Amazon-RDS-Instance_48, sim: full, keywords: [rds, mysql, sql, relational] }
+  - { id: aws.rds-mariadb, group: databases, service: aws.rds-mariadb, icon: Res_Amazon-Aurora_Amazon-RDS-Instance_48, sim: full, keywords: [rds, mariadb, sql] }
+  - { id: aws.rds-sqlserver, group: databases, service: aws.rds-sqlserver, icon: Res_Amazon-Aurora-SQL-Server-Instance_48, sim: full, keywords: [rds, sql server, mssql] }
+  - { id: aws.rds-oracle, group: databases, service: aws.rds-oracle, icon: Res_Amazon-Aurora-Oracle-Instance_48, sim: full, keywords: [rds, oracle] }
+  - { id: aws.aurora-postgres, group: databases, service: aws.aurora-postgres, icon: Res_Amazon-Aurora-PostgreSQL-Instance_48, sim: full, keywords: [aurora, postgres, postgresql, serverless v2] }
+  - { id: aws.aurora-mysql, group: databases, service: aws.aurora-mysql, icon: Res_Amazon-Aurora-MySQL-Instance_48, sim: full, keywords: [aurora, mysql] }
+  - { id: aws.aurora-dsql, group: databases, service: aws.aurora-dsql, icon: Arch_Amazon-Aurora_64, sim: full, keywords: [dsql, distributed sql, multi-region] }
+  - { id: aws.dynamodb, group: databases, service: aws.dynamodb, icon: Arch_Amazon-DynamoDB_64, sim: full, keywords: [dynamo, nosql, key value, table] }
+  - { id: aws.documentdb, group: databases, service: aws.documentdb, icon: Arch_Amazon-DocumentDB_64, sim: full, keywords: [mongodb, mongo, document] }
+  - { id: aws.keyspaces, group: databases, service: aws.keyspaces, icon: Arch_Amazon-Keyspaces_64, sim: full, keywords: [cassandra, wide column] }
+  - { id: aws.neptune, group: databases, service: aws.neptune, icon: Arch_Amazon-Neptune_64, sim: full, keywords: [graph, gremlin, sparql] }
+  - { id: aws.opensearch, group: databases, service: aws.opensearch, icon: Arch_Amazon-OpenSearch-Service_64, sim: full, keywords: [search, elasticsearch, logs] }
+  - { id: aws.timestream, group: databases, service: aws.timestream, icon: Arch_Amazon-Timestream_64, sim: full, keywords: [time series, metrics, iot] }
+
+  # Caching
+  - { id: aws.elasticache-valkey, group: caching, service: aws.elasticache-valkey, icon: Res_Amazon-ElastiCache_ElastiCache-for-Valkey_48, sim: full, keywords: [valkey, redis, cache, in-memory] }
+  - { id: aws.elasticache-redis, group: caching, service: aws.elasticache-redis, icon: Res_Amazon-ElastiCache_ElastiCache-for-Redis_48, sim: full, keywords: [redis, cache, in-memory] }
+  - { id: aws.elasticache-memcached, group: caching, service: aws.elasticache-memcached, icon: Res_Amazon-ElastiCache_ElastiCache-for-Memcached_48, sim: full, keywords: [memcached, cache] }
+  - { id: aws.memorydb, group: caching, service: aws.memorydb, icon: Arch_Amazon-MemoryDB_64, sim: full, keywords: [redis, durable, in-memory database] }
+  - { id: aws.dax, group: caching, service: aws.dax, icon: Res_Amazon-DynamoDB_Amazon-DynamoDB-Accelerator_48, sim: full, keywords: [dax, dynamodb cache] }
+
+  # Messaging and streaming
+  - { id: aws.sqs, group: messaging, service: aws.sqs, icon: Res_Amazon-Simple-Queue-Service_Queue_48, sim: full, keywords: [queue, sqs, fifo, decouple, buffer] }
+  - { id: aws.sns, group: messaging, service: aws.sns, icon: Arch_Amazon-Simple-Notification-Service_64, sim: full, keywords: [pub sub, topic, fan out, notification] }
+  - { id: aws.eventbridge, group: messaging, service: aws.eventbridge, icon: Arch_Amazon-EventBridge_64, sim: full, keywords: [events, event bus, rules] }
+  - { id: aws.kinesis-data-streams, group: messaging, service: aws.kinesis-data-streams, icon: Arch_Amazon-Kinesis-Data-Streams_64, sim: full, keywords: [stream, kinesis, shards] }
+  - { id: aws.msk, group: messaging, service: aws.msk, icon: Arch_Amazon-Managed-Streaming-for-Apache-Kafka_64, sim: full, keywords: [kafka, stream, msk, partitions] }
+  - { id: aws.mq, group: messaging, service: aws.mq, icon: Arch_Amazon-MQ_64, sim: full, keywords: [rabbitmq, activemq, broker] }
+  - { id: aws.step-functions, group: messaging, service: aws.step-functions, icon: Arch_AWS-Step-Functions_64, sim: hop, keywords: [workflow, state machine, orchestration] }
+  - { id: aws.data-firehose, group: messaging, service: aws.data-firehose, icon: Arch_Amazon-Data-Firehose_64, sim: off-path, keywords: [firehose, delivery stream, etl] }
+
+  # Storage
+  - { id: aws.s3, group: storage, service: aws.s3, icon: Res_Amazon-Simple-Storage-Service_Bucket_48, sim: full, keywords: [s3, bucket, object, blob, files] }
+  - { id: aws.s3-glacier, group: storage, service: aws.s3-glacier, icon: Arch_Amazon-Simple-Storage-Service-Glacier_64, sim: off-path, keywords: [archive, glacier, cold storage] }
+  - { id: aws.efs, group: storage, service: aws.efs, icon: Arch_Amazon-EFS_64, sim: full, keywords: [nfs, file system, shared] }
+  - { id: aws.fsx, group: storage, service: aws.fsx, icon: Arch_Amazon-FSx_64, sim: full, keywords: [fsx, lustre, windows file server, netapp] }
+  - { id: aws.backup, group: storage, service: aws.backup, icon: Arch_AWS-Backup_64, sim: off-path, keywords: [backup, vault, restore] }
+
+  # Network: Groups first, then gateways and endpoints.
+  - { id: aws.region, group: network, place: group, group_kind: region, label: Region, icon: Region_32, keywords: [region] }
+  - { id: aws.az, group: network, place: group, group_kind: zone, label: Availability Zone, icon: Region_32, keywords: [az, zone, availability zone] }
+  - { id: aws.vpc, group: network, place: group, group_kind: network, label: VPC, icon: Virtual-private-cloud-VPC_32, keywords: [vpc, network] }
+  - { id: aws.subnet-public, group: network, place: group, group_kind: subnet, tier: public, label: Public subnet, icon: Public-subnet_32, keywords: [subnet, public, dmz] }
+  - { id: aws.subnet-private, group: network, place: group, group_kind: subnet, tier: private, label: Private subnet, icon: Private-subnet_32, keywords: [subnet, private] }
+  - { id: aws.account, group: network, place: group, group_kind: account, label: AWS account, icon: AWS-Account_32, keywords: [account, organization] }
+  - { id: aws.internet-gateway, group: network, service: aws.internet-gateway, icon: Res_Amazon-VPC_Internet-Gateway_48, sim: hop, keywords: [igw, internet] }
+  - { id: aws.nat-gateway, group: network, service: aws.nat-gateway, icon: Res_Amazon-VPC_NAT-Gateway_48, sim: hop, keywords: [nat, egress, outbound] }
+  - { id: aws.vpc-gateway-endpoint, group: network, service: aws.vpc-gateway-endpoint, icon: Res_Amazon-VPC_Endpoints_48, sim: hop, keywords: [endpoint, gateway endpoint, s3 endpoint, dynamodb endpoint] }
+  - { id: aws.privatelink, group: network, service: aws.privatelink, icon: Arch_AWS-PrivateLink_64, sim: hop, keywords: [privatelink, interface endpoint] }
+  - { id: aws.transit-gateway, group: network, service: aws.transit-gateway, icon: Arch_AWS-Transit-Gateway_64, sim: hop, keywords: [tgw, hub, transit] }
+  - { id: aws.vpc-peering, group: network, service: aws.vpc-peering, icon: Res_Amazon-VPC_Peering-Connection_48, sim: hop, keywords: [peering] }
+  - { id: aws.site-to-site-vpn, group: network, service: aws.site-to-site-vpn, icon: Arch_AWS-Site-to-Site-VPN_64, sim: hop, keywords: [vpn, ipsec, on-prem] }
+  - { id: aws.direct-connect, group: network, service: aws.direct-connect, icon: Arch_AWS-Direct-Connect_64, sim: hop, keywords: [direct connect, dx, on-prem] }
+
+  # Security and identity
+  - { id: aws.waf, group: security, service: aws.waf, icon: Arch_AWS-WAF_64, sim: hop, keywords: [waf, firewall, owasp, rate limit] }
+  - { id: aws.shield, group: security, service: aws.shield, icon: Arch_AWS-Shield_64, sim: off-path, keywords: [ddos] }
+  - { id: aws.network-firewall, group: security, service: aws.network-firewall, icon: Arch_AWS-Network-Firewall_64, sim: hop, keywords: [firewall, inspection] }
+  - { id: aws.cognito, group: security, service: aws.cognito, icon: Arch_Amazon-Cognito_64, sim: hop, keywords: [auth, login, users, oauth, oidc] }
+  - { id: aws.kms, group: security, service: aws.kms, icon: Arch_AWS-Key-Management-Service_64, sim: off-path, keywords: [kms, encryption, keys] }
+  - { id: aws.secrets-manager, group: security, service: aws.secrets-manager, icon: Arch_AWS-Secrets-Manager_64, sim: off-path, keywords: [secrets, passwords, credentials] }
+
+  # Monitoring
+  - { id: aws.cloudwatch, group: observability, service: aws.cloudwatch, icon: Arch_Amazon-CloudWatch_64, sim: off-path, keywords: [metrics, alarms, monitoring] }
+  - { id: aws.cloudwatch-logs, group: observability, service: aws.cloudwatch-logs, icon: Arch_Amazon-CloudWatch_64, sim: off-path, keywords: [logs, logging] }
+  - { id: aws.x-ray, group: observability, service: aws.x-ray, icon: Arch_AWS-X-Ray_64, sim: off-path, keywords: [tracing, traces] }
+  - { id: aws.cloudtrail, group: observability, service: aws.cloudtrail, icon: Arch_AWS-CloudTrail_64, sim: off-path, keywords: [audit, api log] }
+
+# Every other catalog Service is still findable by search, under "More", with its service icon.
+more: all-other-services

@@ -1,0 +1,76 @@
+# Azure Component Library, DRAFT (sim ticket 016). Proves the library format fits a second cloud;
+# not shipped until Azure Behaviour Profile overrides, prices and an icon manifest exist.
+# Same schema as aws.yaml. Groups carry the same neutral `role`, so a design moved between clouds
+# maps ECS → Container Apps / AKS, ElastiCache → Azure Managed Redis, and so on.
+# icon: null → generic Component Kind icon until icons/azure.yaml pins the Azure Architecture Icons package.
+provider: azure
+icons: null
+groups:
+  - { id: quick, title: Quick inserts, role: quick }
+  - { id: sources, title: Traffic sources, role: sources }
+  - { id: lb, title: Load balancing, role: load-balancing }
+  - { id: edge, title: Edge and APIs, role: edge }
+  - { id: compute, title: Compute, role: compute }
+  - { id: aks, title: AKS, role: kubernetes }
+  - { id: container-apps, title: Container Apps, role: containers }
+  - { id: databases, title: Databases, role: databases }
+  - { id: caching, title: Caching, role: caching }
+  - { id: messaging, title: Messaging and streaming, role: messaging }
+  - { id: storage, title: Storage, role: storage }
+  - { id: network, title: Network, role: network }
+  - { id: security, title: Security and identity, role: security }
+  - { id: observability, title: Monitoring, role: observability }
+
+quick:
+  - { id: add-cache, title: Cache in front, component: azure.managed-redis, onto: edge, into_kinds: [data.relational, data.document, data.key-value], rule: cache-aside }
+  - { id: add-queue, title: Queue between, component: azure.service-bus-queue, onto: edge, rule: make-async }
+  - { id: add-replica, title: Read replica, component: same, onto: node, kinds: [data.relational], rule: read-replica }
+  - { id: add-lb, title: Load balancer in front, component: azure.application-gateway, onto: node, rule: front }
+  - { id: add-cdn, title: CDN in front, component: azure.front-door, onto: node, rule: front }
+  - { id: add-breaker, title: Circuit breaker, onto: edge, rule: breaker }
+
+components:
+  - { id: src.users, group: sources, kind: external.user, label: Users, icon: null, place: source }
+  - { id: src.mobile, group: sources, kind: external.client, label: Mobile app, icon: null, place: source }
+  - { id: src.client, group: sources, kind: external.client, label: API client, icon: null, place: source }
+
+  - { id: azure.application-gateway, group: lb, service: azure.application-gateway, icon: null, sim: full, keywords: [app gateway, layer 7, http] }
+  - { id: azure.load-balancer, group: lb, service: azure.load-balancer, icon: null, sim: full, keywords: [layer 4, tcp] }
+  - { id: azure.traffic-manager, group: lb, service: azure.traffic-manager, icon: null, sim: off-path, keywords: [dns, global] }
+
+  - { id: azure.front-door, group: edge, service: azure.front-door, icon: null, sim: full, keywords: [cdn, edge, global] }
+  - { id: azure.api-management, group: edge, service: azure.api-management, icon: null, sim: full, keywords: [apim, api gateway] }
+
+  - { id: azure.vmss, group: compute, service: azure.vmss, icon: null, sim: full, keywords: [scale set, vm, autoscale] }
+  - { id: azure.functions, group: compute, service: azure.functions, icon: null, sim: full, keywords: [serverless, function] }
+  - { id: azure.app-service, group: compute, service: azure.app-service, icon: null, sim: full, keywords: [web app, paas] }
+
+  - { id: azure.aks-cluster, group: aks, place: group, group_kind: cluster, service: azure.aks, label: AKS cluster (node pool), icon: null, defaults: { pool: { count: 3, scale: { min: 3, max: 12, target: 0.8 } } } }
+  - { id: azure.aks-workload, group: aks, service: azure.aks-workload, label: AKS workload (Deployment), icon: null, sim: full, keywords: [kubernetes, k8s, pods, deployment] }
+
+  - { id: azure.container-apps-env, group: container-apps, place: group, group_kind: cluster, service: azure.container-apps, label: Container Apps environment, icon: null }
+  - { id: azure.container-apps, group: container-apps, service: azure.container-apps, label: Container app, icon: null, sim: full, keywords: [containers, serverless, revisions, keda] }
+
+  - { id: azure.postgres-flexible, group: databases, service: azure.postgres-flexible, icon: null, sim: full, keywords: [postgres, postgresql] }
+  - { id: azure.sql-database, group: databases, service: azure.sql-database, icon: null, sim: full, keywords: [sql server, mssql] }
+  - { id: azure.cosmos-nosql, group: databases, service: azure.cosmos-nosql, icon: null, sim: full, keywords: [cosmos, document, nosql, request units] }
+
+  - { id: azure.managed-redis, group: caching, service: azure.managed-redis, icon: null, sim: full, keywords: [redis, cache] }
+
+  - { id: azure.service-bus-queue, group: messaging, service: azure.service-bus-queue, icon: null, sim: full, keywords: [queue, service bus] }
+  - { id: azure.event-hubs, group: messaging, service: azure.event-hubs, icon: null, sim: full, keywords: [stream, kafka, partitions] }
+  - { id: azure.event-grid, group: messaging, service: azure.event-grid, icon: null, sim: full, keywords: [events] }
+
+  - { id: azure.blob-storage, group: storage, service: azure.blob-storage, icon: null, sim: full, keywords: [blob, object, files] }
+
+  - { id: azure.vnet, group: network, place: group, group_kind: network, label: Virtual network, icon: null }
+  - { id: azure.subnet, group: network, place: group, group_kind: subnet, tier: private, label: Subnet, icon: null }
+  - { id: azure.nat-gateway, group: network, service: azure.nat-gateway, icon: null, sim: hop }
+  - { id: azure.private-endpoint, group: network, service: azure.private-endpoint, icon: null, sim: hop }
+
+  - { id: azure.waf, group: security, service: azure.waf, icon: null, sim: hop }
+  - { id: azure.key-vault-secrets, group: security, service: azure.key-vault-secrets, icon: null, sim: off-path }
+
+  - { id: azure.monitor, group: observability, service: azure.monitor, icon: null, sim: off-path }
+
+more: all-other-services

@@ -1,0 +1,35 @@
+kind: data.search
+as_of: 2026-10-15
+unit: request                       # one search query, or one indexed document
+capacity:
+  model: cpu
+  # Searches are much heavier than key lookups. AWS's sizing example serves about 1,000 queries/s on 6
+  # data nodes of 8 vCPU: roughly 20 queries/s per data-node vCPU, about 50 ms of CPU each with
+  # replicas sharing the load. Simple term queries are far cheaper; aggregations far dearer.
+  cpu_ms_by_op:
+    read: { low: 5, typical: 40, high: 150 }
+    write: { low: 0.5, typical: 2, high: 10 }      # indexing one small document, refresh and merge included
+  max_util: 0.75                    # merges and refreshes need headroom
+  confidence: measured
+latency:
+  service_ms_by_op:
+    read: { low: 5, typical: 20, high: 100 }
+    write: { low: 2, typical: 10, high: 50 }       # until the document is searchable: the refresh interval
+  spread: 0.7
+memory:
+  on_exceed: { cpu_factor: 2, latency_factor: 4 }   # index beyond page cache
+scaling:
+  mode: fixed                       # data nodes are resized or added by hand; shards rebalance
+failure:
+  failover_s: { low: 10, typical: 30, high: 120 }  # replica shards take over
+  confidence: estimate
+defaults: { count: 3, size: 2vcpu-16gb }            # three data nodes across zones
+sizes:
+  - { id: 2vcpu-16gb, vcpu: 2, ram_gb: 16 }
+  - { id: 4vcpu-32gb, vcpu: 4, ram_gb: 32 }
+  - { id: 8vcpu-64gb, vcpu: 8, ram_gb: 64 }
+services:
+  aws.opensearch: { price: null }
+  azure.ai-search: { price: null }
+sources:
+  - { id: opensearch-sizing, url: "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-solr-opensearch/sizing-cluster.html", copy: facts-only, used_for: [cpu_ms_by_op] }

@@ -1,0 +1,18 @@
+kind: security.identity
+as_of: 2026-10-15
+unit: request                       # a sign-in or token call; checking a token on each request is local (no hop)
+capacity:
+  model: hop
+  # Identity services rate-limit sign-in and token APIs per account; the limits differ by API group and
+  # can be raised. Only sign-in Routes pass through: draw it on the login path, not on every call.
+  rate_per_s: { low: 50, typical: 120, high: 1000 }     # estimate for user sign-in calls per account
+  confidence: estimate
+latency:
+  service_ms: { low: 30, typical: 80, high: 300 }       # password checks are deliberately slow
+  spread: 0.5
+services:
+  aws.cognito: { price: null }      # priced per monthly active user, not per request
+  aws.iam-identity-center: { price: null }
+  azure.entra-id: { price: null }
+  azure.entra-external-id: { price: null }
+sources: []

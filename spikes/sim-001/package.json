@@ -1,0 +1,22 @@
+{
+  "name": "spike-sim-001",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "bench:engine": "node bench/engine.ts",
+    "bench": "node bench/run.mjs"
+  },
+  "dependencies": {
+    "@excalidraw/excalidraw": "0.18.0-143b5b6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "uplot": "1.6.32"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.2",
+    "playwright-core": "1.64.0",
+    "vite": "8.3.4",
+    "yaml": "^2.8.1"
+  }
+}

@@ -1,0 +1,23 @@
+kind: data.key-value
+as_of: 2026-10-15
+unit: request                       # one read of up to 4 KB, or one write of up to 1 KB
+capacity:
+  model: quota
+  # Managed and partitioned: each partition serves up to 3,000 reads/s and 1,000 writes/s. A table with
+  # an even key spread scales with its partitions; a hot key is capped at one partition.
+  per_unit: { reads: 3000, writes: 1000 }
+  units_name: partitions
+  units: { low: 1, typical: 4, high: 100 }        # estimate: grows with data size and past peaks
+  confidence: vendor
+latency:
+  service_ms: { low: 2, typical: 5, high: 12 }
+  spread: 0.5
+scaling:
+  mode: managed                     # estimate: on-demand absorbs up to double the previous peak at once
+failure:
+  failover_s: { low: 0, typical: 0, high: 0 }   # spread across zones by default
+services:
+  aws.dynamodb:
+    price: { per_million_reads: 0.125, per_million_writes: 0.625, mode: on-demand, region: us-east-1, as_of: 2026-10, verify: true }
+sources:
+  - { id: dynamodb-partitions, url: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html", copy: facts-only, used_for: [per_unit] }

@@ -1,6 +1,7 @@
 # Design doc and ADRs (wayfinder/doc-pipeline ticket 005). The common design doc / RFC outline
 # (structure only, our wording); ADRs are DEC entries rendered in MADR 4.0.
 id: design-doc
+summary: "How it is built and why: the design, the alternatives you rejected, rollout, and each decision as an ADR."
 title: Design doc + ADRs
 version: 2
 template: "Design doc / RFC outline (structure only); ADRs in MADR 4.0"

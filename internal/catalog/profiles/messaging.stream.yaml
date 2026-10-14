@@ -1,0 +1,46 @@
+kind: messaging.stream
+as_of: 2026-10-15
+unit: record                        # one record of about 1 KB; set Edge weight for bigger records (KB per record)
+capacity:
+  model: quota
+  # Kinesis: each shard takes up to 1,000 records/s or 1 MB/s in, and serves 2 MB/s out, shared by
+  # consumers unless they use enhanced fan-out. Records keep their order within a shard, so one hot
+  # partition key is capped at one shard.
+  per_unit: { writes: 1000, reads: 2000 }
+  units: { low: 1, typical: 4, high: 100 }
+  units_name: shards
+  confidence: vendor
+latency:
+  service_ms: { low: 10, typical: 20, high: 70 }  # put; consumers see records after their poll interval
+  spread: 0.5
+buffer:
+  retention_s: { low: 86400, typical: 86400, high: 31536000 }   # 24 h by default, up to 365 days
+consumers:
+  poll_ms: { low: 200, typical: 1000, high: 5000 } # GetRecords polling; enhanced fan-out pushes in about 70 ms
+scaling:
+  mode: fixed                       # provisioned shards; on-demand mode scales itself (see services)
+services:
+  aws.kinesis-data-streams:
+    on_demand: { write_mb_s: 4, read_mb_s: 8 }     # default for a new on-demand stream, grows with traffic
+    price: null
+  aws.msk:
+    # Brokers, not shards. AWS recommends at most 1,000 partitions per broker (m7g.large) and keeping
+    # broker CPU under 60%. Express m7g.large: about 15.6 MB/s in, 31.2 MB/s out recommended.
+    capacity:
+      model: quota
+      per_unit: { writes: 15000, reads: 30000 }   # records/s per broker at 1 KB
+      units: { low: 3, typical: 3, high: 30 }
+      units_name: brokers
+      max_partitions_per_broker: 1000
+      confidence: vendor
+    latency: { service_ms: { low: 2, typical: 5, high: 20 }, spread: 0.5 }
+    price: null
+  azure.event-hubs:
+    # One throughput unit: 1 MB/s or 1,000 events/s in, 2 MB/s out.
+    capacity: { model: quota, per_unit: { writes: 1000, reads: 2000 }, units: { low: 1, typical: 2, high: 40 }, confidence: vendor }
+    price: null
+  azure.iot-hub: { price: null }
+sources:
+  - { id: kinesis-quotas, url: "https://docs.aws.amazon.com/streams/latest/dev/service-sizes-and-limits.html", copy: facts-only, used_for: [per_unit, on_demand] }
+  - { id: msk-best-practices, url: "https://docs.aws.amazon.com/msk/latest/developerguide/bestpractices.html", copy: facts-only, used_for: [max_partitions_per_broker] }
+  - { id: msk-express, url: "https://docs.aws.amazon.com/msk/latest/developerguide/bestpractices-express.html", copy: facts-only, used_for: [per_unit] }

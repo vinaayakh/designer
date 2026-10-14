@@ -1,0 +1,99 @@
+{
+ "CRUD web app": {
+  "system": "ALB → 3 × 1 vCPU containers → Postgres db.r6g.large (3 queries per request); 5% of requests read S3",
+  "capacity": {
+   "alb": "1 × 1000000/s = 1000000/s",
+   "api": "3 × 225/s = 675/s",
+   "db": "1 × 4000/s = 4000/s",
+   "s3": "1 × 5500/s = 5500/s"
+  },
+  "costPerHour": 0.37,
+  "lowLoad": "p50 18 ms, p99 85 ms at 50 rps",
+  "saturationOrder": [
+   "api at 670 rps"
+  ],
+  "firstSloBreak": "670 rps (p99 860 ms, errors 0.0%)"
+ },
+ "Read-heavy catalog": {
+  "system": "CloudFront (70% hit) → ALB → 2 × 1 vCPU containers → Redis (2 reads/request, 90% hit) → Postgres on a miss",
+  "capacity": {
+   "cdn": "1 × 1000000/s = 1000000/s",
+   "alb": "1 × 1000000/s = 1000000/s",
+   "api": "2 × 225/s = 450/s",
+   "cache": "1 × 80000/s = 80000/s",
+   "db": "1 × 4000/s = 4000/s"
+  },
+  "costPerHour": 0.53,
+  "lowLoad": "p50 12 ms, p99 38 ms at 50 rps",
+  "saturationOrder": [
+   "api at 1472 rps"
+  ],
+  "firstSloBreak": "1472 rps (p99 374 ms, errors 0.0%)"
+ },
+ "Write-heavy event pipeline": {
+  "system": "API Gateway → Lambda ingest (500 concurrency) → SQS → Lambda consumer (500) → DynamoDB write + S3 archive write (one prefix)",
+  "capacity": {
+   "apigw": "1 × 10000/s = 10000/s",
+   "ingest": "500 × 33/s = 16667/s",
+   "sqs": "1 × 1000000/s = 1000000/s",
+   "consumer": "500 × 33/s = 16667/s",
+   "ddb": "1 × 4000/s = 4000/s",
+   "s3": "1 × 3500/s = 3500/s"
+  },
+  "costPerHour": 0,
+  "lowLoad": "p50 64 ms, p99 134 ms at 50 rps",
+  "saturationOrder": [
+   "s3 at 3388 rps",
+   "ddb at 3923 rps",
+   "apigw at 9929 rps"
+  ],
+  "firstSloBreak": "10426 rps (p99 180 ms, errors 3.8%)"
+ },
+ "EC2 web app with shared files": {
+  "system": "ALB → EC2 Auto Scaling group 2 × m7g.large → Postgres r6g.large (3 queries per request); 20% of requests read a file from EFS",
+  "capacity": {
+   "alb": "1 × 1000000/s = 1000000/s",
+   "web": "2 × 425/s = 850/s",
+   "db": "1 × 4000/s = 4000/s",
+   "efs": "1 × 250000/s = 250000/s"
+  },
+  "costPerHour": 0.39,
+  "lowLoad": "p50 17 ms, p99 38 ms at 50 rps",
+  "saturationOrder": [
+   "web at 816 rps"
+  ],
+  "firstSloBreak": "900 rps (p99 1028 ms, errors 0.0%)"
+ },
+ "Search-backed catalog": {
+  "system": "ALB → 3 × 1 vCPU containers → DocumentDB (2 reads/request) + OpenSearch 3 × 2 vCPU (30% of requests search) + Neptune (20% get recommendations)",
+  "capacity": {
+   "alb": "1 × 1000000/s = 1000000/s",
+   "api": "3 × 225/s = 675/s",
+   "docdb": "1 × 3200/s = 3200/s",
+   "search": "3 × 38/s = 113/s",
+   "graph": "1 × 533/s = 533/s"
+  },
+  "costPerHour": 0.15,
+  "lowLoad": "p50 23 ms, p99 103 ms at 50 rps",
+  "saturationOrder": [],
+  "firstSloBreak": "351 rps (p99 447 ms, errors 0.0%)"
+ },
+ "Event fan-out": {
+  "system": "API Gateway → Lambda (500) → EventBridge put + Kinesis 4 shards + SNS publish (50%); Kinesis → consumer Lambda → Timestream writes",
+  "capacity": {
+   "apigw": "1 × 10000/s = 10000/s",
+   "ingest": "500 × 33/s = 16667/s",
+   "events": "1 × 10000/s = 10000/s",
+   "stream": "1 × 4000/s = 4000/s",
+   "sns": "1 × 30000/s = 30000/s",
+   "consumer": "200 × 33/s = 6667/s",
+   "tsdb": "1 × 1000000/s = 1000000/s"
+  },
+  "costPerHour": 0,
+  "lowLoad": "p50 110 ms, p99 203 ms at 50 rps",
+  "saturationOrder": [
+   "stream at 3923 rps"
+  ],
+  "firstSloBreak": "4543 rps (p99 262 ms, errors 1.5%)"
+ }
+}

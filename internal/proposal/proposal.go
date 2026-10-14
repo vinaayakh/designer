@@ -104,7 +104,8 @@ var ops = map[string]bool{
 	"move_node": true, "remove_node": true, "remove_group": true, "remove_edge": true,
 }
 
-var styles = map[string]bool{"sync": true, "async": true, "stream": true}
+// observe: a watcher, not a request (CloudTrail observes an account); its source may be a Group.
+var styles = map[string]bool{"sync": true, "async": true, "stream": true, "observe": true}
 
 // Prepare validates a payload and fills in element IDs and dependencies.
 // The returned error lists every problem, so the AI can fix them in one go.
@@ -291,7 +292,7 @@ func Prepare(p *Payload, c *Context) error {
 				style = s
 			}
 			if style != "" && !styles[style] {
-				bad(ch, "style must be sync, async or stream")
+				bad(ch, "style must be sync, async, stream or observe")
 			}
 			if ch.Op == "add_edge" && style == "" && (p.View == "production" || conversion) {
 				bad(ch, "style is required on a Production Diagram")

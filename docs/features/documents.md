@@ -12,16 +12,37 @@ The Documents tab writes the documents a senior engineer is expected to produce,
 
 ## Writing a document
 
-![The Documents tab: each Step's status, and why the Requirements spec is stale](../images/documents-pipeline.png)
+The Documents tab lists every document with its status: **Not written**, **vN · up to date**, **vN · out of date** (with the reasons), **Writing…** or **Queued**.
 
-1. Open a Step. It shows its status: waiting for an earlier document, questions to answer, ready, current, or stale (with the reasons).
-2. Answer its questions, one per screen. Answers are recorded in the Register as confirmed entries. **Unknown** is allowed for all but a few required questions; the Assistant then states what it assumes.
-3. **Write it**. The Assistant writes the sections, cites Register entries by ID for its claims, and adds new entries (assumptions, decisions, risks, open questions) as **open** for you to review. Some sections are computed without AI: the data flow diagram and STRIDE table, error budgets, a failure-mode skeleton.
+Some documents depend on others. A document that can't be created yet is **greyed out**, with a message saying what it needs:
+- **Another document.** The Design doc and Reliability & DR build on the Requirements spec, so they say "Needs the Requirements spec first" and offer **Create the Requirements spec**. The Requirements spec, in turn, says which documents it's needed by.
+- **The Production Diagram.** Documents built from it say "Needs a Production Diagram: convert the Rough Draft first".
+- **Optional inputs don't block.** The Threat model uses the Requirements spec if it exists, and says so, but you can create it either way.
+
+You can still prepare a greyed-out document's answers with **Edit answers**.
+
+1. **Create…** a document. If it still needs information, a wizard opens and asks each question on its own screen. **I don't know** is allowed for all but a few required questions; the document then states what it assumes, as an open assumption.
+2. Check the **review** screen: every answer at a glance. Click one to change it.
+3. **Finish**. All the answers are recorded in the Register at once, then the Assistant writes the document.
+   - The Assistant cites Register entries by ID for its claims.
+   - It adds new entries (assumptions, decisions, risks, open questions) as **open**, for you to review.
+   - Some sections are computed without AI: the data flow diagram and STRIDE table, error budgets, a failure-mode skeleton.
 4. **Read** the result. Every version is kept; older ones are under **Older…**.
+
+The other buttons on a document:
+- **Create** writes the document straight away when it needs no more answers.
+- **Edit answers** opens the wizard with all of a document's questions. Change them, then **Save answers** (or update the document).
+- **Update** rewrites an out-of-date document; **Rewrite** writes a current one again.
 
 ![Reading a document: its build record, the Register entries it cites, and the computed data flow diagram](../images/document-reader.png)
 
-A document goes **stale** when the Brief, the diagram, an earlier document or an answer changes, or when an entry it cites is rejected or superseded. It is never rewritten automatically: you choose when to **Rewrite it**.
+A document goes **out of date** when the Brief, the diagram, an earlier document or an answer changes, or when an entry it cites is rejected or superseded. It is never rewritten automatically: you choose when to **Update** it.
+
+## One source of truth
+
+Your answers aren't kept inside one document. They become Register entries (requirements, constraints, non-goals and so on), so every document cites the same facts.
+
+The Assistant gets them too when it changes the diagram. It respects confirmed entries and names them in a change's reason ("meets REQ-004"). Change a fact once, and every document that cites it shows as out of date.
 
 ## The Register
 

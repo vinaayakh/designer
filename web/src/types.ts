@@ -43,6 +43,8 @@ export interface Pending {
   id: string; revision: number; kind: "proposal" | "conversion"; view: View; baseVersion: number;
   payload: Payload; created: string; awaitingRevision?: boolean; reply?: string;
   accepted?: string[]; rejections?: { change: Change; reason?: string }[]; question?: string; answers?: string[];
+  /** "user" for changes applied from Sim Mode; absent for the Assistant's. */
+  author?: "user"; source?: string;
 }
 
 export interface Version { n: number; created: string; source: string; summary?: string; proposal?: string; rationale?: Rationale }

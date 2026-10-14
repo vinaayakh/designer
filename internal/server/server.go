@@ -20,8 +20,10 @@ import (
 
 	"github.com/vinaayakh/designer/internal/app"
 	"github.com/vinaayakh/designer/internal/brief"
+	"github.com/vinaayakh/designer/internal/catalog"
 	"github.com/vinaayakh/designer/internal/obs"
 	"github.com/vinaayakh/designer/internal/project"
+	"github.com/vinaayakh/designer/internal/proposal"
 	"github.com/vinaayakh/designer/internal/register"
 	"github.com/vinaayakh/designer/internal/report"
 	"github.com/vinaayakh/designer/internal/scene"
@@ -528,6 +530,67 @@ func (s *Server) Handler() http.Handler {
 		}
 		writeJSON(w, res)
 	})
+
+	// Simulation (sim map): the engine runs in the browser; the runtime serves
+	// Behaviour Profiles, stores Scenarios and turns applied changes into a Proposal.
+	api.HandleFunc("GET /api/sim/profiles", func(w http.ResponseWriter, r *http.Request) {
+		ps, err := catalog.Profiles()
+		if err != nil {
+			fail(w, 500, err)
+			return
+		}
+		writeJSON(w, ps)
+	})
+	api.HandleFunc("GET /api/sim/scenarios", func(w http.ResponseWriter, r *http.Request) {
+		l, err := a.P.Scenarios()
+		if err != nil {
+			fail(w, 500, err)
+			return
+		}
+		writeJSON(w, l)
+	})
+	api.HandleFunc("GET /api/sim/scenarios/{slug}", func(w http.ResponseWriter, r *http.Request) {
+		v, err := a.P.Scenario(r.PathValue("slug"))
+		switch {
+		case errors.Is(err, fs.ErrNotExist):
+			fail(w, 404, errors.New("no such Scenario"))
+		case err != nil:
+			fail(w, 400, err)
+		default:
+			writeJSON(w, v)
+		}
+	})
+	api.HandleFunc("PUT /api/sim/scenarios/{slug}", func(w http.ResponseWriter, r *http.Request) {
+		var v map[string]any
+		if err := read(r, &v); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		if err := a.P.SaveScenario(r.PathValue("slug"), v); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		writeJSON(w, map[string]bool{"ok": true})
+	})
+	// A Proposal the user authored (Sim Mode's Apply, or a change made in another tool), reviewed like the Assistant's.
+	userProposal := func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Source  string           `json:"source"`
+			Payload proposal.Payload `json:"payload"`
+		}
+		if err := read(r, &in); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		pend, err := a.SubmitUserProposal(&in.Payload, in.Source)
+		if err != nil {
+			fail(w, 409, err)
+			return
+		}
+		writeJSON(w, pend)
+	}
+	api.HandleFunc("POST /api/sim/apply", userProposal)
+	api.HandleFunc("POST /api/proposal/user", userProposal)
 
 	api.HandleFunc("GET /api/settings", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, a.Settings()) })
 	api.HandleFunc("PUT /api/settings", func(w http.ResponseWriter, r *http.Request) {

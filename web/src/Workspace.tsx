@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CaptureUpdateAction, convertToExcalidrawElements, exportToBlob, exportToSvg, getCommonBounds, hashElementsVersion, restoreElements, serializeAsJSON } from "@excalidraw/excalidraw";
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
@@ -15,6 +15,25 @@ import { Inspector, type NodePatch } from "./panels/Inspector";
 import { Versions } from "./panels/Versions";
 import { SettingsModal } from "./panels/Settings";
 import { RecordViewer } from "./RecordViewer";
+/**
+ * Where a Proposal's changes go. Local placement keeps the existing nesting, so a Proposal
+ * that moves a Group under another (a new AWS account Group around the region) is laid out
+ * fully, as Tidy up would, with the current positions as hints.
+ */
+async function layoutChanges(g: Graph, geo: Map<string, Box>, place: Set<string>, changes: Change[], avoid: ReturnType<typeof arrowSegments>) {
+  if (!changes.some((c) => c.op === "update_group" && c.parentId !== undefined)) return placeChanges(g, geo, place, { avoid });
+  const hints = new Map([...geo].map(([id, b]) => [id, { x: b.x + b.w / 2, y: b.y + b.h / 2 }]));
+  let origin = { x: Infinity, y: Infinity };
+  for (const b of geo.values()) origin = { x: Math.min(origin.x, b.x), y: Math.min(origin.y, b.y) };
+  if (!Number.isFinite(origin.x)) origin = { x: 0, y: 0 };
+  const laid = await elkLayout(g, hints, "", origin);
+  const next = new Map(geo);
+  for (const [id, b] of laid) next.set(id, b);
+  return next;
+}
+
+// Sim Mode loads on first use, so the editor never pays for the engine.
+const SimMode = lazy(() => import("./sim/SimMode"));
 import { foreignElements, geometryOf, metaOf, ownerId, renderProduction, type Box, type Overlay } from "./production/render";
 import { drawnParent, graphFromScene, hasOrphans } from "./production/graph";
 import { elkLayout, growGroups, placeChanges, warmLayout } from "./production/layout";
@@ -146,6 +165,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
   const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(null);
   const [record, setRecord] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [simOpen, setSimOpen] = useState(false);
   const [connected, setConnected] = useState(true);
   // Canvas edits not yet saved: "pending" while the autosave waits, "failed" when it couldn't
   // reach the runtime (kept, retried every few seconds and as soon as the connection is back).
@@ -326,7 +346,7 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
         if ((c.op === "add_node" || c.op === "add_group" || c.op === "move_node") && c.elementId) place.add(c.elementId);
         if ((c.op === "update_node" || c.op === "update_group") && c.parentId !== undefined && c.elementId) place.add(c.elementId);
       }
-      const placed = placeChanges(sim.graph, geo, place, { avoid: arrowSegments(base.elements) });
+      const placed = await layoutChanges(sim.graph, geo, place, considered, arrowSegments(base.elements));
       const union: Graph = { ...sim.graph, nodes: [...sim.graph.nodes], groups: [...sim.graph.groups], edges: [...sim.graph.edges] };
       const status = new Map<string, ReturnType<typeof changeStatus>>();
       const key = (e: GEdge) => `${e.from}>${e.to}`;
@@ -479,14 +499,19 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
           if (c.op === "add_node" || c.op === "add_group" || c.op === "move_node") place.add(c.elementId);
           if ((c.op === "update_node" || c.op === "update_group") && c.parentId !== undefined) place.add(c.elementId);
         }
-        const placed = placeChanges(sim.graph, geo, place, { avoid: arrowSegments(base.elements) });
+        const placed = await layoutChanges(sim.graph, geo, place, p.payload.changes.filter((c) => acc.has(c.id)), arrowSegments(base.elements));
         const r = renderProduction(sim.graph, placed, cat, cloud, undefined, foreignElements(base.elements));
         final = { elements: r.elements, files: { ...base.files, ...r.files } };
       }
       const json = JSON.parse(serializeAsJSON(final.elements, a.getAppState(), final.files, "local"));
       const res = await api.decide({ id: p.id, revision: p.revision, action: "accept", accepted: [...acc], scene: json });
+      // The server's proposal.closed event can arrive before this response and start loading the
+      // version the page still thinks is latest (the old one): drop that load, point the page at
+      // the new version, and only skip the load our own setPending(null) is about to start.
+      loading.current++;
+      if (res.version) latestRef.current = res.version;
+      if (modeRef.current === "review") skipLoad.current = true;
       // One Undo reverts the whole Proposal: restore the base, then apply the result as one step.
-      skipLoad.current = true;
       a.setElementRenderOverrides(null);
       a.addFiles(Object.values(final.files));
       a.updateScene({ elements: base.elements, captureUpdate: CaptureUpdateAction.NEVER });
@@ -1013,6 +1038,10 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
         {!frozen && !previewing && (
           <button className="primary" disabled={status.busy || !!pending} onClick={startConversion} title="Turn the Rough Draft into a Production Diagram">Convert</button>
         )}
+        {latest > 0 && !previewing && (
+          <button disabled={!!pending} onClick={() => setSimOpen(true)}
+            title={pending ? "Finish the Proposal under review first" : "Run traffic through the latest Production version and find where it breaks"}>Simulate</button>
+        )}
         <span className="spacer" />
         {!connected && <span className="pill bad">Disconnected — retrying</span>}
         {unsaved === "failed" && <span className="pill bad" title="Your edits are kept in this tab and saved as soon as Designer answers again">Unsaved changes — retrying</span>}
@@ -1134,6 +1163,12 @@ export function Workspace({ initial, reload }: { initial: State; reload: () => P
       {settingsOpen && (
         <SettingsModal settings={st.settings} schema={st.briefSchema} brief={st.brief} name={st.project.name} trusted={st.trusted} kbVersion={st.kbVersion} cloudLocked={latest > 0}
           onClose={() => setSettingsOpen(false)} onSaved={() => reload().then(setSt)} />
+      )}
+      {simOpen && latest > 0 && (
+        <Suspense fallback={<div className="sim-shell"><div className="sim-loading">Loading Sim Mode…</div></div>}>
+          <SimMode latest={latest} answers={st.brief.answers} onClose={() => setSimOpen(false)}
+            onApplied={() => { setSimOpen(false); toastIt("Your Sim Mode changes are waiting for review"); }} />
+        </Suspense>
       )}
       {toast && <div className={`toast ${toast.error ? "error" : ""}`} role="status">{toast.text}</div>}
     </div>

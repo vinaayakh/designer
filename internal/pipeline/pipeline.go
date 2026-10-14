@@ -67,6 +67,7 @@ func (s SectionDef) Written() bool { return s.Kind == "prose" || s.Kind == "list
 type Step struct {
 	ID           string          `yaml:"id" json:"id"`
 	Title        string          `yaml:"title" json:"title"`
+	Summary      string          `yaml:"summary" json:"summary"` // one line for the Documents list
 	Version      int             `yaml:"version" json:"version"`
 	Template     string          `yaml:"template" json:"template"`
 	Credit       string          `yaml:"credit" json:"credit,omitempty"`

@@ -368,3 +368,25 @@ p.bad { color: var(--bad); }
 .sim-table tbody th { color: var(--ink-3); font-weight: 500; white-space: nowrap; }
 .sim-components { list-style: none; padding-left: 0; }
 .sim-components .bad { color: var(--bad); font-weight: 600; }
+
+/* ---- Documents as a list, with the Create wizard */
+.docs-list { display: grid; gap: 10px; }
+.docs-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: grid; gap: 8px; background: var(--surface); }
+.docs-card p { margin: 0; }
+.docs-card.stale { border-color: var(--bad-soft); }
+.docs-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.docs-create { max-width: 620px; display: grid; gap: 14px; }
+.docs-create-head { display: flex; justify-content: space-between; align-items: center; }
+.docs-create-q textarea { min-height: 96px; }
+.docs-dot.review { border-radius: 2px; }
+.docs-review { display: grid; gap: 6px; }
+.docs-review section { display: grid; gap: 4px; }
+.docs-review h4 { margin: 8px 0 2px; }
+.docs-review-row { display: grid; grid-template-columns: minmax(140px, 38%) 1fr; gap: 12px; align-items: start; text-align: left; height: auto; padding: 6px 8px; border: 1px solid var(--line); background: var(--surface); white-space: normal; }
+.docs-review-q { font-weight: 600; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.docs-create-foot { margin-top: 4px; }
+
+/* A document that can't be created yet: greyed, with why and what to do */
+.docs-card.blocked { background: var(--surface-2); border-style: dashed; }
+.docs-card.blocked .docs-step-title, .docs-card.blocked .docs-card-summary { color: var(--ink-3); }
+.docs-blocked-msg { font-size: var(--t-sm); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--ink-4); border-radius: var(--radius-sm); padding: 8px 10px; display: grid; gap: 6px; }

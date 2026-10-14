@@ -1,6 +1,7 @@
 # Threat model (wayfinder/doc-pipeline ticket 006). Structure from the Threat Modeling Manifesto's
 # four questions (CC BY 4.0, adapted, credit below); threats per element with STRIDE.
 id: threat-model
+summary: "What could go wrong for security and what you do about it, element by element (STRIDE)."
 title: Threat model (STRIDE)
 version: 2
 template: "Threat Modeling Manifesto four questions (CC BY 4.0, adapted) with STRIDE per element"

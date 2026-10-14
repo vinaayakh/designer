@@ -11,11 +11,18 @@ All notable changes to Designer are recorded here. The format follows [Keep a Ch
 - Behaviour Profiles for 31 Component Kinds (`internal/catalog/profiles`), embedded and checked by a lint test.
 - **Detached parts** of a diagram (a Node with no Edges, or Nodes linked only to each other) are found by `scene.Graph.Detached()` and reported to the Assistant as `! detached` issues, including when they appear mid-session. The Assistant leaves account-wide services (audit logging, threat detection, key management) in place, proposes removing clear leftovers for your review, and asks when unsure. Detached parts don't block Conversion.
 - **Watchers:** a new Edge style, `observe` ("watches", drawn dotted violet), which can start from a Group. Account-wide services such as CloudTrail are drawn the way AWS reference architectures draw them: inside the AWS account, with one observe Edge from the account instead of an arrow to every service. The Assistant follows this, the simulation ignores observe Edges, and a watcher observing a Group no longer counts as detached.
+- **The Documents tab is now a list** of documents, each with **Create**, in any order (it was a stepper).
+  - Create opens a wizard when the document still needs answers. It ends in a review, and **Finish** records every answer in the Register at once, then writes the document.
+  - **Documents that depend on others are greyed out** until they can be created. The message names what's missing ("Needs the Requirements spec first", or a Production Diagram) and offers to create it. Prerequisites say which documents they're needed by, and optional inputs are a hint, not a block.
+  - **Edit answers** changes a document's answers on their own.
+- **The Register reaches the Assistant during diagram work,** not just when writing documents. It's sent in full the first time, then only changes. The Assistant respects confirmed entries and cites them in its changes' reasons.
+- API: `POST /api/documents/{step}/create` (answers + write, queueing prerequisites) and `POST /api/documents/{step}/answers`.
 - API: `POST /api/proposal/user` submits a Proposal you wrote (outside the Assistant) for the usual review.
 - API: `GET /api/sim/profiles`, `GET`/`PUT /api/sim/scenarios/{slug}`, `POST /api/sim/apply`.
 
 ### Fixed
 
+- Saving several wizard answers at the same time could lose an answer or record a Register entry twice: answers are now recorded one at a time.
 - After accepting a Proposal, the canvas could show the previous version until you reloaded: the server's "Proposal closed" event started a load of the old version that finished after the new one was drawn.
 - A Proposal that moves a Group into another (for example a new AWS account around the region) is now laid out fully, like Tidy up, both in review and when accepted; before, the moved Groups kept their old boxes.
 

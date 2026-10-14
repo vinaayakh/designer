@@ -292,6 +292,9 @@ func (a *App) finishTurnLocked(ev agent.Event) {
 	}
 	a.emit("assistant.done", done)
 	a.emitStatusLocked()
+	if t != nil && t.Kind == "step" {
+		a.nextDocumentLocked(t.Submitted && !t.Interrupted && !isErr)
+	}
 }
 
 func truncate(s string, n int) string {

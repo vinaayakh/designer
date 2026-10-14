@@ -138,7 +138,11 @@ _(Being specified on its own planning map: [wayfinder/doc-pipeline/map.md](wayfi
 - ✅ **Gaps:** a token-free pre-check, then a per-Step wizard (answers are confirmed entries, `unknown` becomes an open assumption), open questions recorded as `Q` entries instead of live questions, chat entries only through an accepted review card, diagram gaps as `RISK` entries with Draft a fix.
 - ✅ **Documents** are written once as `documents/<step>/vNNN.json` plus a rendered Markdown copy; ADRs are rendered `DEC` entries (MADR 4.0); a document pack zip is the audit hand-off.
 - ✅ **Contents** of the Requirements spec (ISO 29148 outline), Design doc and ADRs, Threat model (STRIDE-per-element, Threat Modeling Manifesto) and Reliability & DR (SLOs, failure modes, NIST 800-34 plan): see tickets 004–007 on the map.
-- ✅ **UI** ([ticket 010](wayfinder/doc-pipeline/tickets/010-what-do-the-documents-panel-and-step-wizard-look-like.md)): a Documents tab in the sidebar with a Step stepper, a one-question-per-screen wizard and a Register tab (Confirm / Reject / Draft a fix).
+- ✅ **UI** (replaces the stepper of [ticket 010](wayfinder/doc-pipeline/tickets/010-what-do-the-documents-panel-and-step-wizard-look-like.md), 2026-10-15):
+  - **The list:** a Documents tab listing every document with **Create** (any order), status, Read and Edit answers, beside a Register tab (Confirm / Reject / Draft a fix).
+  - **The wizard:** Create opens a modal wizard when the document still needs answers, then shows a review. Finish records every answer in the Register at once and writes the document.
+  - **Dependencies:** a document whose required documents (or Production Diagram) don't exist yet is greyed out, with a message naming what's missing and a button to create it.
+- ✅ **One source of truth:** answers are Register entries, cited by every document and sent to the Assistant with the diagram (first in full, then only changes) when it proposes diagram changes.
 
 ### R12 — Simulation
 _(Being specified on its own planning map: [wayfinder/sim/map.md](wayfinder/sim/map.md).)_

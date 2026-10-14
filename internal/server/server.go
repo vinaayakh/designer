@@ -378,6 +378,24 @@ func (s *Server) Handler() http.Handler {
 		}
 		return a.Answer(r.PathValue("step"), in.Question, in.Values, in.Unknown)
 	}))
+	api.HandleFunc("POST /api/documents/{step}/create", s.action(func(r *http.Request) error {
+		var in struct {
+			Answers []app.WizardAnswer `json:"answers"`
+		}
+		if err := read(r, &in); err != nil {
+			return err
+		}
+		return a.CreateDocument(r.PathValue("step"), in.Answers)
+	}))
+	api.HandleFunc("POST /api/documents/{step}/answers", s.action(func(r *http.Request) error {
+		var in struct {
+			Answers []app.WizardAnswer `json:"answers"`
+		}
+		if err := read(r, &in); err != nil {
+			return err
+		}
+		return a.RecordAnswers(r.PathValue("step"), in.Answers)
+	}))
 	api.HandleFunc("POST /api/pipeline/{step}/run", s.action(func(r *http.Request) error { return a.RunStep(r.PathValue("step")) }))
 	api.HandleFunc("GET /api/pipeline/{step}/v/{n}", func(w http.ResponseWriter, r *http.Request) {
 		n, err := strconv.Atoi(r.PathValue("n"))

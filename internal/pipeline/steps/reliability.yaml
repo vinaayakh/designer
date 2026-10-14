@@ -1,6 +1,7 @@
 # Reliability & DR (wayfinder/doc-pipeline ticket 007). An SLO document (concepts and structure
 # only), a failure-mode table and a contingency plan in NIST SP 800-34's phases (public domain).
 id: reliability
+summary: "Service levels, failure modes, backup and recovery against your RPO and RTO, and a contingency plan."
 title: Reliability & DR
 version: 2
 template: "SLO document, failure modes (FMEA), NIST SP 800-34 contingency plan phases"
